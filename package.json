@@ -11,7 +11,8 @@
     "build": "pnpm --filter @kvnsys/postgres generate && pnpm check:structure && pnpm -r build",
     "test": "pnpm -r test",
     "db:deploy": "pnpm --filter @kvnsys/postgres migrate:deploy",
-    "seed": "pnpm --filter @kvnsys/server seed"
+    "seed": "pnpm --filter @kvnsys/server seed",
+    "start:server": "pnpm --filter @kvnsys/server start"
   },
   "devDependencies": {
     "dependency-cruiser": "18.6.0",

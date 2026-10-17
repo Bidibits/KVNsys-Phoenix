@@ -9,7 +9,8 @@
   "dependencies": {
     "@kvnsys/core": "workspace:*",
     "@kvnsys/postgres": "workspace:*",
-    "@kvnsys/server": "workspace:*"
+    "@kvnsys/server": "workspace:*",
+    "@kvnsys/wire": "workspace:*"
   },
   "devDependencies": {
     "vitest": "5.0.5"

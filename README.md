@@ -12,9 +12,14 @@ and everything a user sees, is called KVNsys.
 
 ## Status
 
-**The first feature is in: the seed.** It's the one-time setup that makes a new install usable:
-the first shop, this PC as its first machine, three roles and the first admin. Everything else is
-still to come. The schema (five tables and their first migration) is in
+**So far:**
+- **The seed:** the one-time setup that makes a new install usable. It creates the first shop,
+  this PC as its first machine, three roles and the first admin.
+- **KVNsys Server starts and answers on the shop's network.** Other PCs can ask it what it is,
+  which version it is, and which protocol it speaks. It does nothing else yet: no sign-in, no
+  screens. For now it's started by hand; starting with Windows comes later.
+
+Everything else is still to come. The schema (five tables and their first migration) is in
 `src/KVNsysPostgres/prisma/`.
 
 ## How it runs
@@ -147,6 +152,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm test` | Runs every test project (after `pnpm build`) |
 | `pnpm db:deploy` | Creates or updates the tables in the database named in `.env` |
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
+| `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it |
 
 **Setting up a new install:** copy `.env.example` to `.env` and fill it in. Then run
 `pnpm install`, `pnpm build`, `pnpm db:deploy` and `pnpm seed`, in that order.

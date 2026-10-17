@@ -1,2 +1,2 @@
-// KVNsysWire's entry point. Empty on purpose: the workspace is set up, no code is written yet.
-export {};
+// KVNsysWire: the calls between client and server, and the shape of each.
+export { HelloPath, ProtocolVersion, ServerHello } from './hello.js';
