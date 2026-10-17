@@ -13,10 +13,15 @@
     "db:deploy": "pnpm --filter @kvnsys/postgres migrate:deploy",
     "seed": "pnpm --filter @kvnsys/server seed",
     "start:server": "pnpm --filter @kvnsys/server start",
-    "start:app": "pnpm --filter @kvnsys/client-app start"
+    "start:app": "pnpm --filter @kvnsys/client-app start",
+    "package": "pnpm build && node scripts/package.mjs",
+    "install:here": "node scripts/install-here.mjs"
   },
   "devDependencies": {
+    "@electron/packager": "20.3.0",
     "dependency-cruiser": "18.6.0",
+    "esbuild": "0.28.2",
+    "postject": "1.0.0-alpha.6",
     "typescript": "5.9.3"
   }
 }

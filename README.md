@@ -186,9 +186,19 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`), set up with `pnpm db:deploy` and `pnpm seed`, and refuses to start without it. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
+| `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`). Neither needs Node or pnpm on the PC that runs it. |
+| `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
 
 **Setting up a new install:** copy `.env.example` to `.env` and fill it in. Then run
 `pnpm install`, `pnpm build`, `pnpm db:deploy` and `pnpm seed`, in that order.
+
+**The installed programs.** Double-click **KVNsys Server** and it runs in its own window, showing
+the address registers use; close the window to stop it. If something's wrong, such as no
+database, it says what and waits for Enter before closing. It reads its settings from
+`server.env`, beside its certificate in `%LOCALAPPDATA%\KVNsys\Server`, written like `.env`. On
+this PC, `pnpm install:here` fills that in from `.env`. Windows may ask, the first time it starts,
+whether to let it through the firewall: allow it on private networks, or other PCs can't reach it.
+Double-click **KVNsys POS & Inventory** for the app.
 
 The database tests make their own throwaway database and drop it afterwards, so they never touch
 an existing one. The app's tests do the same with its settings: each run gets a throwaway folder

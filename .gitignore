@@ -3,3 +3,5 @@ coverage/
 .env
 # Prisma's generated client: rebuilt from the schema, never committed.
 generated/
+# The packaged programs (`pnpm package`): rebuilt from the source, never committed.
+out/

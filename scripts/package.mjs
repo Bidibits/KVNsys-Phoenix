@@ -1,0 +1,148 @@
+// `pnpm package`: makes the two programs a shop's PCs run, from what `pnpm build` produced.
+//
+//   out/KVNsys POS & Inventory/   the app for each register: Electron, with its own Chrome and Node
+//   out/KVNsys Server/            the server: KVNsys Server.exe, a console program, with its own Node
+//
+// Neither needs Node or pnpm on the PC it runs on. `pnpm install:here` then installs them on this PC.
+import { execFileSync } from 'node:child_process';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { packager } from '@electron/packager';
+import { build } from 'esbuild';
+import postject from 'postject';
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+const out = join(root, 'out');
+const stage = join(out, 'stage');
+
+const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
+const writeJson = (path, value) => writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+
+/** The register app. Its desktop side is bundled into one file, so the package needs no node_modules. */
+async function packageClient() {
+  const app = join(root, 'src', 'KVNsysClientApp');
+  const { productName, version } = readJson(join(app, 'package.json'));
+  const electronVersion = readJson(join(app, 'node_modules', 'electron', 'package.json')).version;
+  const dir = join(stage, 'client');
+  rmSync(dir, { recursive: true, force: true });
+
+  await build({
+    entryPoints: [join(app, 'dist', 'desktop', 'main.js')],
+    outfile: join(dir, 'dist', 'desktop', 'main.js'),
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    target: 'node24',
+    // Real class and function names, in NestJS's log and in stack traces.
+    keepNames: true,
+    external: ['electron'],
+    // Anything bundled that still calls require() gets a real one.
+    banner: { js: "import { createRequire as kvnsysCreateRequire } from 'node:module'; const require = kvnsysCreateRequire(import.meta.url);" },
+    logLevel: 'warning',
+  });
+  // The preload only uses Electron, and the screens are already bundled by Vite.
+  copyFileSync(join(app, 'dist', 'desktop', 'preload.cjs'), join(dir, 'dist', 'desktop', 'preload.cjs'));
+  cpSync(join(app, 'dist', 'screens'), join(dir, 'dist', 'screens'), { recursive: true });
+  writeJson(join(dir, 'package.json'), {
+    name: 'kvnsys-pos-inventory',
+    // Also names the app's settings folder in %APPDATA%, so it must stay the same.
+    productName,
+    version,
+    private: true,
+    type: 'module',
+    main: 'dist/desktop/main.js',
+  });
+
+  const [packaged] = await packager({
+    dir,
+    out: join(stage, 'client-packaged'),
+    overwrite: true,
+    name: productName,
+    executableName: productName,
+    platform: 'win32',
+    arch: 'x64',
+    electronVersion,
+    appVersion: version,
+    asar: true,
+    prune: false,
+    win32metadata: { CompanyName: 'KVNsys', ProductName: productName, FileDescription: productName },
+  });
+  const target = join(out, productName);
+  rmSync(target, { recursive: true, force: true });
+  renameSync(packaged, target);
+  return target;
+}
+
+/**
+ * The server, as one exe: Node's "single executable application". It runs a single CommonJS file
+ * and loads nothing else from disk except Node's own modules, so everything goes into that file.
+ */
+async function packageServer() {
+  const server = join(root, 'src', 'KVNsysServer');
+  const { version } = readJson(join(server, 'package.json'));
+  const dir = join(stage, 'server');
+  const target = join(out, 'KVNsys Server');
+  rmSync(dir, { recursive: true, force: true });
+  rmSync(target, { recursive: true, force: true });
+  mkdirSync(join(target, 'app'), { recursive: true });
+
+  await build({
+    entryPoints: [join(server, 'dist', 'start.js')],
+    outfile: join(dir, 'server.cjs'),
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    target: 'node24',
+    // Real class and function names, in NestJS's log and in stack traces.
+    keepNames: true,
+    // Optional parts of NestJS and pg that KVNsys doesn't use. They're only loaded if present,
+    // inside a try, so leaving them out is safe.
+    external: [
+      '@nestjs/microservices',
+      '@nestjs/microservices/*',
+      '@nestjs/websockets',
+      '@nestjs/websockets/*',
+      'class-transformer',
+      'class-transformer/*',
+      'class-validator',
+      'pg-native',
+    ],
+    // Two files are read from beside the code: the server's package.json (for its version) and
+    // the database updates it ships with. In the exe's folder they sit under app/, so the code is
+    // told it lives at app/dist/server.cjs and finds them where it always looks.
+    define: { 'import.meta.url': 'kvnsysModuleUrl' },
+    banner: {
+      js: "const kvnsysModuleUrl = require('node:url').pathToFileURL(require('node:path').join(require('node:path').dirname(process.execPath), 'app', 'dist', 'server.cjs')).href;",
+    },
+    logLevel: 'warning',
+  });
+  writeJson(join(target, 'app', 'package.json'), { name: 'kvnsys-server', version, private: true });
+  cpSync(join(root, 'src', 'KVNsysPostgres', 'prisma', 'migrations'), join(target, 'app', 'prisma', 'migrations'), { recursive: true });
+  const migrations = readdirSync(join(target, 'app', 'prisma', 'migrations'), { withFileTypes: true }).filter((e) => e.isDirectory());
+  if (migrations.length === 0) throw new Error('No database updates were copied next to the server; it would refuse every database.');
+
+  writeJson(join(dir, 'sea-config.json'), {
+    main: join(dir, 'server.cjs'),
+    output: join(dir, 'sea-prep.blob'),
+    disableExperimentalSEAWarning: true,
+    useSnapshot: false,
+    useCodeCache: false,
+  });
+  execFileSync(process.execPath, ['--experimental-sea-config', join(dir, 'sea-config.json')], { stdio: 'inherit' });
+
+  // This PC's own Node, with the server put inside it.
+  const exe = join(target, 'KVNsys Server.exe');
+  copyFileSync(process.execPath, exe);
+  await postject.inject(exe, 'NODE_SEA_BLOB', readFileSync(join(dir, 'sea-prep.blob')), {
+    sentinelFuse: 'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2',
+  });
+  return target;
+}
+
+for (const make of [packageClient, packageServer]) {
+  const made = await make();
+  if (!existsSync(made)) throw new Error(`Packaging finished but ${made} isn't there.`);
+  console.log(`Made ${made}`);
+}
+console.log('Run `pnpm install:here` to install them on this PC, with icons on the desktop.');
