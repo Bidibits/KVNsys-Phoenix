@@ -5,3 +5,5 @@ coverage/
 generated/
 # The packaged programs (`pnpm package`): rebuilt from the source, never committed.
 out/
+# What the server's setup file will carry (`pnpm fetch:installer-parts`): downloaded, never committed.
+vendor/

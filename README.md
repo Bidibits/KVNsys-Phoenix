@@ -190,6 +190,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
 | `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register. None of them needs Node or pnpm on the PC that runs it. |
 | `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
+| `pnpm fetch:installer-parts` | Downloads what the server's setup file will carry into `vendor/`, which isn't committed: PostgreSQL 18.6 for Windows from EDB (unpacked), and Microsoft's Visual C++ runtime. Each file is checked against its recorded fingerprint. |
 
 **Setting up a new install:** copy `.env.example` to `.env` and fill it in. Then run
 `pnpm install`, `pnpm build`, `pnpm db:deploy` and `pnpm seed`, in that order.
@@ -207,6 +208,11 @@ and double-click it. It installs the app for the person signed in to Windows, as
 needing no administrator rights. It puts an icon on the desktop and in the Start menu, then opens
 the app. To remove it, use Windows' list of apps. The app's settings (which server it uses, and
 which server it trusts) are kept, so a reinstall picks up where it left off.
+
+**KVNsys's own PostgreSQL:** `scripts/postgresql/install-postgresql.ps1` installs it as a Windows
+service: port 5433, answering on this PC only, with random passwords nobody sees. `remove-postgresql.ps1`
+takes it away again, data too with `-RemoveData`. Both need administrator rights. They're part 1
+of the server's setup file. See [`docs/server-setup-plan.md`](docs/server-setup-plan.md).
 
 **A new install sets itself up.** Point the server at a PostgreSQL database and start it. If the
 database doesn't exist yet, the server creates it, as long as its PostgreSQL account is allowed

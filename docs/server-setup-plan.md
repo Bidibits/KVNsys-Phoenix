@@ -1,8 +1,14 @@
 # Server setup plan: KVNsys Server Setup.exe, with PostgreSQL inside
 
-**Status: a plan only. Nothing here is built (2026-10-18).** It's for the partners to agree before
-anyone builds it. The versions, support dates and the EDB package were checked on 18 October 2026
-(sources at the end). Anything marked *check when building* is still unverified.
+**Status (2026-10-18): part 1 of 3 is built and tested.** `scripts/postgresql/install-postgresql.ps1`
+installs KVNsys's own PostgreSQL as a Windows service, and `remove-postgresql.ps1` takes it away again.
+Both were run for real on the development PC. Not built yet:
+- part 2, wrapping this and KVNsys Server into one setup file
+- part 3, KVNsys Server starting with Windows
+
+It's still for the partners to agree. The versions, support dates and the EDB package were checked on
+18 October 2026 (sources at the end), and the part 1 test settled the rest. See "What the part 1
+test settled".
 
 ## What a person does at a branch
 
@@ -30,11 +36,9 @@ Nothing about PostgreSQL is ever shown to anyone or asked of them.
   (Windows x86-64, 18.6 among them), not EDB's installer. EDB says the archive holds everything its
   installers install, so it has to be trimmed. Only what the server needs is kept: `bin`, `lib`,
   `share`, and the licence. No pgAdmin, no StackBuilder, no documentation.
-- **The Visual C++ runtime.** It's very likely needed. PostgreSQL's Windows builds load Microsoft's
-  Visual C++ 2015–2022 runtime (`vcruntime140.dll`), which EDB's installer puts in for you. So the
-  setup carries Microsoft's x64 redistributable and runs it silently; that's harmless where it's
-  already installed. *Check when building:* run `initdb` from the trimmed files on a clean Windows,
-  first without the runtime, then with it.
+- **The Visual C++ runtime is needed** (settled). `postgres.exe` loads `VCRUNTIME140.dll`, and EDB's
+  zip carries none of the runtime's files. So the setup carries Microsoft's x64 redistributable and
+  runs it silently, which is harmless where it's already installed.
 - **Licence:** the PostgreSQL License is permissive, so bundling is allowed. Its licence file goes
   in with the install.
 
@@ -97,9 +101,8 @@ writes it into the settings.
   - It has to run with administrator rights, which the setup has anyway.
   - Service "KVNsys PostgreSQL" (`kvnsys-postgresql`) starts automatically.
   - It runs as a virtual service account (`NT SERVICE\kvnsys-postgresql`) that can only reach its
-    own data folder. *Check when building* that `pg_ctl register` accepts that account; nothing
-    found confirms or rules it out. If it doesn't, fall back to NetworkService, which is what EDB's
-    installer uses.
+    own data folder. Settled: `pg_ctl register` accepts it, and the service ran under it. The script
+    still falls back to NetworkService, which EDB's installer uses, if a PC ever refuses it.
   - If it stops unexpectedly, Windows restarts it.
   - On its own, a PostgreSQL service logs to Windows' Event Viewer. Turn `logging_collector` on so
     the logs land as files in the data folder's `log` folder, where someone helping a branch can
@@ -133,12 +136,36 @@ Uninstalling removes the programs and the services, but keeps the data folder, t
 backups, and says where they are. Deleting a shop's data takes a deliberate second step: a separate
 "remove all data" option that's off unless someone ticks it.
 
+## What the part 1 test settled (2026-10-18)
+
+The install script, run for real on the development PC next to its own PostgreSQL 16:
+
+- **The programs:** after trimming they take **141 MB**. The zip unpacks to about 870 MB, 684 MB of
+  that pgAdmin.
+- **The data folder:** `initdb` used PostgreSQL's own text rules (`--locale-provider=builtin`,
+  `C.UTF-8`), which work the same on every PC whatever Windows' language setting. Data checksums are on.
+- **Rights:** `initdb` drops administrator rights before it runs. So its one-time password file has
+  to be readable by the account running the setup, not only by Administrators.
+- **The service:** "KVNsys PostgreSQL" starts automatically, restarts if it stops, runs as
+  `NT SERVICE\kvnsys-postgresql`, and listens on `127.0.0.1` and `::1` only.
+- **The stored `postgres` password:** an ordinary account can't read the file it's kept in.
+- **Running it again** keeps the data folder, reads the stored password back, gives `kvnsys` a fresh
+  password and rewrites the settings.
+- **KVNsys Server:** the installed program, given the settings the script wrote, set up its tables
+  as `kvnsys` (not a superuser), asked its two questions and started. The admin signed in.
+- **Removing it** with `-RemoveData` took away the service, both folders and the port, and nothing
+  else.
+- **A bug the test caught:** the settings file's comment and the `DATABASE_URL` line came out on one
+  line, so the server would never have found its database. That PowerShell trap is fixed.
+
 ## Building the setup file
 
 - **Tool.** electron-builder only makes setup files for Electron apps, and KVNsys Server isn't one.
   **Recommended: Inno Setup.** It's free and mature, and built for exactly this: administrator
   installs, services, and a proper uninstaller. Its compiler is a one-time install on the build
-  PC, and `pnpm package` would call it. The alternative is a hand-written NSIS script.
+  PC, and `pnpm package` would call it. The alternative is a hand-written NSIS script. Inno Setup
+  **7.1.0** (12 August 2026) is installed on the development PC, for that account only, at
+  `%LOCALAPPDATA%\Programs\Inno Setup 7`.
 - *Check when building:* the setup file's compressed size. A rough guess is PostgreSQL at 50–100 MB
   plus the server at about 30 MB.
 

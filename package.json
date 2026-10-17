@@ -15,7 +15,8 @@
     "start:server": "pnpm --filter @kvnsys/server start",
     "start:app": "pnpm --filter @kvnsys/client-app start",
     "package": "pnpm build && node scripts/package.mjs",
-    "install:here": "node scripts/install-here.mjs"
+    "install:here": "node scripts/install-here.mjs",
+    "fetch:installer-parts": "node scripts/fetch-installer-parts.mjs"
   },
   "devDependencies": {
     "@electron/packager": "20.3.0",
