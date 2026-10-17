@@ -7,6 +7,9 @@ import { z } from 'zod';
  */
 export const ProtocolVersion = 1;
 
+/** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
+export const DefaultPort = 9000;
+
 /** Where a client asks "are you a KVNsys server, and which version?" */
 export const HelloPath = '/api/hello';
 

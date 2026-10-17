@@ -18,6 +18,10 @@ and everything a user sees, is called KVNsys.
 - **KVNsys Server starts and answers on the shop's network.** Other PCs can ask it what it is,
   which version it is, and which protocol it speaks. It does nothing else yet: no sign-in, no
   screens. For now it's started by hand; starting with Windows comes later.
+- **The client engine can connect to a server.** Given an address the way a person types it
+  (`192.168.0.111`), it checks the server is a KVNsys Server speaking the same protocol. If not,
+  it says why in plain words: a bad address, nothing there, not a KVNsys Server, or a different
+  update and which side to update. There are no screens for it yet.
 
 Everything else is still to come. The schema (five tables and their first migration) is in
 `src/KVNsysPostgres/prisma/`.

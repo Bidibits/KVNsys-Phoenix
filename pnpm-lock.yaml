@@ -166,6 +166,12 @@ importers:
       '@kvnsys/client':
         specifier: workspace:*
         version: link:../../src/KVNsysClient
+      '@kvnsys/server':
+        specifier: workspace:*
+        version: link:../../src/KVNsysServer
+      '@kvnsys/wire':
+        specifier: workspace:*
+        version: link:../../src/KVNsysWire
     devDependencies:
       vitest:
         specifier: 5.0.5

@@ -7,7 +7,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@kvnsys/client": "workspace:*"
+    "@kvnsys/client": "workspace:*",
+    "@kvnsys/server": "workspace:*",
+    "@kvnsys/wire": "workspace:*"
   },
   "devDependencies": {
     "vitest": "5.0.5"

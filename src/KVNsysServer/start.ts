@@ -1,8 +1,9 @@
 // `pnpm start:server`: starts KVNsys Server on this PC, reachable from the shop's network.
 import { networkInterfaces } from 'node:os';
+import { DefaultPort } from '@kvnsys/wire';
 import { createServer } from './http/create-server.js';
 
-const port = Number(process.env.KVNSYS_PORT ?? 9000);
+const port = Number(process.env.KVNSYS_PORT ?? DefaultPort);
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   console.error(`KVNSYS_PORT must be a whole number from 1 to 65535, not "${process.env.KVNSYS_PORT}".`);
   process.exit(1);
