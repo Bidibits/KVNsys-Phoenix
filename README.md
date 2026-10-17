@@ -69,8 +69,15 @@ Dependencies point inward, as in Release:
   database only by asking the server.
 - **Engines hold no screens; screens hold no rules.**
 
-Once there's code, an automatic check enforces these rules on every build. Each rule is proven to
-work by breaking it once on purpose.
+**The guard enforces all of this.** `pnpm build` runs it first. It reads every import in `src/`,
+and if a rule is broken it stops the build and names the file and the rule. The table is enforced
+exactly as written: `KVNsysClientApp` may use `KVNsysClient` and `KVNsysUI`, not `KVNsysCore`
+directly. When a project genuinely needs something new, change this table and the guard
+(`.dependency-cruiser.cjs`) together, on purpose. Test projects aren't checked.
+
+Proven on 2026-10-17. A mistake was planted for each of the guard's 12 rules, and every one was
+caught. Allowed imports were not flagged, and a broken rule stopped the build before anything
+compiled.
 
 | In Release it was | Here |
 |---|---|
@@ -134,7 +141,8 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | Command | Does |
 |---|---|
 | `pnpm install` | Installs every project's dependencies |
-| `pnpm build` | Compiles every project, inner ones first |
+| `pnpm build` | Runs the guard, then compiles every project, inner ones first |
+| `pnpm check:structure` | Runs only the guard |
 | `pnpm test` | Runs every test project |
 
 Until a test project has its first test, `pnpm test` says "No test files found" for it and passes.
