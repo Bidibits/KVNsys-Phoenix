@@ -1,12 +1,6 @@
 import { passwordProblem, type PcIdentity } from '@kvnsys/core';
 import type { InstallSeed } from './install-seed.js';
-
-/** Asks things in the server's window. The console provides the real one; tests provide the answers. */
-export interface Questions {
-  ask(prompt: string): Promise<string>;
-  /** Like ask, but what's typed doesn't show: for passwords. */
-  askSecret(prompt: string): Promise<string>;
-}
+import { NoAnswer, type Questions } from './questions.js';
 
 /** Every server set up this way is the shop with code HQ, as `pnpm seed` does, until a second shop needs its own. */
 export const FirstShopCode = 'HQ';
@@ -54,4 +48,36 @@ export async function setUpFirstShop(
   });
   say(`Set up ${shopName}. On a register, sign in as "${FirstAdminUsername}" with that password.`);
   say('');
+}
+
+/**
+ * The two first-start answers, given ahead of time: the shop's name in KVNSYS_LOCATION_NAME and the
+ * administrator's password in KVNSYS_ADMIN_PASSWORD, the same names `pnpm seed` reads. The server's
+ * setup file fills them in from its own page. Each answer is given once. Asked again means it was
+ * refused, and asking forever helps nobody, so it says why instead.
+ */
+export function answersFrom(env: NodeJS.ProcessEnv): { ok: true; questions: Questions } | { ok: false; message: string } {
+  const shopName = env.KVNSYS_LOCATION_NAME?.trim();
+  const password = env.KVNSYS_ADMIN_PASSWORD;
+  if (!shopName || !password) {
+    return { ok: false, message: "Setting up a new install needs the shop's name (KVNSYS_LOCATION_NAME) and an administrator's password (KVNSYS_ADMIN_PASSWORD)." };
+  }
+  const problem = passwordProblem(password);
+  if (problem) return { ok: false, message: `KVNSYS_ADMIN_PASSWORD: ${problem}` };
+  let named = 0;
+  let typed = 0;
+  return {
+    ok: true,
+    questions: {
+      ask: async () => {
+        if (named++ > 0) throw new NoAnswer();
+        return shopName;
+      },
+      // Twice: once, then once more to confirm.
+      askSecret: async () => {
+        if (typed++ > 1) throw new NoAnswer();
+        return password;
+      },
+    },
+  };
 }

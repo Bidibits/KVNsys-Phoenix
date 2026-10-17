@@ -1,5 +1,6 @@
 import { PassThrough } from 'node:stream';
 import {
+  answersFrom,
   consoleQuestions,
   FirstAdminUsername,
   FirstShopCode,
@@ -85,5 +86,27 @@ describe('consoleQuestions, reading answers from a pipe', () => {
     expect(await questions.askSecret('Again: ')).toBe('a-good-password');
     await expect(questions.ask('More: ')).rejects.toBeInstanceOf(NoAnswer);
     questions.close();
+  });
+});
+
+describe('answersFrom, for the setup file to give the answers ahead of time', () => {
+  it("answers with the shop's name and the password it's given", async () => {
+    const answers = answersFrom({ KVNSYS_LOCATION_NAME: ' Kenly Lucena ', KVNSYS_ADMIN_PASSWORD: 'a-good-password' });
+    if (!answers.ok) throw new Error(answers.message);
+    const { seed, runs } = recordingSeed();
+    await setUpFirstShop(seed, answers.questions, server, () => {});
+    expect(runs[0]).toMatchObject({ locationName: 'Kenly Lucena', adminPassword: 'a-good-password', adminUsername: FirstAdminUsername });
+  });
+
+  it('says what is missing instead of setting anything up', () => {
+    expect(answersFrom({ KVNSYS_ADMIN_PASSWORD: 'a-good-password' })).toMatchObject({ ok: false, message: expect.stringMatching(/KVNSYS_LOCATION_NAME/) });
+    expect(answersFrom({ KVNSYS_LOCATION_NAME: 'Kenly Lucena' })).toMatchObject({ ok: false, message: expect.stringMatching(/KVNSYS_ADMIN_PASSWORD/) });
+  });
+
+  it('turns down a password too short to be allowed, with the rule', () => {
+    expect(answersFrom({ KVNSYS_LOCATION_NAME: 'Kenly Lucena', KVNSYS_ADMIN_PASSWORD: 'short' })).toEqual({
+      ok: false,
+      message: 'KVNSYS_ADMIN_PASSWORD: A password needs at least 8 characters.',
+    });
   });
 });

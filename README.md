@@ -204,11 +204,17 @@ whether to let it through the firewall: allow it on private networks, or other P
 Double-click **KVNsys POS & Inventory** for the app.
 
 **For the server PC:** copy `out\KVNsys Server Setup.exe` to it and double-click it. Windows asks
-once for administrator rights, because a service needs them. It installs Microsoft's Visual C++ runtime
-if the PC lacks it, its own PostgreSQL as a Windows service (port 5433, this PC only, passwords
-nobody sees), and KVNsys Server with a desktop and a Start menu icon. Its last page offers to start
-the server, which then asks its two first-start questions. Remove it from Windows' list of apps: the
-programs and the service go, and the shop's data stays in `C:\ProgramData\KVNsys`.
+once for administrator rights, because services need them. On a new install, one page asks for the
+shop's name and an administrator's password. Then it installs:
+- Microsoft's Visual C++ runtime, if the PC lacks it
+- its own PostgreSQL (port 5433, this PC only, passwords nobody sees)
+- KVNsys Server
+
+PostgreSQL and KVNsys Server both run as Windows services that start whenever the PC starts, so there's
+no window or icon to open. One option, ticked by default, lets the shop's registers reach the server
+through Windows Firewall, on private networks only. To remove it, use Windows' list of apps: the
+programs, the services and the firewall rule go, and the shop's data stays in `C:\ProgramData\KVNsys`.
+Installing again picks that data up, so the shop and its accounts are still there.
 
 **For a register:** copy `out\KVNsys POS & Inventory Setup.exe` to it, on a USB stick for example,
 and double-click it. It installs the app for the person signed in to Windows, asking nothing and

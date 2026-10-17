@@ -1,13 +1,15 @@
 # Server setup plan: KVNsys Server Setup.exe, with PostgreSQL inside
 
-**Status (2026-10-18): parts 1 and 2 of 3 are built and tested.**
+**Status (2026-10-18): all 3 parts are built and tested.**
 - Part 1: `scripts/postgresql/install-postgresql.ps1` installs KVNsys's own PostgreSQL as a Windows
   service, and `remove-postgresql.ps1` takes it away again.
 - Part 2: `KVNsys Server Setup.exe` (`scripts/server-setup/kvnsys-server.iss`) wraps that and KVNsys
   Server into one setup file.
 
-Both were run for real on the development PC. Not built yet: part 3, KVNsys Server starting with
-Windows.
+- Part 3: KVNsys Server runs as a Windows service through WinSW, and the setup asks the shop's name
+  and the administrator's password on its own page.
+
+All of it was run for real on the development PC.
 
 It's still for the partners to agree. The versions, support dates and the EDB package were checked on
 18 October 2026 (sources at the end), and the part 1 test settled the rest. See "What the part 1
@@ -177,6 +179,27 @@ The install script, run for real on the development PC next to its own PostgreSQ
   It kept the database, the stored password, and the server's settings and certificate.
 - Not tried: installing again over the kept data. Part 1's test covered the script's reuse path,
   which is the same.
+
+## What the part 3 test settled (2026-10-18)
+
+- **A silent install** (`/ShopName` and `/AdminPassword` standing in for the page, firewall option
+  off) worked:
+  - `KVNsys Server.exe --set-up` made the database and the shop.
+  - Both services run automatically, under `NT SERVICE\kvnsys-postgresql` and `NT SERVICE\kvnsys-server`.
+    WinSW accepts that kind of account, so the LocalService fallback wasn't needed.
+  - The server listens on port 9000, starts after PostgreSQL, and restarts if it stops.
+- **The first try failed, in two ways the test caught:**
+  - The folder lock-down left `server.env` readable by nobody.
+  - The server, having failed, waited for an Enter key that a service can never receive, while Windows
+    reported it as running.
+
+  Both are fixed. The setup now also repairs the folder's permissions before writing to it.
+- **Installing again over that install** stopped the services, replaced the programs, kept the
+  database and the shop (no shop page, no questions), and started the service.
+- **The installed register app** connected to the server running as a service and signed in with the
+  first install's password. An ordinary account can't read the settings folder.
+- **Uninstalling** removed both services, the programs and the app list entry, and kept the data.
+- Not tried: the firewall option (left unticked), and a real restart of the PC.
 
 ## Building the setup file
 

@@ -2,6 +2,8 @@
 // (never committed):
 //   - PostgreSQL's Windows programs, from EDB, unpacked
 //   - Microsoft's Visual C++ runtime. PostgreSQL's programs need it, and a fresh Windows may not have it.
+//   - WinSW, which runs KVNsys Server as a Windows service. It's MIT-licensed, and unsigned, so its
+//     fingerprint is the only check.
 //
 // Each file is checked against the fingerprint (SHA-256) recorded here when it was first fetched,
 // so a file that has changed at its source is refused rather than shipped.
@@ -29,6 +31,12 @@ const parts = [
     url: 'https://download.visualstudio.microsoft.com/download/pr/990c720a-46ce-4dc7-87b9-c2eb615d34b9/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe',
     file: join(vendor, 'vc-redist', 'VC_redist.x64.exe'),
     sha256: 'cc0ff0eb1dc3f5188ae6300faef32bf5beeba4bdd6e8e445a9184072096b713b',
+  },
+  {
+    name: 'WinSW 2.12.0 (the build for the .NET Framework built into Windows)',
+    url: 'https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW.NET461.exe',
+    file: join(vendor, 'winsw', 'WinSW.NET461.exe'),
+    sha256: 'b5066b7bbdfba1293e5d15cda3caaea88fbeab35bd5b38c41c913d492aadfc4f',
   },
 ];
 

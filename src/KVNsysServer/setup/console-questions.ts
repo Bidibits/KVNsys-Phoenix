@@ -1,13 +1,5 @@
 import { createInterface } from 'node:readline';
-import type { Questions } from './first-shop.js';
-
-/** Thrown when the input has ended: nobody is there to answer. */
-export class NoAnswer extends Error {
-  constructor() {
-    super('The input ended before every question was answered.');
-    this.name = 'NoAnswer';
-  }
-}
+import { NoAnswer, type Questions } from './questions.js';
 
 /**
  * Questions asked in the server's console window. At a keyboard, a secret shows as stars. From a

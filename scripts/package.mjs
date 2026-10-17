@@ -203,7 +203,11 @@ function makeServerSetup() {
     console.log("Skipped KVNsys Server Setup.exe: Inno Setup 7 isn't installed on this PC (see the README).");
     return null;
   }
-  for (const needed of [join('vendor', 'postgresql', 'pgsql', 'bin', 'postgres.exe'), join('vendor', 'vc-redist', 'VC_redist.x64.exe')]) {
+  for (const needed of [
+    join('vendor', 'postgresql', 'pgsql', 'bin', 'postgres.exe'),
+    join('vendor', 'vc-redist', 'VC_redist.x64.exe'),
+    join('vendor', 'winsw', 'WinSW.NET461.exe'),
+  ]) {
     if (!existsSync(join(root, needed))) throw new Error(`${needed} is missing. Run \`pnpm fetch:installer-parts\` first.`);
   }
   const { version } = readJson(join(root, 'src', 'KVNsysServer', 'package.json'));
