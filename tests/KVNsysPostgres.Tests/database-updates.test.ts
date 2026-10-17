@@ -1,4 +1,11 @@
-import { applyDatabaseUpdates, checkDatabase, createPrismaClient, isEmptyDatabase, knownMigrations } from '@kvnsys/postgres';
+import {
+  applyDatabaseUpdates,
+  checkDatabase,
+  createDatabaseIfMissing,
+  createPrismaClient,
+  isEmptyDatabase,
+  knownMigrations,
+} from '@kvnsys/postgres';
 import { expect, it } from 'vitest';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
@@ -7,6 +14,16 @@ async function query<T>(url: string, sql: string): Promise<T[]> {
   const db = createPrismaClient(url);
   try {
     return await db.$queryRawUnsafe<T[]>(sql);
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+/** Runs a statement that returns nothing, such as making or dropping a database or an account. */
+async function execute(url: string, sql: string): Promise<void> {
+  const db = createPrismaClient(url);
+  try {
+    await db.$executeRawUnsafe(sql);
   } finally {
     await db.$disconnect();
   }
@@ -91,4 +108,56 @@ describeWithDatabase("setting up an empty database without Prisma's tool", () =>
       await database.drop();
     }
   }, 120_000);
+});
+
+describeWithDatabase('creating a database that is not there yet', () => {
+  const serverUrl = process.env.KVNSYS_TEST_POSTGRES_URL!;
+  /** The test server's address, naming another database, and optionally signing in as another account. */
+  function addressOf(database: string, account?: { name: string; password: string }): string {
+    const url = new URL(serverUrl);
+    url.pathname = `/${database}`;
+    if (account) {
+      url.username = account.name;
+      url.password = account.password;
+    }
+    return url.toString();
+  }
+
+  it('creates it, empty, and does nothing the second time', async () => {
+    const name = `kvnsys_test_created_${Date.now()}`;
+    try {
+      expect(await createDatabaseIfMissing(addressOf(name))).toBe(name);
+      expect(await isEmptyDatabase(addressOf(name))).toBe(true);
+      expect(await createDatabaseIfMissing(addressOf(name))).toBeNull();
+    } finally {
+      await execute(serverUrl, `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
+    }
+  }, 60_000);
+
+  it('leaves a database that already exists alone', async () => {
+    const database = await createThrowawayDatabase({ migrate: false });
+    try {
+      await query(database.url, 'CREATE TABLE notes (id serial PRIMARY KEY)');
+      expect(await createDatabaseIfMissing(database.url)).toBeNull();
+      expect(await isEmptyDatabase(database.url)).toBe(false);
+    } finally {
+      await database.drop();
+    }
+  }, 60_000);
+
+  it("says so plainly when the account isn't allowed to create databases", async () => {
+    const account = { name: `kvnsys_test_cannot_create_${Date.now()}`, password: 'not-allowed-to-create' };
+    const name = `kvnsys_test_never_made_${Date.now()}`;
+    await execute(serverUrl, `CREATE ROLE "${account.name}" LOGIN PASSWORD '${account.password}' NOCREATEDB`);
+    try {
+      await expect(createDatabaseIfMissing(addressOf(name, account))).rejects.toThrow(/isn't allowed to create one/);
+    } finally {
+      await execute(serverUrl, `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
+      await execute(serverUrl, `DROP ROLE IF EXISTS "${account.name}"`);
+    }
+  }, 60_000);
+});
+
+it('leaves a database server it cannot reach for the usual check to explain', async () => {
+  expect(await createDatabaseIfMissing('postgresql://nobody:nothing@127.0.0.1:1/kvnsys')).toBeNull();
 });

@@ -30,6 +30,48 @@ export async function isEmptyDatabase(databaseUrl: string): Promise<boolean> {
   });
 }
 
+// PostgreSQL's own codes for the three answers that matter when making a database.
+const NoSuchDatabase = '3D000';
+const NotAllowed = '42501';
+const AlreadyThere = '42P04';
+
+/**
+ * Creates the database named in this address if it doesn't exist yet, empty, by connecting to the
+ * PostgreSQL server's own "postgres" database to do it. Returns the name it created, or null when
+ * there was nothing to do. Any other trouble reaching the database, it leaves for checkDatabase to
+ * explain.
+ */
+export async function createDatabaseIfMissing(databaseUrl: string): Promise<string | null> {
+  try {
+    await withConnection(databaseUrl, async () => {});
+    return null;
+  } catch (error) {
+    if (sqlState(error) !== NoSuchDatabase) return null;
+  }
+  const address = new URL(databaseUrl);
+  const name = decodeURIComponent(address.pathname.slice(1));
+  if (!name) return null;
+  address.pathname = '/postgres';
+  try {
+    await withConnection(address.toString(), (client) => client.query(`CREATE DATABASE "${name.replaceAll('"', '""')}"`));
+  } catch (error) {
+    // Someone else made it in the meantime: it's there now, which is all that was needed.
+    if (sqlState(error) === AlreadyThere) return null;
+    if (sqlState(error) === NotAllowed) {
+      throw new Error(
+        `There's no database called ${name}, and the PostgreSQL account in DATABASE_URL isn't allowed to create one.\n` +
+          'Create it in pgAdmin, or use an account that may create databases.',
+      );
+    }
+    throw new Error(`There's no database called ${name}, and creating it failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return name;
+}
+
+function sqlState(error: unknown): unknown {
+  return (error as { code?: unknown }).code;
+}
+
 /**
  * Applies the schema updates this copy of KVNsys ships with that the database doesn't have yet,
  * oldest first, and records each one the way Prisma's own tool does, checksum and all. Returns the

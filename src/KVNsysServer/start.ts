@@ -3,7 +3,14 @@
 import { networkInterfaces } from 'node:os';
 import { createInterface } from 'node:readline/promises';
 import { isSea } from 'node:sea';
-import { applyDatabaseUpdates, checkDatabase, createPrismaClient, isEmptyDatabase, PrismaSetupStore } from '@kvnsys/postgres';
+import {
+  applyDatabaseUpdates,
+  checkDatabase,
+  createDatabaseIfMissing,
+  createPrismaClient,
+  isEmptyDatabase,
+  PrismaSetupStore,
+} from '@kvnsys/postgres';
 import { DefaultPort } from '@kvnsys/wire';
 import { createServer } from './http/create-server.js';
 import { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
@@ -31,6 +38,14 @@ async function main(): Promise<void> {
         `Put a line like DATABASE_URL=postgresql://user:password@localhost:5432/kvnsys in\n  ${settings.file}\n` +
         "(When running from source, Phoenix's .env works too.)",
     );
+  }
+
+  // A database that doesn't exist yet is created here, empty, and then set up like any empty one.
+  try {
+    const created = await createDatabaseIfMissing(databaseUrl);
+    if (created) console.log(`There was no database called ${created}, so KVNsys Server created it.`);
+  } catch (error) {
+    return stop(error instanceof Error ? error.message : String(error));
   }
 
   // Refuse to start without a working database, rather than failing at the first sign-in. An
