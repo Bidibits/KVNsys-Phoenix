@@ -9,3 +9,8 @@ onlyBuiltDependencies:
   - prisma
   - "@prisma/engines"
   - esbuild
+
+# Install scripts deliberately not run: electron-winstaller is electron-builder's tool for the
+# Squirrel setup format. KVNsys POS & Inventory's setup file uses NSIS instead.
+ignoredBuiltDependencies:
+  - electron-winstaller

@@ -1,14 +1,17 @@
 // `pnpm package`: makes the two programs a shop's PCs run, from what `pnpm build` produced.
 //
-//   out/KVNsys POS & Inventory/   the app for each register: Electron, with its own Chrome and Node
-//   out/KVNsys Server/            the server: KVNsys Server.exe, a console program, with its own Node
+//   out/KVNsys POS & Inventory/            the app for each register: Electron, with its own Chrome and Node
+//   out/KVNsys POS & Inventory Setup.exe   that app as one setup file, to carry to a register
+//   out/KVNsys Server/                     the server: KVNsys Server.exe, a console program, with its own Node
 //
-// Neither needs Node or pnpm on the PC it runs on. `pnpm install:here` then installs them on this PC.
+// None of them needs Node or pnpm on the PC it runs on. `pnpm install:here` installs the app and the
+// server on this PC.
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { packager } from '@electron/packager';
+import electronBuilder from 'electron-builder';
 import { build } from 'esbuild';
 import postject from 'postject';
 
@@ -49,6 +52,8 @@ async function packageClient() {
     // Also names the app's settings folder in %APPDATA%, so it must stay the same.
     productName,
     version,
+    description: 'KVNsys POS & Inventory, the app for each register',
+    author: 'KVNsys',
     private: true,
     type: 'module',
     main: 'dist/desktop/main.js',
@@ -72,6 +77,47 @@ async function packageClient() {
   rmSync(target, { recursive: true, force: true });
   renameSync(packaged, target);
   return target;
+}
+
+/**
+ * The register's setup file, made from the app packageClient made. Double-clicked, it installs the
+ * app for the person signed in to Windows, with no administrator rights and no questions. It adds
+ * a desktop icon, a Start menu icon, and an uninstaller in Windows' list of apps.
+ */
+async function makeClientSetup(packagedApp) {
+  const app = join(root, 'src', 'KVNsysClientApp');
+  const { productName } = readJson(join(app, 'package.json'));
+  const electronVersion = readJson(join(app, 'node_modules', 'electron', 'package.json')).version;
+  const output = join(stage, 'setup');
+  rmSync(output, { recursive: true, force: true });
+
+  const { build: buildSetup, Platform, Arch } = electronBuilder;
+  await buildSetup({
+    targets: Platform.WINDOWS.createTarget('nsis', Arch.x64),
+    prepackaged: packagedApp,
+    projectDir: join(stage, 'client'),
+    config: {
+      // Windows knows the installed app by this. Changing it would install a second copy beside the first.
+      appId: 'com.kvnsys.pos-inventory',
+      productName,
+      electronVersion,
+      npmRebuild: false,
+      publish: null,
+      directories: { output },
+      nsis: {
+        oneClick: true,
+        perMachine: false,
+        createDesktopShortcut: true,
+        createStartMenuShortcut: true,
+        // The register's settings (its server, and the server it trusts) survive an uninstall and reinstall.
+        deleteAppDataOnUninstall: false,
+        artifactName: '${productName} Setup.${ext}',
+      },
+    },
+  });
+  const setup = join(out, `${productName} Setup.exe`);
+  copyFileSync(join(output, `${productName} Setup.exe`), setup);
+  return setup;
 }
 
 /**
@@ -140,9 +186,10 @@ async function packageServer() {
   return target;
 }
 
-for (const make of [packageClient, packageServer]) {
-  const made = await make();
+const client = await packageClient();
+for (const made of [client, await makeClientSetup(client), await packageServer()]) {
   if (!existsSync(made)) throw new Error(`Packaging finished but ${made} isn't there.`);
   console.log(`Made ${made}`);
 }
-console.log('Run `pnpm install:here` to install them on this PC, with icons on the desktop.');
+console.log('Run `pnpm install:here` to install the app and the server on this PC, with icons on the desktop.');
+console.log('A register gets the app from the setup file instead.');

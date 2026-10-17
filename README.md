@@ -188,7 +188,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's password; any other database must already be KVNsys's, or it refuses to start. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
-| `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`). Neither needs Node or pnpm on the PC that runs it. |
+| `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register. None of them needs Node or pnpm on the PC that runs it. |
 | `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
 
 **Setting up a new install:** copy `.env.example` to `.env` and fill it in. Then run
@@ -201,6 +201,12 @@ database, it says what and waits for Enter before closing. It reads its settings
 this PC, `pnpm install:here` fills that in from `.env`. Windows may ask, the first time it starts,
 whether to let it through the firewall: allow it on private networks, or other PCs can't reach it.
 Double-click **KVNsys POS & Inventory** for the app.
+
+**For a register:** copy `out\KVNsys POS & Inventory Setup.exe` to it, on a USB stick for example,
+and double-click it. It installs the app for the person signed in to Windows, asking nothing and
+needing no administrator rights. It puts an icon on the desktop and in the Start menu, then opens
+the app. To remove it, use Windows' list of apps. The app's settings (which server it uses, and
+which server it trusts) are kept, so a reinstall picks up where it left off.
 
 **A new install sets itself up.** Point the server at a PostgreSQL database and start it. If the
 database doesn't exist yet, the server creates it, as long as its PostgreSQL account is allowed
