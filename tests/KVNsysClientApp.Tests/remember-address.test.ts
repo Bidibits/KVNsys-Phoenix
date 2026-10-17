@@ -73,14 +73,16 @@ describe('remembering the server, across real restarts of the app', () => {
     await session(async (window) => {
       const notice = window.getByRole('status');
       await notice.waitFor();
-      expect(await notice.textContent()).toMatch(/^Connected to KVNsys Server/);
-      expect(await window.getByLabel('Server address').inputValue()).toBe(`https://${serverAddress}`);
+      expect(await notice.textContent()).toContain(`Connected to KVNsys Server`);
+      expect(await notice.textContent()).toContain(`at https://${serverAddress}.`);
+      expect(await window.getByLabel('Username').isVisible()).toBe(true);
     });
   });
 
   it('keeps the saved address when a different one fails', async () => {
     await session(async (window) => {
       await window.getByRole('status').waitFor();
+      await window.getByRole('button', { name: 'Use a different server' }).click();
       await window.getByLabel('Server address').fill(await deadAddress());
       await window.getByRole('button', { name: 'Connect' }).click();
       await window.getByRole('alert').waitFor();

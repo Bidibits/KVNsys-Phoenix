@@ -189,6 +189,9 @@ importers:
       '@kvnsys/client-app':
         specifier: workspace:*
         version: link:../../src/KVNsysClientApp
+      '@kvnsys/postgres':
+        specifier: workspace:*
+        version: link:../../src/KVNsysPostgres
       '@kvnsys/server':
         specifier: workspace:*
         version: link:../../src/KVNsysServer

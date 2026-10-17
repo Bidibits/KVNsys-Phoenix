@@ -27,6 +27,9 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **KVNsys Server listens on port 9000** by default (`KVNSYS_PORT`), on every network address of the PC | 9000 is the port the old KVNsys used. Listening on every address is what lets registers on the shop's network reach it. |
 | 2026-10-17 | **The first call is "hello":** what the server is, its version, and its protocol number. A client and a server only talk when their protocol numbers match. | A branch that updated one side but not the other gets a clear message instead of strange errors |
 | 2026-10-17 | **HTTPS only, with the server's certificate pinned by the app.** The server makes a self-signed certificate on first start and keeps it. The app trusts the first one it meets at an address and refuses any other there, checking the exact fingerprint during the handshake, before anything is sent. Plain HTTP gets no answer at all. | No certificate authority reaches a shop with no internet. Trust on first use, then pinning, is what the old KVNsysWire did. |
+| 2026-10-18 | **A password only ever goes to a server this register already trusts.** Never on a first contact, and never to a server showing another certificate: that's refused during the handshake, before the password leaves the PC. Tested by stand-in servers that must receive nothing. | Trust on first use is fine for "hello"; it would be reckless for a password |
+| 2026-10-18 | **No sessions yet.** Signing in checks the password and shows who it is; the server doesn't remember anyone, and signing out only returns to the sign-in screen. | Sessions come with the first thing that needs to know who's asking |
+| 2026-10-18 | **The app's window opens at 1024×720** and a screen's panel is 540 wide, so a whole screen fits without scrolling | 720 still fits a 768-pixel register screen with the Windows taskbar |
 | 2026-10-17 | **A certificate is trusted only after the server proves to be a KVNsys Server this app can talk to.** Nothing else ever gets pinned. | A router or another device at a typed address must never become "trusted" |
 | 2026-10-17 | **The trusted-servers file is stricter than the settings file:** missing means "trusts nobody yet", but damaged means "connect to nothing until IT checks". | Quietly forgetting the pins would let an impostor be trusted as a first contact. The old KVNsys learned this one. |
 | 2026-10-17 | **The server's certificate is valid 2000–2099, and marked as its own authority** | A register with a dead clock battery still connects; trust comes from the fingerprint, not the dates. Electron's TLS needs the authority mark; see below. |
@@ -99,6 +102,10 @@ column, its index, and the comments written for the browser design.
 - **Electron's main file opens the window with `app.whenReady().then(...)`, never a top-level
   `await app.whenReady()`.** The top-level version never finishes under Playwright. That was
   confirmed by switching it back and watching the test fail.
+- **A message that exists isn't a message a person can see.** The first sign-in screen put "Wrong
+  username or password." below the fold of a short window. Every test passed, because the message
+  was there; only a screenshot showed it was cut off. Errors now sit above the fields, and the
+  worst case (a first connection plus an error) is checked for scrolling.
 - **Electron's TLS is stricter than Node's.** Electron uses BoringSSL, and it won't accept a pinned
   certificate as a trust anchor unless the certificate is marked as an authority. Plain Node
   (OpenSSL) accepts it either way, so every engine test passed while the real app couldn't

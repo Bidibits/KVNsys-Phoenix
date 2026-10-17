@@ -2,21 +2,32 @@ import { Button, Notice, Panel, TextField } from '@kvnsys/ui';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { ConnectReply } from '../../desktop/bridge.js';
 
-type State = { kind: 'idle' } | { kind: 'connecting' } | { kind: 'done'; result: ConnectReply };
+export type Connected = Extract<ConnectReply, { ok: true }>;
 
 /**
- * The first screen: which KVNsys Server this register should use. If this PC remembers one, it
- * connects to it straight away; otherwise it waits for an address.
+ * Which KVNsys Server this register should use. If this PC remembers one and `autoConnect` is on,
+ * it connects straight away; otherwise it waits for an address.
  */
-export function ConnectScreen() {
+export function ConnectScreen({
+  autoConnect,
+  onConnected,
+}: {
+  autoConnect: boolean;
+  onConnected: (connected: Connected) => void;
+}) {
   const [address, setAddress] = useState('');
   const [missing, setMissing] = useState(false);
-  const [state, setState] = useState<State>({ kind: 'idle' });
+  const [connecting, setConnecting] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   const started = useRef(false);
 
   async function connectTo(target: string) {
-    setState({ kind: 'connecting' });
-    setState({ kind: 'done', result: await window.kvnsys.connectToServer(target) });
+    setConnecting(true);
+    setProblem(null);
+    const reply = await window.kvnsys.connectToServer(target);
+    setConnecting(false);
+    if (reply.ok) onConnected(reply);
+    else setProblem(reply.message);
   }
 
   useEffect(() => {
@@ -25,7 +36,7 @@ export function ConnectScreen() {
     void window.kvnsys.savedServerAddress().then((saved) => {
       if (!saved) return;
       setAddress(saved);
-      void connectTo(saved);
+      if (autoConnect) void connectTo(saved);
     });
   }, []);
 
@@ -38,7 +49,6 @@ export function ConnectScreen() {
     await connectTo(address);
   }
 
-  const connecting = state.kind === 'connecting';
   return (
     <Panel title="KVNsys POS & Inventory" subtitle="Connect this register to the shop's KVNsys Server.">
       <form onSubmit={connect} noValidate>
@@ -58,17 +68,7 @@ export function ConnectScreen() {
           {connecting ? 'Connecting…' : 'Connect'}
         </Button>
       </form>
-      {state.kind === 'done' &&
-        (state.result.ok ? (
-          <Notice tone="good">
-            Connected to KVNsys Server {state.result.server.version} at {state.result.server.address}.
-            {state.result.server.firstTrust &&
-              ' This register now trusts this server, and will refuse any other that tries to answer at this address.'}
-            {state.result.remembered === false && " This PC couldn't save the address, so you'll need to type it again next time."}
-          </Notice>
-        ) : (
-          <Notice tone="problem">{state.result.message}</Notice>
-        ))}
+      {problem && <Notice tone="problem">{problem}</Notice>}
     </Panel>
   );
 }

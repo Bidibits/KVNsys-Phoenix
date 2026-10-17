@@ -42,16 +42,6 @@ describe('the first window, driven like a person would', () => {
     expect(await window.getByText("Type the server's address first.").isVisible()).toBe(true);
   });
 
-  it('connects to a running KVNsys Server and says so', async () => {
-    await connect(serverAddress);
-    const notice = window.getByRole('status');
-    await notice.waitFor();
-    expect(await notice.textContent()).toBe(
-      `Connected to KVNsys Server ${ServerVersion} at https://${serverAddress}. ` +
-        'This register now trusts this server, and will refuse any other that tries to answer at this address.',
-    );
-  });
-
   it('explains, in plain words, an address that is not one', async () => {
     await connect('oops not an address');
     const problem = window.getByRole('alert');
@@ -59,8 +49,27 @@ describe('the first window, driven like a person would', () => {
     expect(await problem.textContent()).toMatch(/isn't a server address/);
   });
 
+  it('connects to a running KVNsys Server, says so, and moves on to signing in', async () => {
+    await connect(serverAddress);
+    const notice = window.getByRole('status');
+    await notice.waitFor();
+    expect(await notice.textContent()).toBe(
+      `Connected to KVNsys Server ${ServerVersion} at https://${serverAddress}. ` +
+        'This register now trusts this server, and will refuse any other that tries to answer at this address.',
+    );
+    expect(await window.getByLabel('Username').isVisible()).toBe(true);
+  });
+
+  it('can go back and choose a different server, without bouncing straight back', async () => {
+    await window.getByRole('button', { name: 'Use a different server' }).click();
+    await window.getByLabel('Server address').waitFor();
+    await window.waitForTimeout(500);
+    expect(await window.getByLabel('Server address').isVisible()).toBe(true);
+    expect(await window.getByLabel('Username').count()).toBe(0);
+  });
+
   it('cannot be turned into a browser: the page has no access to Node', async () => {
     expect(await window.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined');
-    expect(await window.evaluate(() => Object.keys(window.kvnsys).sort())).toEqual(['connectToServer', 'savedServerAddress']);
+    expect(await window.evaluate(() => Object.keys(window.kvnsys).sort())).toEqual(['connectToServer', 'savedServerAddress', 'signIn']);
   });
 });

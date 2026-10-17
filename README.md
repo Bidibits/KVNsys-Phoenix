@@ -26,10 +26,11 @@ and everything a user sees, is called KVNsys.
   look. It asks for the server address and shows whether it connected. Once it has connected,
   it remembers the address on this PC and connects on its own the next time it opens. There's
   no sign-in yet.
-- **The server can check a sign-in.** Given a username and password, it answers yes, with the
-  person's name and role, or no, with a plain reason. A wrong password and a name that doesn't
-  exist get the same answer, so nobody can use it to find usernames. The app has no sign-in
-  screen yet.
+- **Signing in.** Once connected, the app asks for a username and password, checks them with the
+  server, and shows who signed in, or why not ("Wrong username or password." whether the password
+  is wrong or the name doesn't exist, so nobody can use it to find usernames). The password only
+  ever goes to a server this register already trusts. There are no sessions yet: signing out just
+  returns to the sign-in screen.
 - **Every connection is HTTPS, and the app knows its server.** The server makes its own security
   certificate the first time it starts, and keeps it. The app trusts the first certificate it meets
   at an address, and from then on refuses any other there. So a different machine answering at the

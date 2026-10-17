@@ -1,5 +1,6 @@
 import { HelloPath, ProtocolVersion, ServerHello } from '@kvnsys/wire';
-import { requestJson, SecureRequestError, type ServerPin } from './secure-request.js';
+import { describeTransportFailure } from './failures.js';
+import { requestJson, type ServerPin } from './secure-request.js';
 import { normalizeServerAddress } from './server-address.js';
 
 export interface ConnectedServer {
@@ -78,36 +79,7 @@ export async function connectToServer(
 }
 
 function failure(error: unknown, address: string, timeoutMs: number): ConnectResult {
-  const kind = error instanceof SecureRequestError ? error.kind : 'unreachable';
-  switch (kind) {
-    case 'certificate-changed':
-      return {
-        ok: false,
-        reason: 'not-trusted',
-        message:
-          `The server at ${address} isn't the one this register trusts: its security certificate is different. ` +
-          "If the server PC was replaced or reinstalled, IT needs to reset this register's trust. " +
-          'Otherwise, don\'t use it: something may be pretending to be the server.',
-      };
-    case 'not-secure':
-      return {
-        ok: false,
-        reason: 'not-kvnsys',
-        message: `Something answered at ${address}, but not over a secure connection. If it's an older KVNsys Server, update it.`,
-      };
-    case 'timeout':
-      return {
-        ok: false,
-        reason: 'unreachable',
-        message: `The server at ${address} didn't answer within ${timeoutMs / 1000} seconds. It may be busy, or the address may be wrong.`,
-      };
-    default:
-      return {
-        ok: false,
-        reason: 'unreachable',
-        message: `Couldn't reach a server at ${address}. Check the address, that the server PC is on with KVNsys Server running, and that this PC is on the shop's network.`,
-      };
-  }
+  return { ok: false, ...describeTransportFailure(error, address, timeoutMs) };
 }
 
 /** Says which side needs updating when the app and the server speak different protocols. */

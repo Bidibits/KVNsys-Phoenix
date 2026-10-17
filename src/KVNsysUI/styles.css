@@ -33,20 +33,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 16px;
 }
 
 .kv-panel {
   width: 100%;
-  max-width: 480px;
+  max-width: 540px;
   background: var(--kv-card);
   border: 1px solid var(--kv-line);
   border-radius: 16px;
-  padding: 32px;
+  padding: 28px 32px;
 }
 
 .kv-panel__header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .kv-panel__title {
@@ -62,7 +62,7 @@ body {
 }
 
 .kv-field {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .kv-field__label {
@@ -131,9 +131,35 @@ body {
   cursor: default;
 }
 
+.kv-button--secondary {
+  margin-top: 12px;
+  color: var(--kv-accent-dark);
+  background: transparent;
+  border: 1px solid var(--kv-line);
+}
+
+.kv-button--secondary:hover {
+  background: var(--kv-page);
+}
+
+/* Space above a block that follows a notice or another block. */
+.kv-spaced {
+  margin-top: 16px;
+}
+
+.kv-detail {
+  margin: 0 0 20px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.kv-detail strong {
+  font-weight: 600;
+}
+
 .kv-notice {
-  margin: 20px 0 0;
-  padding: 14px 16px;
+  margin: 16px 0 0;
+  padding: 12px 16px;
   font-size: 16px;
   line-height: 1.5;
   border-radius: var(--kv-radius);

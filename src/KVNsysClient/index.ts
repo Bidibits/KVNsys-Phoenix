@@ -8,6 +8,7 @@ export {
   type ConnectResult,
   type ServerTrust,
 } from './connection/connect.js';
+export { describeTransportFailure, type TransportProblem } from './connection/failures.js';
 export {
   requestJson,
   SecureRequestError,
@@ -16,3 +17,5 @@ export {
   type ServerPin,
 } from './connection/secure-request.js';
 export { normalizeServerAddress } from './connection/server-address.js';
+export { signIn, type SignInProblem, type SignInResult } from './identity/sign-in.js';
+export type { SignedInUser } from '@kvnsys/wire';

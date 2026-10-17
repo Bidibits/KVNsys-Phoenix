@@ -2,9 +2,9 @@
 // requests through the bridge. The client engine runs here, not in the screens.
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { connectToServer } from '@kvnsys/client';
+import { connectToServer, signIn, type SignInResult } from '@kvnsys/client';
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
-import { ConnectChannel, SavedAddressChannel, type ConnectReply } from './bridge.js';
+import { ConnectChannel, SavedAddressChannel, SignInChannel, type ConnectReply } from './bridge.js';
 import { SettingsFile } from './settings-file.js';
 import { TrustFile } from './trust-file.js';
 
@@ -15,6 +15,9 @@ const AppName = 'KVNsys POS & Inventory';
 if (process.env.KVNSYS_APP_DATA) app.setPath('userData', process.env.KVNSYS_APP_DATA);
 const settings = new SettingsFile(join(app.getPath('userData'), 'settings.json'));
 const trustFile = new TrustFile(join(app.getPath('userData'), 'trusted-servers.json'));
+
+/** The server this register last connected to in this run. Sign-in only ever goes there. */
+let connectedAddress: string | null = null;
 
 ipcMain.handle(SavedAddressChannel, (): string | null => settings.load().serverAddress ?? null);
 
@@ -47,6 +50,7 @@ ipcMain.handle(ConnectChannel, async (_event, typed: unknown): Promise<ConnectRe
   }
   // A failed attempt never replaces the address that worked: the server may just be off.
   if (!result.ok) return result;
+  connectedAddress = result.server.address;
   try {
     settings.save({ ...settings.load(), serverAddress: result.server.address });
     return { ...result, remembered: true };
@@ -56,11 +60,24 @@ ipcMain.handle(ConnectChannel, async (_event, typed: unknown): Promise<ConnectRe
   }
 });
 
+ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknown): Promise<SignInResult> => {
+  if (typeof username !== 'string' || typeof password !== 'string' || username.length > 100 || password.length > 200) {
+    return { ok: false, reason: 'refused', message: 'Type a username and a password.' };
+  }
+  if (!connectedAddress) {
+    return { ok: false, reason: 'not-connected', message: 'Connect to the server first.' };
+  }
+  const trusted = trustFile.read();
+  if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
+  // The password is used for this one request and kept nowhere: not logged, not stored.
+  return signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null });
+});
+
 function openWindow(): void {
   const window = new BrowserWindow({
     title: AppName,
-    width: 960,
-    height: 640,
+    width: 1024,
+    height: 720,
     minWidth: 720,
     minHeight: 520,
     show: false,

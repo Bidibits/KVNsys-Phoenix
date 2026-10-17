@@ -1,4 +1,4 @@
-import type { ConnectResult } from '@kvnsys/client';
+import type { ConnectResult, SignInResult } from '@kvnsys/client';
 
 /**
  * A connect result, plus whether this PC managed to save the address for next time. It's only
@@ -15,8 +15,11 @@ export interface KvnsysBridge {
   connectToServer(address: string): Promise<ConnectReply>;
   /** The address that last connected, if this PC remembers one. */
   savedServerAddress(): Promise<string | null>;
+  /** Checks a username and password with the server this register is connected to. */
+  signIn(username: string, password: string): Promise<SignInResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
 export const ConnectChannel = 'kvnsys:connect-to-server';
 export const SavedAddressChannel = 'kvnsys:saved-server-address';
+export const SignInChannel = 'kvnsys:sign-in';
