@@ -105,6 +105,7 @@ column, its index, and the comments written for the browser design.
 | The refund flow | During the cashier interviews |
 | HQ ↔ branch data as numbered packages, sent over the internet when it's up and on USB with the delivery when it isn't (proposed 2026-10-16) | The partners |
 | Should pressing Sign in again clear the server's last answer? Today "Wrong username or password." stays up beside "Type your password.", and on a first connection the screen then scrolls (it did with the old styling too) (found 2026-10-18) | The partners. It's one line of the sign-in screen. |
+| The server's setup file, with PostgreSQL inside: version, where the data lives, passwords, running as a Windows service. Planned in [`docs/server-setup-plan.md`](server-setup-plan.md); nothing built (2026-10-18) | The partners, before it's built |
 | Type-check the tests. Nothing runs `tsc` on them and the test projects have no Node type definitions, so a type mistake in a test goes unnoticed (found 2026-10-18) | Offered as its own task |
 | How a branch installs KVNsys. Recommended: one setup file per PC, the server's bringing PostgreSQL and setting up its own database, and no Docker (the 2026-10-16 structure plan already said no Docker on branch PCs: on Windows it also brings in WSL and virtualization, and a shop can't fix it when it breaks) (asked 2026-10-18) | The partners |
 
