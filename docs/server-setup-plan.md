@@ -1,7 +1,8 @@
 # Server setup plan: KVNsys Server Setup.exe, with PostgreSQL inside
 
 **Status: a plan only. Nothing here is built (2026-10-18).** It's for the partners to agree before
-anyone builds it. Facts marked *check when building* weren't verified while writing this.
+anyone builds it. The versions, support dates and the EDB package were checked on 18 October 2026
+(sources at the end). Anything marked *check when building* is still unverified.
 
 ## What a person does at a branch
 
@@ -16,19 +17,24 @@ Nothing about PostgreSQL is ever shown to anyone or asked of them.
 ## Which PostgreSQL
 
 - **One major version, bundled.** Pick the newest one that has had at least one minor release
-  (x.1 or later) when we build. Today that means 18. Development and the tests move to the same
-  major at the same time; they're on 16 now.
-- **How long it lasts.** Each major gets five years of fixes: 16 until November 2028, 17 until
-  November 2029, 18 until November 2030.
+  (x.1 or later) when we build. Today that means 18, currently at 18.6. PostgreSQL 19 was only at
+  its first release candidate on 15 October 2026, and by this rule it qualifies once 19.1 is out.
+  Development and the tests move to the same major at the same time; they're on 16 now.
+- **How long it lasts.** Each major gets five years of fixes: 16 until 9 November 2028, 17 until
+  8 November 2029, 18 until 14 November 2030.
 - **Minor updates** (18.1 → 18.2) come inside a newer setup file. They replace the program files and
   restart the service. The data isn't touched.
 - **Major upgrades** (18 → 19) are a separate, deliberate step, done after a backup with
   PostgreSQL's `pg_upgrade`. A setup file never does one quietly.
-- **The package:** the official PostgreSQL binaries for Windows that EDB publishes as a zip, not
-  EDB's installer. Only what the server needs is kept: `bin`, `lib`, `share`, and the licence. No
-  pgAdmin, no StackBuilder, no documentation. *Check when building:* the exact zip and its size,
-  and whether it needs Microsoft's Visual C++ runtime. If it does, the setup installs that
-  silently too.
+- **The package:** the official PostgreSQL binaries for Windows that EDB publishes as an archive
+  (Windows x86-64, 18.6 among them), not EDB's installer. EDB says the archive holds everything its
+  installers install, so it has to be trimmed. Only what the server needs is kept: `bin`, `lib`,
+  `share`, and the licence. No pgAdmin, no StackBuilder, no documentation.
+- **The Visual C++ runtime.** It's very likely needed. PostgreSQL's Windows builds load Microsoft's
+  Visual C++ 2015–2022 runtime (`vcruntime140.dll`), which EDB's installer puts in for you. So the
+  setup carries Microsoft's x64 redistributable and runs it silently; that's harmless where it's
+  already installed. *Check when building:* run `initdb` from the trimmed files on a clean Windows,
+  first without the runtime, then with it.
 - **Licence:** the PostgreSQL License is permissive, so bundling is allowed. Its licence file goes
   in with the install.
 
@@ -85,12 +91,19 @@ writes it into the settings.
 
 ## Running as a Windows service
 
-- **PostgreSQL.** It's registered with PostgreSQL's own tool, `pg_ctl register`:
-  - service "KVNsys PostgreSQL" (`kvnsys-postgresql`), set to start automatically
-  - it runs as a virtual service account (`NT SERVICE\kvnsys-postgresql`) that can only reach its
-    own data folder. EDB's installer uses NetworkService; a virtual account is narrower. *Check
-    when building* that `pg_ctl register` accepts it.
-  - if it stops unexpectedly, Windows restarts it
+- **PostgreSQL.** It's registered with PostgreSQL's own tool, as a portable PostgreSQL 18 has been
+  shown to work:
+  `pg_ctl register -N kvnsys-postgresql -D <data folder> -o "-p 5433" -S auto`
+  - It has to run with administrator rights, which the setup has anyway.
+  - Service "KVNsys PostgreSQL" (`kvnsys-postgresql`) starts automatically.
+  - It runs as a virtual service account (`NT SERVICE\kvnsys-postgresql`) that can only reach its
+    own data folder. *Check when building* that `pg_ctl register` accepts that account; nothing
+    found confirms or rules it out. If it doesn't, fall back to NetworkService, which is what EDB's
+    installer uses.
+  - If it stops unexpectedly, Windows restarts it.
+  - On its own, a PostgreSQL service logs to Windows' Event Viewer. Turn `logging_collector` on so
+    the logs land as files in the data folder's `log` folder, where someone helping a branch can
+    find them.
 - **KVNsys Server** becomes a service in its own later step, "starts with Windows". A Node
   program can't answer Windows' service manager by itself, so it needs a small wrapper (WinSW is
   the first candidate). Until then, the setup opens it the way the desktop icon does today.
@@ -101,7 +114,7 @@ writes it into the settings.
 
 1. Check: Windows 10 or 11 64-bit, administrator rights, enough disk space, and a free port.
 2. Copy the program files.
-3. Install the Visual C++ runtime silently, if the binaries need it.
+3. Install Microsoft's Visual C++ runtime silently. That's harmless where it's already installed.
 4. **If there's no data folder yet:** run `initdb` with UTF-8 encoding, so names like Peñaranda
    work, and with `scram-sha-256` sign-in. The random `postgres` password goes in through a
    temporary file that's deleted straight after.
@@ -137,3 +150,9 @@ backups, and says where they are. Deleting a shop's data takes a deliberate seco
 | The `postgres` password: only stored encrypted on the PC (planned), or also written on paper and kept by the owners? | The owners |
 | Nightly backup: which USB stick, who swaps it, and who checks that a restore works | The partners, with the branch manager |
 | PostgreSQL 18 everywhere, development included (moving off 16) | The partners |
+
+## Sources (checked 18 October 2026)
+
+- PostgreSQL versions and support dates: [postgresql.org/support/versioning](https://www.postgresql.org/support/versioning/)
+- The Windows binaries: [EDB, PostgreSQL binaries](https://www.enterprisedb.com/download-postgresql-binaries)
+- `pg_ctl register` with a portable PostgreSQL 18: [notepad.onghu.com](https://notepad.onghu.com/2026/portable-postgresql-on-windows-service-pg18/), and the [pg_ctl documentation](https://www.postgresql.org/docs/17/app-pg-ctl.html)
