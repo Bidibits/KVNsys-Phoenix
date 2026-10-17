@@ -3,10 +3,15 @@
 import { networkInterfaces } from 'node:os';
 import { createInterface } from 'node:readline/promises';
 import { isSea } from 'node:sea';
-import { checkDatabase, createPrismaClient } from '@kvnsys/postgres';
+import { applyDatabaseUpdates, checkDatabase, createPrismaClient, isEmptyDatabase, PrismaSetupStore } from '@kvnsys/postgres';
 import { DefaultPort } from '@kvnsys/wire';
 import { createServer } from './http/create-server.js';
+import { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
 import { defaultServerDataDir, loadOrCreateServerCertificate } from './security/server-certificate.js';
+import { consoleQuestions, NoAnswer } from './setup/console-questions.js';
+import { setUpFirstShop } from './setup/first-shop.js';
+import { InstallSeed } from './setup/install-seed.js';
+import { readPcIdentity } from './setup/server-identity.js';
 import { loadServerSettings } from './setup/server-settings.js';
 
 async function main(): Promise<void> {
@@ -28,20 +33,53 @@ async function main(): Promise<void> {
     );
   }
 
-  // Refuse to start without a working database, rather than failing at the first sign-in.
-  const probe = createPrismaClient(databaseUrl);
-  const check = await checkDatabase(probe);
-  await probe.$disconnect();
-  if (!check.ok) {
-    const advice: Record<typeof check.problem, string> = {
-      unreachable: `Can't reach the database: ${check.detail}\nCheck DATABASE_URL, and that PostgreSQL is running.`,
-      'not-set-up': 'That database has no KVNsys tables yet. Run `pnpm db:deploy`, then `pnpm seed`.',
-      'out-of-date': `That database is missing KVNsys updates (${check.detail}). Run \`pnpm db:deploy\`.`,
-      unrecognised:
-        `That database has updates this server doesn't recognise (${check.detail}). ` +
-        'It may belong to another program, or to a newer KVNsys Server. Check DATABASE_URL.',
-    };
-    return stop(advice[check.problem]);
+  // Refuse to start without a working database, rather than failing at the first sign-in. An
+  // empty one gets set up here, so a new install needs no pnpm.
+  const db = createPrismaClient(databaseUrl);
+  try {
+    let check = await checkDatabase(db);
+    if (!check.ok && check.problem === 'not-set-up' && (await isEmptyDatabase(databaseUrl))) {
+      console.log('The database is empty, so KVNsys Server is setting it up.');
+      try {
+        const applied = await applyDatabaseUpdates(databaseUrl);
+        console.log(`  Applied ${applied.length} database ${applied.length === 1 ? 'update' : 'updates'}.`);
+      } catch (error) {
+        return stop(error instanceof Error ? error.message : String(error));
+      }
+      check = await checkDatabase(db);
+    }
+    if (!check.ok) {
+      const advice: Record<typeof check.problem, string> = {
+        unreachable: `Can't reach the database: ${check.detail}\nCheck DATABASE_URL, and that PostgreSQL is running.`,
+        'not-set-up':
+          "That database already has tables in it, and they aren't KVNsys's: it may belong to another program.\n" +
+          'Give KVNsys Server an empty database of its own, or check DATABASE_URL.',
+        'out-of-date': `That database is missing KVNsys updates (${check.detail}). Run \`pnpm db:deploy\`.`,
+        unrecognised:
+          `That database has updates this server doesn't recognise (${check.detail}). ` +
+          'It may belong to another program, or to a newer KVNsys Server. Check DATABASE_URL.',
+      };
+      return stop(advice[check.problem]);
+    }
+
+    // A brand-new install has nobody who could sign in yet, so it asks, once, for what it needs.
+    const seed = new InstallSeed(new PrismaSetupStore(db), new ScryptPasswordHasher());
+    if (await seed.firstAdministratorNeeded()) {
+      const questions = consoleQuestions();
+      try {
+        await setUpFirstShop(seed, questions, readPcIdentity(), (line) => console.log(line));
+      } catch (error) {
+        if (!(error instanceof NoAnswer)) throw error;
+        return stop(
+          'KVNsys Server needs two answers the first time it starts, but nothing can be typed here. ' +
+            'Start it from its icon, and answer in its window.',
+        );
+      } finally {
+        questions.close();
+      }
+    }
+  } finally {
+    await db.$disconnect();
   }
 
   // The server's identity for secure connections: made once, then kept, because registers pin it.

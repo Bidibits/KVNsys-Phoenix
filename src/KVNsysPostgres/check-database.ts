@@ -5,9 +5,14 @@ export type DatabaseProblem = 'unreachable' | 'not-set-up' | 'out-of-date' | 'un
 
 export type DatabaseCheck = { ok: true } | { ok: false; problem: DatabaseProblem; detail: string };
 
+/** Where this copy of KVNsys keeps the schema updates it ships with. */
+export function migrationsFolder(): URL {
+  return new URL('../prisma/migrations/', import.meta.url);
+}
+
 /** The schema updates this copy of KVNsys ships with: one folder each in prisma/migrations. */
 export function knownMigrations(): string[] {
-  return readdirSync(new URL('../prisma/migrations/', import.meta.url), { withFileTypes: true })
+  return readdirSync(migrationsFolder(), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();

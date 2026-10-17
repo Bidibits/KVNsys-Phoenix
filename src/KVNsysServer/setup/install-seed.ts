@@ -41,6 +41,11 @@ export class InstallSeed {
     private readonly hasher: PasswordHasher,
   ) {}
 
+  /** True on a brand-new install: there's nobody yet who could sign in. */
+  async firstAdministratorNeeded(): Promise<boolean> {
+    return (await this.store.transaction((tx) => tx.countUsers())) === 0;
+  }
+
   async run(input: SeedInput): Promise<SeedReport> {
     // Hashing is slow on purpose, so it happens before the transaction opens.
     const adminHash = input.adminPassword === undefined ? undefined : await this.hashAdminPassword(input.adminPassword);

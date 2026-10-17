@@ -34,6 +34,8 @@ and everything a user sees, is called KVNsys.
   follow. It lasts 12 hours and lives only in the app's memory, on the desktop side: the screens
   never see it and it's never written to disk. Signing out hands it back and the server cancels
   it. Restarting the server ends every session, and registers sign in again.
+- **The server sets up a new install by itself.** Given an empty database, it creates its tables and
+  asks once for the shop's name and the first administrator's password. No pnpm needed.
 - **Every connection is HTTPS, and the app knows its server.** The server makes its own security
   certificate the first time it starts, and keeps it. The app trusts the first certificate it meets
   at an address, and from then on refuses any other there. So a different machine answering at the
@@ -184,7 +186,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm test` | Runs every test project (after `pnpm build`) |
 | `pnpm db:deploy` | Creates or updates the tables in the database named in `.env` |
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
-| `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`), set up with `pnpm db:deploy` and `pnpm seed`, and refuses to start without it. |
+| `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). An empty one it sets up itself, asking once for the shop's name and an administrator's password; any other database must already be KVNsys's, or it refuses to start. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
 | `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`). Neither needs Node or pnpm on the PC that runs it. |
 | `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
@@ -199,6 +201,12 @@ database, it says what and waits for Enter before closing. It reads its settings
 this PC, `pnpm install:here` fills that in from `.env`. Windows may ask, the first time it starts,
 whether to let it through the firewall: allow it on private networks, or other PCs can't reach it.
 Double-click **KVNsys POS & Inventory** for the app.
+
+**A new install sets itself up.** Point the server at an empty PostgreSQL database and start it.
+It creates its tables, then asks two questions, just this once: the shop's name, and a password
+for the first administrator, `admin` (typed twice, shown as stars). No pnpm is needed. A database
+that already holds someone else's tables is refused, never written into. Creating the empty
+database is still up to you, in pgAdmin for example.
 
 The database tests make their own throwaway database and drop it afterwards, so they never touch
 an existing one. The app's tests do the same with its settings: each run gets a throwaway folder
