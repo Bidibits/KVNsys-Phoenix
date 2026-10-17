@@ -1,5 +1,5 @@
 import type { AddressInfo } from 'node:net';
-import { createServer, ServerVersion } from '@kvnsys/server';
+import { createServer, createServerCertificate, ServerVersion } from '@kvnsys/server';
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
@@ -12,7 +12,7 @@ describe('the first window, driven like a person would', () => {
   let window: Page;
 
   beforeAll(async () => {
-    server = await createServer({ logger: false });
+    server = await createServer({ logger: false, certificate: await createServerCertificate() });
     await server.listen(0, '127.0.0.1');
     serverAddress = `127.0.0.1:${(server.getHttpServer().address() as AddressInfo).port}`;
 
@@ -46,7 +46,10 @@ describe('the first window, driven like a person would', () => {
     await connect(serverAddress);
     const notice = window.getByRole('status');
     await notice.waitFor();
-    expect(await notice.textContent()).toBe(`Connected to KVNsys Server ${ServerVersion} at http://${serverAddress}.`);
+    expect(await notice.textContent()).toBe(
+      `Connected to KVNsys Server ${ServerVersion} at https://${serverAddress}. ` +
+        'This register now trusts this server, and will refuse any other that tries to answer at this address.',
+    );
   });
 
   it('explains, in plain words, an address that is not one', async () => {

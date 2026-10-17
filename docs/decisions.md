@@ -26,7 +26,11 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **The default port lives in `KVNsysWire`**, shared by client and server | So the two can't disagree about it |
 | 2026-10-17 | **KVNsys Server listens on port 9000** by default (`KVNSYS_PORT`), on every network address of the PC | 9000 is the port the old KVNsys used. Listening on every address is what lets registers on the shop's network reach it. |
 | 2026-10-17 | **The first call is "hello":** what the server is, its version, and its protocol number. A client and a server only talk when their protocol numbers match. | A branch that updated one side but not the other gets a clear message instead of strange errors |
-| 2026-10-17 | **Plain HTTP for now — and HTTPS before the app sends a sign-in.** HTTPS, with the server's own certificate pinned by the app, comes before any password or shop data travels between PCs. | "Hello" carries no secrets. Sign-in exists on the server, but nothing sends a password over the network yet (only tests, on one PC). |
+| 2026-10-17 | **HTTPS only, with the server's certificate pinned by the app.** The server makes a self-signed certificate on first start and keeps it. The app trusts the first one it meets at an address and refuses any other there, checking the exact fingerprint during the handshake, before anything is sent. Plain HTTP gets no answer at all. | No certificate authority reaches a shop with no internet. Trust on first use, then pinning, is what the old KVNsysWire did. |
+| 2026-10-17 | **A certificate is trusted only after the server proves to be a KVNsys Server this app can talk to.** Nothing else ever gets pinned. | A router or another device at a typed address must never become "trusted" |
+| 2026-10-17 | **The trusted-servers file is stricter than the settings file:** missing means "trusts nobody yet", but damaged means "connect to nothing until IT checks". | Quietly forgetting the pins would let an impostor be trusted as a first contact. The old KVNsys learned this one. |
+| 2026-10-17 | **The server's certificate is valid 2000–2099, and marked as its own authority** | A register with a dead clock battery still connects; trust comes from the fingerprint, not the dates. Electron's TLS needs the authority mark; see below. |
+| 2026-10-17 | **If one of the server's two certificate files goes missing, it refuses to start** rather than make a new identity | A new identity means every register refuses the server until IT resets them, so it's never done quietly |
 | 2026-10-17 | **Sign-in answers yes or no.** Yes comes with the person's name and role; no comes with a plain reason (400 nothing typed, 401 wrong, 403 switched off). A wrong password and an unknown username get the same answer and take the same time. "Switched off" is only said once the password is right. | Sign-in mustn't help anyone guess which usernames exist |
 | 2026-10-17 | **Protocol 2:** sign-in was added | A new app needs a server that knows sign-in, and the protocol number is how they find out |
 | 2026-10-17 | **The server refuses to start unless its database has exactly the KVNsys updates it ships with.** It reads the record Prisma keeps of applied updates and compares it with its own list. It tells apart: can't reach, not set up, missing updates, and updates it doesn't recognise. | The first version only looked for a `users` table, and started happily against another program's database on this PC that had one |
@@ -95,6 +99,10 @@ column, its index, and the comments written for the browser design.
 - **Electron's main file opens the window with `app.whenReady().then(...)`, never a top-level
   `await app.whenReady()`.** The top-level version never finishes under Playwright. That was
   confirmed by switching it back and watching the test fail.
+- **Electron's TLS is stricter than Node's.** Electron uses BoringSSL, and it won't accept a pinned
+  certificate as a trust anchor unless the certificate is marked as an authority. Plain Node
+  (OpenSSL) accepts it either way, so every engine test passed while the real app couldn't
+  reconnect. Only restarting the real app caught it.
 - **"Is there a users table?" doesn't prove a database is yours.** Another program's database on
   this PC had one, and the server started against it. Check the record of applied updates instead.
 - **The same failure can arrive in different shapes.** "Nothing at that port" came back as a bare

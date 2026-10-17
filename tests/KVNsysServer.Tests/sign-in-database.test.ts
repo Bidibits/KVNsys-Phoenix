@@ -1,9 +1,18 @@
 import type { AddressInfo } from 'node:net';
 import type { INestApplication } from '@nestjs/common';
 import { checkDatabase, createPrismaClient, knownMigrations, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
-import { createServer, InstallSeed, ScryptPasswordHasher, SwitchedOff, WrongCredentials } from '@kvnsys/server';
+import {
+  createServer,
+  createServerCertificate,
+  InstallSeed,
+  ScryptPasswordHasher,
+  SwitchedOff,
+  WrongCredentials,
+  type ServerCertificate,
+} from '@kvnsys/server';
 import { SignInPath, SignInReply } from '@kvnsys/wire';
 import { afterAll, beforeAll, expect, it } from 'vitest';
+import { httpsJson } from './https.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
@@ -13,6 +22,7 @@ describeWithDatabase('sign-in, over HTTP, against a real database', () => {
   let db: PrismaClient;
   let app: INestApplication;
   let base: string;
+  let certificate: ServerCertificate;
 
   beforeAll(async () => {
     database = await createThrowawayDatabase();
@@ -24,9 +34,10 @@ describeWithDatabase('sign-in, over HTTP, against a real database', () => {
       adminPassword: AdminPassword,
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
-    app = await createServer({ logger: false, databaseUrl: database.url });
+    certificate = await createServerCertificate();
+    app = await createServer({ logger: false, databaseUrl: database.url, certificate });
     await app.listen(0, '127.0.0.1');
-    base = `http://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}`;
+    base = `https://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}`;
   }, 120_000);
 
   afterAll(async () => {
@@ -36,12 +47,8 @@ describeWithDatabase('sign-in, over HTTP, against a real database', () => {
   });
 
   async function signIn(body: unknown) {
-    const response = await fetch(base + SignInPath, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    return { status: response.status, reply: SignInReply.parse(await response.json()) };
+    const response = await httpsJson(base + SignInPath, { ca: certificate.cert, method: 'POST', body });
+    return { status: response.status, reply: SignInReply.parse(response.body) };
   }
 
   it('says yes to the seeded administrator, with their name and role', async () => {
@@ -77,12 +84,12 @@ describeWithDatabase('sign-in, over HTTP, against a real database', () => {
   });
 
   it('never sends the password hash back', async () => {
-    const response = await fetch(base + SignInPath, {
+    const response = await httpsJson(base + SignInPath, {
+      ca: certificate.cert,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: AdminPassword }),
+      body: { username: 'admin', password: AdminPassword },
     });
-    expect(await response.text()).not.toMatch(/scrypt|passwordHash/i);
+    expect(response.text).not.toMatch(/scrypt|passwordHash/i);
   });
 });
 

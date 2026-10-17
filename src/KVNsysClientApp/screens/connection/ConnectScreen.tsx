@@ -62,6 +62,8 @@ export function ConnectScreen() {
         (state.result.ok ? (
           <Notice tone="good">
             Connected to KVNsys Server {state.result.server.version} at {state.result.server.address}.
+            {state.result.server.firstTrust &&
+              ' This register now trusts this server, and will refuse any other that tries to answer at this address.'}
             {state.result.remembered === false && " This PC couldn't save the address, so you'll need to type it again next time."}
           </Notice>
         ) : (

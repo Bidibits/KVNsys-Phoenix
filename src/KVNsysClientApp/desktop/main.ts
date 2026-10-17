@@ -6,6 +6,7 @@ import { connectToServer } from '@kvnsys/client';
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import { ConnectChannel, SavedAddressChannel, type ConnectReply } from './bridge.js';
 import { SettingsFile } from './settings-file.js';
+import { TrustFile } from './trust-file.js';
 
 const AppName = 'KVNsys POS & Inventory';
 
@@ -13,6 +14,7 @@ const AppName = 'KVNsys POS & Inventory';
 // point it at a throwaway folder, so they never touch a real register's settings.
 if (process.env.KVNSYS_APP_DATA) app.setPath('userData', process.env.KVNSYS_APP_DATA);
 const settings = new SettingsFile(join(app.getPath('userData'), 'settings.json'));
+const trustFile = new TrustFile(join(app.getPath('userData'), 'trusted-servers.json'));
 
 ipcMain.handle(SavedAddressChannel, (): string | null => settings.load().serverAddress ?? null);
 
@@ -21,7 +23,28 @@ ipcMain.handle(ConnectChannel, async (_event, typed: unknown): Promise<ConnectRe
   if (typeof typed !== 'string' || typed.length > 200) {
     return { ok: false, reason: 'bad-address', message: "That isn't a server address." };
   }
-  const result = await connectToServer(typed);
+
+  // Read fresh every time, so IT resetting the file takes effect without restarting the app.
+  const trusted = trustFile.read();
+  if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
+
+  let result;
+  try {
+    result = await connectToServer(typed, {
+      trust: {
+        pinFor: (address) => trusted.servers[address] ?? null,
+        remember: (address, pin) => trustFile.remember(address, pin, trusted.servers),
+      },
+    });
+  } catch (error) {
+    // Only an unexpected failure on this PC gets here, such as being unable to save the trust.
+    console.error('Connecting failed on this register:', error);
+    return {
+      ok: false,
+      reason: 'unreachable',
+      message: `Something went wrong on this register while connecting: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
   // A failed attempt never replaces the address that worked: the server may just be off.
   if (!result.ok) return result;
   try {

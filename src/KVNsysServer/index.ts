@@ -1,6 +1,12 @@
 // KVNsysServer: the server engine. No screens.
 export { createServer, type ServerOptions } from './http/create-server.js';
 export { ServerVersion } from './version.js';
+export {
+  createServerCertificate,
+  defaultServerDataDir,
+  loadOrCreateServerCertificate,
+  type ServerCertificate,
+} from './security/server-certificate.js';
 export { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
 export { SignIn, SwitchedOff, WrongCredentials, type SignInOutcome } from './identity/sign-in.js';
 export { InstallSeed, type SeedInput, type SeedReport } from './setup/install-seed.js';

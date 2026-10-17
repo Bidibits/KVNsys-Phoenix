@@ -3,6 +3,7 @@ import { networkInterfaces } from 'node:os';
 import { checkDatabase, createPrismaClient } from '@kvnsys/postgres';
 import { DefaultPort } from '@kvnsys/wire';
 import { createServer } from './http/create-server.js';
+import { defaultServerDataDir, loadOrCreateServerCertificate } from './security/server-certificate.js';
 
 const port = Number(process.env.KVNSYS_PORT ?? DefaultPort);
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -33,7 +34,18 @@ if (!check.ok) {
   process.exit(1);
 }
 
-const app = await createServer({ databaseUrl });
+// The server's identity for secure connections: made once, then kept, because registers pin it.
+const dataDir = process.env.KVNSYS_SERVER_DATA || defaultServerDataDir();
+let certificate: Awaited<ReturnType<typeof loadOrCreateServerCertificate>>;
+try {
+  certificate = await loadOrCreateServerCertificate(dataDir);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}
+if (certificate.created) console.log(`Made this server's security certificate, in ${dataDir}.`);
+
+const app = await createServer({ databaseUrl, certificate });
 try {
   // 0.0.0.0, not localhost: the registers are other PCs on the shop's network.
   await app.listen(port, '0.0.0.0');
@@ -53,6 +65,8 @@ const addresses = Object.values(networkInterfaces())
 
 console.log(`KVNsys Server is running on port ${port}, connected to its database.`);
 for (const address of addresses) {
-  console.log(`  Other PCs on this network can reach it at http://${address}:${port}`);
+  console.log(`  Other PCs on this network can reach it at https://${address}:${port}`);
 }
+console.log(`  Its certificate fingerprint, for checking a register's first connection:
+  ${certificate.fingerprint256}`);
 console.log('Press Ctrl+C to stop it.');

@@ -29,9 +29,22 @@ and everything a user sees, is called KVNsys.
 - **The server can check a sign-in.** Given a username and password, it answers yes, with the
   person's name and role, or no, with a plain reason. A wrong password and a name that doesn't
   exist get the same answer, so nobody can use it to find usernames. The app has no sign-in
-  screen yet. **HTTPS comes first**, so passwords never cross the shop's network as plain text.
+  screen yet.
+- **Every connection is HTTPS, and the app knows its server.** The server makes its own security
+  certificate the first time it starts, and keeps it. The app trusts the first certificate it meets
+  at an address, and from then on refuses any other there. So a different machine answering at the
+  server's address, an impostor, is turned away before anything is sent.
 
-Everything else is still to come. The schema (five tables and their first migration) is in
+Everything else is still to come.
+
+**For IT:**
+- The server's certificate is in `%LOCALAPPDATA%\KVNsys\Server` (or `KVNSYS_SERVER_DATA`) on the
+  server PC. Back it up: if it's lost, every register has to be reset.
+- To reset a register's trust, for example after replacing the server PC, delete
+  `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
+  trust the next server it connects to.
+- The server prints its certificate fingerprint when it starts, so the first connection can be
+  checked against it. The schema (five tables and their first migration) is in
 `src/KVNsysPostgres/prisma/`.
 
 ## How it runs
