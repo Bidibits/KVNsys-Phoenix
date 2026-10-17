@@ -12,9 +12,9 @@ and everything a user sees, is called KVNsys.
 
 ## Status
 
-**Nothing is built yet.** The structure below is decided. `database/` holds the schema carried
-over so far (five tables and their first migration). It moves into `src/KVNsysPostgres/` when
-building starts.
+**Nothing is built yet.** The structure below is decided, and its folders exist under `src/` and
+`tests/`, each holding only a one-line README. `database/` holds the schema carried over so far
+(five tables and their first migration). It moves into `src/KVNsysPostgres/` when building starts.
 
 ## How it runs
 
