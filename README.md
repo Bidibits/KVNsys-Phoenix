@@ -14,9 +14,8 @@ and everything a user sees, is called KVNsys.
 
 **No feature code yet.** The structure below is decided and set up. Each project under `src/`
 has its `package.json`, TypeScript settings and an empty entry file. Each test project under
-`tests/` is ready for tests, and the dependencies are installed. `database/` holds the schema
-carried over so far (five tables and their first migration). It moves into `src/KVNsysPostgres/`
-when building starts.
+`tests/` is ready for tests, and the dependencies are installed. The schema carried over so far
+(five tables and their first migration) is in `src/KVNsysPostgres/prisma/`.
 
 ## How it runs
 

@@ -16,6 +16,7 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **Electron** for the desktop app, not Tauri | See below |
 | 2026-10-17 | **Reuse Release's project structure**, name for name | It's already a backend/frontend split, plus a shared middle (`KVNsysCore`, `KVNsysWire`) that two plain folders have nowhere to put. See the README. |
 | 2026-10-17 | **Versions:** Node 24, pnpm 10, TypeScript 5.9 (not 7.0), NestJS 12, Prisma 7.10 (not the 8.0 release candidate), React 19, Vite 8, Electron 44, Vitest 5. Each pinned exactly. | TypeScript 7 is newer, but NestJS relies on decorator support TypeScript 7 has only just carried over. Prisma's "latest" tag points at a release candidate, not a release. |
+| 2026-10-17 | **Until the first install, the baseline migration is edited in place** rather than adding a new migration for each change. After the first install, every change is a new migration. | Nothing has deployed, so there's no data a migration needs to protect. This is SCHEMA-PLAN's "one baseline". A local database built from an older baseline has to be recreated. |
 | 2026-10-17 | The lineage columns (`created_by_user`, `created_at_machine`…) are **not foreign keys** | A product made at HQ arrives at a branch carrying an HQ user's id, and that user doesn't exist in the branch's database. A foreign key would refuse every delivery. |
 
 ## Why Electron
@@ -46,8 +47,8 @@ Running in a browser had four known problems. A desktop app removes three of the
 - Device registration by browser cookie, built and then removed on 2026-10-17. A register is
   recognised by its hardware id. A manager still names it once.
 
-**Left over in `database/`:** `schema.prisma` still has a `device_token_hash` column, plus comments
-written for the browser design. They go when `KVNsysPostgres` is set up.
+**Cleaned up when `KVNsysPostgres` was set up (2026-10-17):** the schema's `device_token_hash`
+column, its index, and the comments written for the browser design.
 
 ## Open
 

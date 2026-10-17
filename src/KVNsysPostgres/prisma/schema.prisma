@@ -14,7 +14,7 @@
 
 generator client {
   provider               = "prisma-client"
-  output                 = "../src/generated/prisma"
+  output                 = "../generated/prisma"
   moduleFormat           = "esm"
   runtime                = "nodejs"
   importFileExtension    = "js"
@@ -125,17 +125,15 @@ model Machine {
   id              String  @id @db.Uuid
   code            String  @unique
   name            String
-  /// The server PC's hardware id (Windows MachineGuid). A browser cannot read one, so
-  /// this is null for every register.
-  machineUuid     String? @unique @map("machine_uuid")
-  /// The server PC's computer name, as the OS reports it. Null for registers.
-  machineName     String? @map("machine_name")
-  /// A register's identity: the SHA-256 of the random token kept in its browser cookie.
-  /// The token itself is never stored, so a copy of this table cannot impersonate a register.
-  deviceTokenHash String? @unique @map("device_token_hash")
-  locationId      String  @map("location_id") @db.Uuid
-  status          String  @default("Active")
-  description     String?
+  /// The PC's hardware id (Windows MachineGuid), read by the KVNsys program running on it.
+  /// It survives renaming the PC; reinstalling Windows changes it. Null only if it couldn't
+  /// be read.
+  machineUuid String? @unique @map("machine_uuid")
+  /// The PC's computer name, as Windows reports it.
+  machineName String? @map("machine_name")
+  locationId  String  @map("location_id") @db.Uuid
+  status      String  @default("Active")
+  description String?
 
   updatedByUser     String?   @map("updated_by_user") @db.Uuid
   updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid

@@ -1,3 +1,5 @@
 *.tsbuildinfo
 coverage/
 .env
+# Prisma's generated client: rebuilt from the schema, never committed.
+generated/

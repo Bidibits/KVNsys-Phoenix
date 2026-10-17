@@ -1,5 +1,4 @@
 # Every project under src/ and every test project under tests/.
-# database/ is deliberately not listed: it moves into src/KVNsysPostgres when building starts.
 packages:
   - src/*
   - tests/*

@@ -83,7 +83,6 @@ CREATE TABLE "machines" (
     "name" TEXT NOT NULL,
     "machine_uuid" TEXT,
     "machine_name" TEXT,
-    "device_token_hash" TEXT,
     "location_id" UUID NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'Active',
     "description" TEXT,
@@ -116,9 +115,6 @@ CREATE UNIQUE INDEX "machines_code_key" ON "machines"("code");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "machines_machine_uuid_key" ON "machines"("machine_uuid");
-
--- CreateIndex
-CREATE UNIQUE INDEX "machines_device_token_hash_key" ON "machines"("device_token_hash");
 
 -- AddForeignKey
 ALTER TABLE "accesses" ADD CONSTRAINT "accesses_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
