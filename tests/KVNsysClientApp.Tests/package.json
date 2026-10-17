@@ -7,9 +7,11 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@kvnsys/client-app": "workspace:*"
+    "@kvnsys/client-app": "workspace:*",
+    "@kvnsys/server": "workspace:*"
   },
   "devDependencies": {
+    "playwright-core": "1.64.1",
     "vitest": "5.0.5"
   }
 }

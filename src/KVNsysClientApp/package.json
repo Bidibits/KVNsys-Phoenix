@@ -1,17 +1,13 @@
 {
   "name": "@kvnsys/client-app",
+  "productName": "KVNsys POS & Inventory",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": {
-      "source": "./index.ts",
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
+  "main": "dist/desktop/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.screens.json && vite build",
+    "start": "electron ."
   },
   "dependencies": {
     "@kvnsys/client": "workspace:*",

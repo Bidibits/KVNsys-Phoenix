@@ -1,21 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "dist",
-    "jsx": "react-jsx",
-    "lib": [
-      "ES2023",
-      "DOM",
-      "DOM.Iterable"
+    "rootDir": "desktop",
+    "outDir": "dist/desktop",
+    "types": [
+      "node"
     ]
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
+    "desktop/**/*.ts",
+    "desktop/**/*.cts"
   ]
 }

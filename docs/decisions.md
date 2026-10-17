@@ -16,6 +16,10 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **Electron** for the desktop app, not Tauri | See below |
 | 2026-10-17 | **Reuse Release's project structure**, name for name | It's already a backend/frontend split, plus a shared middle (`KVNsysCore`, `KVNsysWire`) that two plain folders have nowhere to put. See the README. |
 | 2026-10-17 | **Versions:** Node 24, pnpm 10, TypeScript 5.9 (not 7.0), NestJS 12, Prisma 7.10 (not the 8.0 release candidate), React 19, Vite 8, Electron 44, Vitest 5. Each pinned exactly. | TypeScript 7 is newer, but NestJS relies on decorator support TypeScript 7 has only just carried over. Prisma's "latest" tag points at a release candidate, not a release. |
+| 2026-10-17 | **The client engine runs on the app's desktop side; the screens ask through a narrow bridge.** | The screens never cross from their own files to the server, so there are no browser cross-site rules to fight. The PC's hardware id and the server's pinned certificate belong on the desktop side anyway. And a screen that went wrong couldn't reach the PC. |
+| 2026-10-17 | **The window is an app, never a browser:** no menu bar, no opening other windows, no wandering to another page, and no Node access for the screens (Electron's sandbox) | |
+| 2026-10-17 | **Plain CSS in `KVNsysUI`** for now | No styling framework has been chosen. One stylesheet is easy to swap later. |
+| 2026-10-17 | **Playwright drives the real app in tests:** it opens the window, types, clicks and reads what appears | Only running the real window shows whether the window works |
 | 2026-10-17 | **Connecting never crashes on an expected problem.** A bad address, nothing there, not a KVNsys Server, or a protocol mismatch each comes back as a plain-words message, and a mismatch names which side to update. It gives up after 5 seconds. | A manager setting up a register needs to know what to fix, not see an error code |
 | 2026-10-17 | **The default port lives in `KVNsysWire`**, shared by client and server | So the two can't disagree about it |
 | 2026-10-17 | **KVNsys Server listens on port 9000** by default (`KVNSYS_PORT`), on every network address of the PC | 9000 is the port the old KVNsys used. Listening on every address is what lets registers on the shop's network reach it. |
@@ -80,3 +84,11 @@ column, its index, and the comments written for the browser design.
   structure check written for an earlier version of Phoenix passed while three of its five rules
   could never fire.
 - **A test that can't run shows as skipped, never as passed.**
+
+## Learned the hard way
+
+- **Electron's main file opens the window with `app.whenReady().then(...)`, never a top-level
+  `await app.whenReady()`.** The top-level version never finishes under Playwright. That was
+  confirmed by switching it back and watching the test fail.
+- **On Windows, never pass a folder path ending in `\` as a program argument.** Before the closing
+  quote it reads as an escaped quote, and the program gets a broken path.

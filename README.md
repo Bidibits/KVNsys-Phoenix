@@ -21,7 +21,10 @@ and everything a user sees, is called KVNsys.
 - **The client engine can connect to a server.** Given an address the way a person types it
   (`192.168.0.111`), it checks the server is a KVNsys Server speaking the same protocol. If not,
   it says why in plain words: a bad address, nothing there, not a KVNsys Server, or a different
-  update and which side to update. There are no screens for it yet.
+  update and which side to update.
+- **The first window.** KVNsys POS & Inventory opens as its own program window, with no browser
+  look. It asks for the server address and shows whether it connected. It doesn't remember the
+  address yet, and there's no sign-in.
 
 Everything else is still to come. The schema (five tables and their first migration) is in
 `src/KVNsysPostgres/prisma/`.
@@ -126,6 +129,9 @@ into an ordinary Windows program with an installer and a desktop icon. It has tw
 | The desktop side | Opens the window (full screen for a till), prints receipts without a dialog, opens the cash drawer, reads the PC's hardware id, and trusts only this branch's server |
 | The screens | Everything the cashier sees, in React |
 
+The client engine runs on the desktop side. The screens reach it only through a small bridge
+(`desktop/bridge.ts`), and can't touch the network, the disk or the PC themselves.
+
 Why Electron, and what it fixes compared with running in a browser:
 [`docs/decisions.md`](docs/decisions.md).
 
@@ -157,6 +163,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm db:deploy` | Creates or updates the tables in the database named in `.env` |
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it |
+| `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
 
 **Setting up a new install:** copy `.env.example` to `.env` and fill it in. Then run
 `pnpm install`, `pnpm build`, `pnpm db:deploy` and `pnpm seed`, in that order.

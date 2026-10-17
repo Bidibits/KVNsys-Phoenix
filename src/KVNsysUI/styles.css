@@ -1,0 +1,150 @@
+/* KVNsys's look, shared by every screen. Plain CSS: no styling framework has been chosen yet. */
+
+:root {
+  --kv-page: #eef2f0;
+  --kv-card: #ffffff;
+  --kv-text: #1c2a24;
+  --kv-muted: #5a6b63;
+  --kv-line: #cfd9d4;
+  --kv-accent: #1f7a55;
+  --kv-accent-dark: #17603f;
+  --kv-good-bg: #e3f4ea;
+  --kv-good-text: #145a36;
+  --kv-problem-bg: #fdeceb;
+  --kv-problem-text: #9b2a22;
+  --kv-radius: 12px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--kv-text);
+  background: var(--kv-page);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.kv-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.kv-panel {
+  width: 100%;
+  max-width: 480px;
+  background: var(--kv-card);
+  border: 1px solid var(--kv-line);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.kv-panel__header {
+  margin-bottom: 24px;
+}
+
+.kv-panel__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.kv-panel__subtitle {
+  margin: 8px 0 0;
+  font-size: 17px;
+  color: var(--kv-muted);
+}
+
+.kv-field {
+  margin-bottom: 20px;
+}
+
+.kv-field__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Touch targets: at least 44px tall; these are 56. */
+.kv-field__input {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 20px;
+  color: var(--kv-text);
+  background: var(--kv-card);
+  border: 1px solid var(--kv-line);
+  border-radius: var(--kv-radius);
+}
+
+.kv-field__input:focus {
+  outline: 3px solid var(--kv-accent);
+  outline-offset: 1px;
+}
+
+.kv-field__input[aria-invalid='true'] {
+  border-color: var(--kv-problem-text);
+}
+
+.kv-field__error {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--kv-problem-text);
+}
+
+.kv-button {
+  width: 100%;
+  min-height: 56px;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--kv-accent);
+  border: none;
+  border-radius: var(--kv-radius);
+  cursor: pointer;
+}
+
+.kv-button:hover {
+  background: var(--kv-accent-dark);
+}
+
+.kv-button:active {
+  transform: scale(0.99);
+}
+
+.kv-button:focus-visible {
+  outline: 3px solid var(--kv-text);
+  outline-offset: 2px;
+}
+
+.kv-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.kv-notice {
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  border-radius: var(--kv-radius);
+}
+
+.kv-notice--good {
+  background: var(--kv-good-bg);
+  color: var(--kv-good-text);
+}
+
+.kv-notice--problem {
+  background: var(--kv-problem-bg);
+  color: var(--kv-problem-text);
+}
