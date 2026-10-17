@@ -45,10 +45,11 @@ describe('signIn', () => {
     server = undefined;
   });
 
-  it("says who signed in when the server says yes", async () => {
+  it('says who signed in when the server says yes, with the pass it hands back', async () => {
     const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' };
-    server = await fakeServer(certificate, 200, { signedIn: true, user });
-    expect(await signIn(server.address, credentials, { pin: pinOf(certificate) })).toEqual({ ok: true, user });
+    const session = { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' };
+    server = await fakeServer(certificate, 200, { signedIn: true, user, session });
+    expect(await signIn(server.address, credentials, { pin: pinOf(certificate) })).toEqual({ ok: true, user, session });
     expect(JSON.parse(server.received[0]!)).toEqual(credentials);
   });
 

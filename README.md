@@ -29,8 +29,11 @@ and everything a user sees, is called KVNsys.
 - **Signing in.** Once connected, the app asks for a username and password, checks them with the
   server, and shows who signed in, or why not ("Wrong username or password." whether the password
   is wrong or the name doesn't exist, so nobody can use it to find usernames). The password only
-  ever goes to a server this register already trusts. There are no sessions yet: signing out just
-  returns to the sign-in screen.
+  ever goes to a server this register already trusts.
+- **Sessions.** A sign-in comes with a pass that proves who's signed in, for the requests that
+  follow. It lasts 12 hours and lives only in the app's memory, on the desktop side: the screens
+  never see it and it's never written to disk. Signing out hands it back and the server cancels
+  it. Restarting the server ends every session, and registers sign in again.
 - **Every connection is HTTPS, and the app knows its server.** The server makes its own security
   certificate the first time it starts, and keeps it. The app trusts the first certificate it meets
   at an address, and from then on refuses any other there. So a different machine answering at the

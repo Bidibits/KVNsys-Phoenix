@@ -6,18 +6,20 @@ import {
   createServerCertificate,
   InstallSeed,
   ScryptPasswordHasher,
+  Sessions,
+  SignInEnded,
   SwitchedOff,
   WrongCredentials,
   type ServerCertificate,
 } from '@kvnsys/server';
-import { SignInPath, SignInReply } from '@kvnsys/wire';
+import { SessionPath, SessionReply, SignInPath, SignInReply, SignOutPath, SignOutReply } from '@kvnsys/wire';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { httpsJson } from './https.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
 
-describeWithDatabase('sign-in, over HTTP, against a real database', () => {
+describeWithDatabase('sign-in and sessions, over HTTP, against a real database', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
   let app: INestApplication;
@@ -51,11 +53,73 @@ describeWithDatabase('sign-in, over HTTP, against a real database', () => {
     return { status: response.status, reply: SignInReply.parse(response.body) };
   }
 
-  it('says yes to the seeded administrator, with their name and role', async () => {
+  /** Signs the administrator in and returns the pass. */
+  async function signedInPass(): Promise<string> {
+    const { reply } = await signIn({ username: 'admin', password: AdminPassword });
+    if (!reply.signedIn) throw new Error(`Sign-in failed: ${reply.message}`);
+    return reply.session.token;
+  }
+
+  const showing = (token?: string): Record<string, string> => (token ? { Authorization: `Bearer ${token}` } : {});
+
+  async function session(token?: string) {
+    const response = await httpsJson(base + SessionPath, { ca: certificate.cert, headers: showing(token) });
+    return { status: response.status, reply: SessionReply.parse(response.body) };
+  }
+
+  async function signOut(token?: string) {
+    const response = await httpsJson(base + SignOutPath, { ca: certificate.cert, method: 'POST', headers: showing(token) });
+    return { status: response.status, reply: SignOutReply.parse(response.body) };
+  }
+
+  it('says yes to the seeded administrator, with their name and role, and a pass', async () => {
     expect(await signIn({ username: 'admin', password: AdminPassword })).toEqual({
       status: 200,
-      reply: { signedIn: true, user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' } },
+      reply: {
+        signedIn: true,
+        user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' },
+        session: { token: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/), expiresAt: expect.any(String) },
+      },
     });
+  });
+
+  it('hands back a pass that later requests can show, to say who is asking', async () => {
+    const { reply } = await signIn({ username: 'admin', password: AdminPassword });
+    if (!reply.signedIn) throw new Error(reply.message);
+    expect(await session(reply.session.token)).toEqual({
+      status: 200,
+      reply: { signedIn: true, user: reply.user, expiresAt: reply.session.expiresAt },
+    });
+  });
+
+  it('turns away a request with no pass, or a made-up one', async () => {
+    const ended = { status: 401, reply: { signedIn: false, message: SignInEnded } };
+    expect(await session()).toEqual(ended);
+    expect(await session('made-up-made-up-made-up-made-up-made-up-mad')).toEqual(ended);
+  });
+
+  it('cancels a pass at sign-out, so it stops working, and leaves other passes alone', async () => {
+    const leaving = await signedInPass();
+    const staying = await signedInPass();
+    const before = app.get(Sessions).activeCount();
+    expect(await signOut(leaving)).toEqual({ status: 200, reply: { signedOut: true } });
+    expect(app.get(Sessions).activeCount()).toBe(before - 1);
+    expect(await session(leaving)).toMatchObject({ status: 401 });
+    expect(await session(staying)).toMatchObject({ status: 200 });
+  });
+
+  it('treats signing out twice, or with no pass at all, as signed out', async () => {
+    const token = await signedInPass();
+    const signedOut = { status: 200, reply: { signedOut: true } };
+    expect(await signOut(token)).toEqual(signedOut);
+    expect(await signOut(token)).toEqual(signedOut);
+    expect(await signOut()).toEqual(signedOut);
+  });
+
+  it('gives no pass for a wrong password', async () => {
+    const before = app.get(Sessions).activeCount();
+    await signIn({ username: 'admin', password: 'not-the-password' });
+    expect(app.get(Sessions).activeCount()).toBe(before);
   });
 
   it('says no to a wrong password, and the same no to a username that does not exist', async () => {

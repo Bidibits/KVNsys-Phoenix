@@ -1,6 +1,6 @@
 import type { AddressInfo } from 'node:net';
 import { createPrismaClient, PrismaSetupStore } from '@kvnsys/postgres';
-import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHasher } from '@kvnsys/server';
+import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHasher, Sessions } from '@kvnsys/server';
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
@@ -86,11 +86,28 @@ describeWithDatabase('signing in from the real app, against a real server and da
     const who = window.getByRole('status').filter({ hasText: 'Signed in as' });
     await who.waitFor();
     expect(await who.textContent()).toBe('Signed in as System Administrator (admin, role ADMIN).');
+    // The server handed this register a pass, and is keeping exactly one.
+    expect(server.get(Sessions).activeCount()).toBe(1);
   });
 
-  it('signs out, back to the sign-in screen', async () => {
+  it('signs out, back to the sign-in screen, and the server cancels the pass', async () => {
     await window.getByRole('button', { name: 'Sign out' }).click();
     await window.getByLabel('Username').waitFor();
     expect(await window.getByLabel('Password').inputValue()).toBe('');
+    // The server only cancels a pass that matches, so this proves the app kept it and showed it.
+    expect(server.get(Sessions).activeCount()).toBe(0);
+  });
+
+  it('keeps the pass on the desktop side: the screens are never handed it', async () => {
+    // Asked the way a screen asks. (Inside evaluate, globalThis is the window's own.)
+    type Bridge = { signIn(username: string, password: string): Promise<unknown>; signOut(): Promise<void> };
+    const reply = await window.evaluate(
+      (password) => (globalThis as unknown as { kvnsys: Bridge }).kvnsys.signIn('admin', password),
+      AdminPassword,
+    );
+    expect(reply).toEqual({ ok: true, user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' } });
+    expect(server.get(Sessions).activeCount()).toBe(1);
+    await window.evaluate(() => (globalThis as unknown as { kvnsys: Bridge }).kvnsys.signOut());
+    expect(server.get(Sessions).activeCount()).toBe(0);
   });
 });

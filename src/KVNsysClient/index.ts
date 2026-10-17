@@ -18,4 +18,5 @@ export {
 } from './connection/secure-request.js';
 export { normalizeServerAddress } from './connection/server-address.js';
 export { signIn, type SignInProblem, type SignInResult } from './identity/sign-in.js';
-export type { SignedInUser } from '@kvnsys/wire';
+export { checkSession, signOut, type SessionCheck, type SessionProblem, type SignOutResult } from './identity/session.js';
+export type { SessionPass, SignedInUser } from '@kvnsys/wire';

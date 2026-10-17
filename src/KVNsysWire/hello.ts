@@ -5,9 +5,9 @@ import { z } from 'zod';
  * number, so a branch that updated one but not the other gets a clear message instead of
  * strange errors. Raise it whenever a call is added or changes shape.
  *
- * 1: hello. 2: sign-in.
+ * 1: hello. 2: sign-in. 3: sessions (sign-in hands back a pass; session check; sign-out).
  */
-export const ProtocolVersion = 2;
+export const ProtocolVersion = 3;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

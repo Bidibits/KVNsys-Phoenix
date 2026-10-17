@@ -43,16 +43,25 @@ export function requestJson(options: {
   path: string;
   method?: 'GET' | 'POST';
   body?: unknown;
+  /** The pass from a sign-in, sent as "Authorization: Bearer". Only ever sent to a pinned server. */
+  pass?: string;
   pin: ServerPin | null;
   timeoutMs: number;
 }): Promise<SecureResponse> {
   const { pin } = options;
+  if (options.pass !== undefined && !pin) {
+    // A pass proves who's signed in. Like a password, it never goes to a server that isn't trusted yet.
+    return Promise.reject(new Error('A sign-in pass is only ever sent to a server this register has pinned.'));
+  }
   const payload = options.body === undefined ? undefined : JSON.stringify(options.body);
 
   return new Promise((resolve, reject) => {
     const req = request(new URL(options.path, options.address), {
       method: options.method ?? 'GET',
-      headers: payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {},
+      headers: {
+        ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}),
+        ...(options.pass ? { Authorization: `Bearer ${options.pass}` } : {}),
+      },
       timeout: options.timeoutMs,
       agent: false,
       ...(pin

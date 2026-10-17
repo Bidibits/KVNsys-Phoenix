@@ -29,7 +29,7 @@ export function App() {
       );
     case 'signed-in':
       return (
-        <SignedInScreen user={stage.user} onSignOut={() => setStage({ kind: 'sign-in', connected: stage.connected })} />
+        <SignedInScreen user={stage.user} onSignedOut={() => setStage({ kind: 'sign-in', connected: stage.connected })} />
       );
   }
 }

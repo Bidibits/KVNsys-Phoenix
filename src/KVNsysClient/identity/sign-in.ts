@@ -1,10 +1,13 @@
-import { SignInPath, SignInReply, type SignedInUser } from '@kvnsys/wire';
+import { SignInPath, SignInReply, type SessionPass, type SignedInUser } from '@kvnsys/wire';
 import { describeTransportFailure, type TransportProblem } from '../connection/failures.js';
 import { requestJson, type ServerPin } from '../connection/secure-request.js';
 
 export type SignInProblem = 'refused' | 'not-connected' | TransportProblem;
 
-export type SignInResult = { ok: true; user: SignedInUser } | { ok: false; reason: SignInProblem; message: string };
+/** Yes comes with a pass: proof of who's signed in, for later requests. Keep it on the desktop side. */
+export type SignInResult =
+  | { ok: true; user: SignedInUser; session: SessionPass }
+  | { ok: false; reason: SignInProblem; message: string };
 
 const DefaultTimeoutMs = 5000;
 
@@ -43,5 +46,7 @@ export async function signIn(
   if (!reply.success) {
     return { ok: false, reason: 'not-kvnsys', message: `The server at ${address} gave an answer this app doesn't understand.` };
   }
-  return reply.data.signedIn ? { ok: true, user: reply.data.user } : { ok: false, reason: 'refused', message: reply.data.message };
+  return reply.data.signedIn
+    ? { ok: true, user: reply.data.user, session: reply.data.session }
+    : { ok: false, reason: 'refused', message: reply.data.message };
 }

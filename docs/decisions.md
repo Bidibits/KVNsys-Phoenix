@@ -28,7 +28,7 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **The first call is "hello":** what the server is, its version, and its protocol number. A client and a server only talk when their protocol numbers match. | A branch that updated one side but not the other gets a clear message instead of strange errors |
 | 2026-10-17 | **HTTPS only, with the server's certificate pinned by the app.** The server makes a self-signed certificate on first start and keeps it. The app trusts the first one it meets at an address and refuses any other there, checking the exact fingerprint during the handshake, before anything is sent. Plain HTTP gets no answer at all. | No certificate authority reaches a shop with no internet. Trust on first use, then pinning, is what the old KVNsysWire did. |
 | 2026-10-18 | **A password only ever goes to a server this register already trusts.** Never on a first contact, and never to a server showing another certificate: that's refused during the handshake, before the password leaves the PC. Tested by stand-in servers that must receive nothing. | Trust on first use is fine for "hello"; it would be reckless for a password |
-| 2026-10-18 | **No sessions yet.** Signing in checks the password and shows who it is; the server doesn't remember anyone, and signing out only returns to the sign-in screen. | Sessions come with the first thing that needs to know who's asking |
+| 2026-10-18 | ~~**No sessions yet.**~~ Replaced the same day by sessions, below | |
 | 2026-10-18 | **The app's window opens at 1024×720** and a screen's panel is 540 wide, so a whole screen fits without scrolling | 720 still fits a 768-pixel register screen with the Windows taskbar |
 | 2026-10-17 | **A certificate is trusted only after the server proves to be a KVNsys Server this app can talk to.** Nothing else ever gets pinned. | A router or another device at a typed address must never become "trusted" |
 | 2026-10-17 | **The trusted-servers file is stricter than the settings file:** missing means "trusts nobody yet", but damaged means "connect to nothing until IT checks". | Quietly forgetting the pins would let an impostor be trusted as a first contact. The old KVNsys learned this one. |
@@ -47,6 +47,11 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-18 | **shadcn/ui, on Tailwind, is the base of `KVNsysUI`.** Its parts are copied into `KVNsysUI/components/ui` and from then on are our code. KVNsys's own parts (`Panel`, `TextField`, `Button`, `Notice`) are built on them, and screens use ours. More parts come in as screens need them, with Beta's component library as the checklist. | Ready-made parts that already handle the keyboard, focus and screen readers, instead of writing each one. Copied in rather than installed, so an update can't change them under us and any of them can be edited. The touch sizes stay KVNsys's: 56px boxes and buttons, 20px typing. |
 | 2026-10-18 | **shadcn's helpers are pinned like everything else:** `cn` 0.5.0, `radix-ui` 1.8.1, `class-variance-authority` 0.7.1, Tailwind 4.3.3, `tw-animate-css` 1.4.0 | `cn` is shadcn's own class-merging package, which its command-line tool now uses instead of writing a `utils.ts`. It isn't a typo. |
 | 2026-10-18 | **`KVNsysUI` is used as source:** an app imports its `.tsx` files and compiles them in its own build; `KVNsysUI`'s own build only type-checks | A shadcn part is meant to be edited where it lives, and the app's build compiles React files anyway. A separately compiled copy would be one more thing to keep in step. |
+| 2026-10-18 | **Sessions.** A sign-in hands back a pass (32 random bytes), good for 12 hours. Later requests show it as `Authorization: Bearer <pass>`; `GET /api/session` says whose it is. Signing out (`POST /api/sign-out`) cancels it, and signing out twice, or with a pass that's already gone, still counts as signed out. | Release did the same: a 32-byte token per login, removed at logout. HTTP keeps no connection open, so the pass is the sign-in. 12 hours covers a long shift. |
+| 2026-10-18 | **The server keeps passes in its memory, only as hashes, and a restart ends every session** | Nothing to clean up in the database, and nothing read out of the server's memory can be used as a pass. Registers sign in again after a restart. |
+| 2026-10-18 | **The pass stays on the app's desktop side, in memory only.** The screens are never handed it, it's never written to disk, and closing the app drops it (the server forgets it within 12 hours). Like a password, it only ever goes to the pinned server, and the request code itself refuses to send it anywhere else. | A screen that went wrong can't leak what it never had |
+| 2026-10-18 | **Protocol 3:** sessions | An updated app needs an updated server, and the protocol number is how they find out |
+| 2026-10-18 | **What sessions don't do yet**, from Release's checklist: sign-ins aren't recorded in an audit log (there isn't one yet), a pass doesn't say which register it's on (registering machines isn't built), the server can't list or cut off sessions, and switching an account off doesn't end its passes | Each comes with the step that needs it |
 
 ## Why Electron
 
@@ -89,6 +94,7 @@ column, its index, and the comments written for the browser design.
 | The refund flow | During the cashier interviews |
 | HQ ↔ branch data as numbered packages, sent over the internet when it's up and on USB with the delivery when it isn't (proposed 2026-10-16) | The partners |
 | Should pressing Sign in again clear the server's last answer? Today "Wrong username or password." stays up beside "Type your password.", and on a first connection the screen then scrolls (it did with the old styling too) (found 2026-10-18) | The partners. It's one line of the sign-in screen. |
+| Type-check the tests. Nothing runs `tsc` on them and the test projects have no Node type definitions, so a type mistake in a test goes unnoticed (found 2026-10-18) | Offered as its own task |
 
 ## How we work
 
@@ -100,6 +106,8 @@ column, its index, and the comments written for the browser design.
   structure check written for an earlier version of Phoenix passed while three of its five rules
   could never fire.
 - **A test that can't run shows as skipped, never as passed.**
+- **Assert the rule, not today's number.** A test pinned the protocol at exactly 2, and broke the
+  moment sessions rightly raised it. It now checks that sign-in came with 2 or later.
 
 ## Learned the hard way
 

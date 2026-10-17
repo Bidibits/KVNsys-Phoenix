@@ -2,9 +2,16 @@
 // requests through the bridge. The client engine runs here, not in the screens.
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { connectToServer, signIn, type SignInResult } from '@kvnsys/client';
+import { connectToServer, signIn, signOut, type SessionPass } from '@kvnsys/client';
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
-import { ConnectChannel, SavedAddressChannel, SignInChannel, type ConnectReply } from './bridge.js';
+import {
+  ConnectChannel,
+  SavedAddressChannel,
+  SignInChannel,
+  SignOutChannel,
+  type ConnectReply,
+  type SignInForScreens,
+} from './bridge.js';
 import { SettingsFile } from './settings-file.js';
 import { TrustFile } from './trust-file.js';
 
@@ -18,6 +25,13 @@ const trustFile = new TrustFile(join(app.getPath('userData'), 'trusted-servers.j
 
 /** The server this register last connected to in this run. Sign-in only ever goes there. */
 let connectedAddress: string | null = null;
+
+/**
+ * The pass from the current sign-in, and the server that gave it. It lives only here, in memory:
+ * never handed to the screens, never written to disk. Closing the app drops it, and the server
+ * forgets it within 12 hours.
+ */
+let session: { address: string; pass: SessionPass } | null = null;
 
 ipcMain.handle(SavedAddressChannel, (): string | null => settings.load().serverAddress ?? null);
 
@@ -60,7 +74,7 @@ ipcMain.handle(ConnectChannel, async (_event, typed: unknown): Promise<ConnectRe
   }
 });
 
-ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknown): Promise<SignInResult> => {
+ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknown): Promise<SignInForScreens> => {
   if (typeof username !== 'string' || typeof password !== 'string' || username.length > 100 || password.length > 200) {
     return { ok: false, reason: 'refused', message: 'Type a username and a password.' };
   }
@@ -70,7 +84,20 @@ ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknow
   const trusted = trustFile.read();
   if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
   // The password is used for this one request and kept nowhere: not logged, not stored.
-  return signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null });
+  const result = await signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null });
+  if (!result.ok) return result;
+  session = { address: connectedAddress, pass: result.session };
+  return { ok: true, user: result.user };
+});
+
+ipcMain.handle(SignOutChannel, async (): Promise<void> => {
+  if (!session) return;
+  const { address, pass } = session;
+  // Forgotten here first: whatever the server says, this register is now signed out.
+  session = null;
+  const trusted = trustFile.read();
+  const result = await signOut(address, pass, { pin: trusted.ok ? (trusted.servers[address] ?? null) : null });
+  if (!result.ok) console.error(`Couldn't tell the server about the sign-out, so the pass will end on its own: ${result.message}`);
 });
 
 function openWindow(): void {

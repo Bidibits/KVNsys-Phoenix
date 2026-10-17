@@ -4,8 +4,15 @@ import { displayName, maySignIn, PasswordHasher, UserDirectory } from '@kvnsys/c
 export const WrongCredentials = 'Wrong username or password.';
 export const SwitchedOff = 'This account is switched off. Ask a manager.';
 
+export interface SignedInPerson {
+  id: string;
+  username: string;
+  displayName: string;
+  roleCode: string;
+}
+
 export type SignInOutcome =
-  | { ok: true; user: { id: string; username: string; displayName: string; roleCode: string } }
+  | { ok: true; user: SignedInPerson }
   | { ok: false; problem: 'wrong-credentials' | 'switched-off'; message: string };
 
 /** Checks a username and password against the users in the database. */

@@ -6,7 +6,7 @@ import { request } from 'node:https';
  */
 export function httpsJson(
   url: string,
-  options: { ca: string; method?: 'GET' | 'POST'; body?: unknown },
+  options: { ca: string; method?: 'GET' | 'POST'; body?: unknown; headers?: Record<string, string> },
 ): Promise<{ status: number; body: unknown; text: string }> {
   const payload = options.body === undefined ? undefined : JSON.stringify(options.body);
   return new Promise((resolve, reject) => {
@@ -14,7 +14,10 @@ export function httpsJson(
       method: options.method ?? 'GET',
       ca: options.ca,
       agent: false,
-      headers: payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {},
+      headers: {
+        ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}),
+        ...options.headers,
+      },
     });
     req.on('error', reject);
     req.on('response', (res) => {

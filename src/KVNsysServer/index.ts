@@ -8,6 +8,8 @@ export {
   type ServerCertificate,
 } from './security/server-certificate.js';
 export { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
-export { SignIn, SwitchedOff, WrongCredentials, type SignInOutcome } from './identity/sign-in.js';
+export { SignIn, SwitchedOff, WrongCredentials, type SignedInPerson, type SignInOutcome } from './identity/sign-in.js';
+export { Sessions, SessionHours, type Session } from './identity/sessions.js';
+export { SignInEnded } from './http/session.controller.js';
 export { InstallSeed, type SeedInput, type SeedReport } from './setup/install-seed.js';
 export { readPcIdentity } from './setup/server-identity.js';
