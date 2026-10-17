@@ -4,11 +4,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { KvnsysBridge } from './bridge.js';
 
-// Must equal ConnectChannel in bridge.ts. A sandboxed preload can't import it at run time.
+// Must equal the channels in bridge.ts. A sandboxed preload can't import them at run time.
 const ConnectChannel = 'kvnsys:connect-to-server';
+const SavedAddressChannel = 'kvnsys:saved-server-address';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
+  savedServerAddress: () => ipcRenderer.invoke(SavedAddressChannel),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

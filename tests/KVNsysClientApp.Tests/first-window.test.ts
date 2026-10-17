@@ -1,20 +1,13 @@
-import { createRequire } from 'node:module';
 import type { AddressInfo } from 'node:net';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createServer, ServerVersion } from '@kvnsys/server';
-import { _electron as electron, type ElectronApplication, type Page } from 'playwright-core';
+import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
-// No trailing slash: on Windows a path ending in \ before the closing quote reads as an escaped
-// quote, and Electron is handed a broken path. That cost a debugging session.
-const appDir = fileURLToPath(new URL('../../src/KVNsysClientApp', import.meta.url));
-// The app's own copy of Electron: what a register would run.
-const electronPath = createRequire(join(appDir, 'package.json'))('electron') as string;
+import { freshDataDir, launchApp, removeDataDir } from './launch.js';
 
 describe('the first window, driven like a person would', () => {
   let server: Awaited<ReturnType<typeof createServer>>;
   let serverAddress: string;
+  let dataDir: string;
   let app: ElectronApplication;
   let window: Page;
 
@@ -23,13 +16,15 @@ describe('the first window, driven like a person would', () => {
     await server.listen(0, '127.0.0.1');
     serverAddress = `127.0.0.1:${(server.getHttpServer().address() as AddressInfo).port}`;
 
-    app = await electron.launch({ executablePath: electronPath, args: [appDir] });
+    dataDir = freshDataDir();
+    app = await launchApp(dataDir);
     window = await app.firstWindow();
   });
 
   afterAll(async () => {
     await app?.close();
     await server?.close();
+    if (dataDir) removeDataDir(dataDir);
   });
 
   async function connect(address: string) {
@@ -63,6 +58,6 @@ describe('the first window, driven like a person would', () => {
 
   it('cannot be turned into a browser: the page has no access to Node', async () => {
     expect(await window.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined');
-    expect(await window.evaluate(() => Object.keys(window.kvnsys))).toEqual(['connectToServer']);
+    expect(await window.evaluate(() => Object.keys(window.kvnsys).sort())).toEqual(['connectToServer', 'savedServerAddress']);
   });
 });

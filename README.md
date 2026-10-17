@@ -23,8 +23,9 @@ and everything a user sees, is called KVNsys.
   it says why in plain words: a bad address, nothing there, not a KVNsys Server, or a different
   update and which side to update.
 - **The first window.** KVNsys POS & Inventory opens as its own program window, with no browser
-  look. It asks for the server address and shows whether it connected. It doesn't remember the
-  address yet, and there's no sign-in.
+  look. It asks for the server address and shows whether it connected. Once it has connected,
+  it remembers the address on this PC and connects on its own the next time it opens. There's
+  no sign-in yet.
 
 Everything else is still to come. The schema (five tables and their first migration) is in
 `src/KVNsysPostgres/prisma/`.
@@ -169,7 +170,8 @@ Needs Node 24 and pnpm 10. Run from this folder:
 `pnpm install`, `pnpm build`, `pnpm db:deploy` and `pnpm seed`, in that order.
 
 The database tests make their own throwaway database and drop it afterwards, so they never touch
-an existing one. They need `KVNSYS_TEST_POSTGRES_URL` in `.env`; without it they show as
+an existing one. The app's tests do the same with its settings: each run gets a throwaway folder
+(through `KVNSYS_APP_DATA`), never this PC's real one. They need `KVNSYS_TEST_POSTGRES_URL` in `.env`; without it they show as
 skipped.
 
 Until a test project has its first test, `pnpm test` says "No test files found" for it and passes.
