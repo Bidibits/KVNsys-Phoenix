@@ -1,0 +1,15 @@
+{
+  "name": "@kvnsys/wire-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@kvnsys/wire": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
+  }
+}

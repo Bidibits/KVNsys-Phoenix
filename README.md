@@ -12,9 +12,11 @@ and everything a user sees, is called KVNsys.
 
 ## Status
 
-**Nothing is built yet.** The structure below is decided, and its folders exist under `src/` and
-`tests/`, each holding only a one-line README. `database/` holds the schema carried over so far
-(five tables and their first migration). It moves into `src/KVNsysPostgres/` when building starts.
+**No feature code yet.** The structure below is decided and set up. Each project under `src/`
+has its `package.json`, TypeScript settings and an empty entry file. Each test project under
+`tests/` is ready for tests, and the dependencies are installed. `database/` holds the schema
+carried over so far (five tables and their first migration). It moves into `src/KVNsysPostgres/`
+when building starts.
 
 ## How it runs
 
@@ -125,6 +127,20 @@ TypeScript everywhere, on Node 24 with pnpm workspaces.
 
 Folders keep their KVNsys names. Package names are lowercase (`@kvnsys/core`), because npm
 requires it.
+
+## Commands
+
+Needs Node 24 and pnpm 10. Run from this folder:
+
+| Command | Does |
+|---|---|
+| `pnpm install` | Installs every project's dependencies |
+| `pnpm build` | Compiles every project, inner ones first |
+| `pnpm test` | Runs every test project |
+
+Until a test project has its first test, `pnpm test` says "No test files found" for it and passes.
+Once every project has tests, drop `--passWithNoTests` from the test projects, so a misplaced test
+file can't pass by going unnoticed.
 
 Later, and only when they're wanted: a console face, a phone face, and more KVNsys programs
 beside POS & Inventory.

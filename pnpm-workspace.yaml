@@ -1,0 +1,12 @@
+# Every project under src/ and every test project under tests/.
+# database/ is deliberately not listed: it moves into src/KVNsysPostgres when building starts.
+packages:
+  - src/*
+  - tests/*
+
+# pnpm 10 runs no install scripts unless they are listed here.
+onlyBuiltDependencies:
+  - electron
+  - prisma
+  - "@prisma/engines"
+  - esbuild

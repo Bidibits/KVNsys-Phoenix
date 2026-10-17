@@ -1,0 +1,15 @@
+{
+  "name": "@kvnsys/server-app-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@kvnsys/server-app": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
+  }
+}
