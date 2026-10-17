@@ -48,7 +48,7 @@ export function SignInScreen({
       </Notice>
       {/* Above the fields, so it can never fall off the bottom of a short window unseen. */}
       {problem && <Notice tone="problem">{problem}</Notice>}
-      <form onSubmit={submit} noValidate className="kv-spaced">
+      <form onSubmit={submit} noValidate className="mt-4">
         <TextField
           label="Username"
           value={username}

@@ -71,6 +71,15 @@ describeWithDatabase('signing in from the real app, against a real server and da
     await window.getByText('Wrong username or password.').waitFor();
   });
 
+  it('fits a first connection plus a wrong password in the window, without scrolling', async () => {
+    // Both notices are showing, and the first-trust one is the longest. A restyle once made this
+    // scroll while every other test passed, because every message was still there.
+    expect(await window.getByText('This register now trusts this server').isVisible()).toBe(true);
+    expect(await window.getByRole('alert').isVisible()).toBe(true);
+    const page = await window.evaluate(() => ({ height: document.documentElement.scrollHeight, window: innerHeight }));
+    expect(page.height).toBeLessThanOrEqual(page.window);
+  });
+
   it('signs in with the right password, and says who', async () => {
     await signIn('admin', AdminPassword);
     // Wait for this text specifically: the sign-in screen's "Connected to…" notice is a status too.

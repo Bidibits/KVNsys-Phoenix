@@ -20,7 +20,7 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **Only a successful connect is saved.** A failed attempt never replaces the saved address, a damaged settings file counts as "nothing remembered" rather than a crash, and the file is written to a side file first and then swapped in. | A server that's switched off shouldn't make a register forget it, and a power cut mid-save shouldn't stop the app starting |
 | 2026-10-17 | **The client engine runs on the app's desktop side; the screens ask through a narrow bridge.** | The screens never cross from their own files to the server, so there are no browser cross-site rules to fight. The PC's hardware id and the server's pinned certificate belong on the desktop side anyway. And a screen that went wrong couldn't reach the PC. |
 | 2026-10-17 | **The window is an app, never a browser:** no menu bar, no opening other windows, no wandering to another page, and no Node access for the screens (Electron's sandbox) | |
-| 2026-10-17 | **Plain CSS in `KVNsysUI`** for now | No styling framework has been chosen. One stylesheet is easy to swap later. |
+| 2026-10-17 | ~~**Plain CSS in `KVNsysUI`** for now~~ Replaced on 2026-10-18 by shadcn/ui, below | No styling framework had been chosen. One stylesheet was easy to swap later, and it was. |
 | 2026-10-17 | **Playwright drives the real app in tests:** it opens the window, types, clicks and reads what appears | Only running the real window shows whether the window works |
 | 2026-10-17 | **Connecting never crashes on an expected problem.** A bad address, nothing there, not a KVNsys Server, or a protocol mismatch each comes back as a plain-words message, and a mismatch names which side to update. It gives up after 5 seconds. | A manager setting up a register needs to know what to fix, not see an error code |
 | 2026-10-17 | **The default port lives in `KVNsysWire`**, shared by client and server | So the two can't disagree about it |
@@ -44,6 +44,9 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **The guard:** dependency-cruiser checks the README's "who may use whom" table on every `pnpm build`, exactly as written, and stops the build when a rule is broken | Rules that live only on paper erode quietly. Each of its 12 rules was proven by planting a mistake for it. |
 | 2026-10-17 | **Until the first install, the baseline migration is edited in place** rather than adding a new migration for each change. After the first install, every change is a new migration. | Nothing has deployed, so there's no data a migration needs to protect. This is SCHEMA-PLAN's "one baseline". A local database built from an older baseline has to be recreated. |
 | 2026-10-17 | The lineage columns (`created_by_user`, `created_at_machine`…) are **not foreign keys** | A product made at HQ arrives at a branch carrying an HQ user's id, and that user doesn't exist in the branch's database. A foreign key would refuse every delivery. |
+| 2026-10-18 | **shadcn/ui, on Tailwind, is the base of `KVNsysUI`.** Its parts are copied into `KVNsysUI/components/ui` and from then on are our code. KVNsys's own parts (`Panel`, `TextField`, `Button`, `Notice`) are built on them, and screens use ours. More parts come in as screens need them, with Beta's component library as the checklist. | Ready-made parts that already handle the keyboard, focus and screen readers, instead of writing each one. Copied in rather than installed, so an update can't change them under us and any of them can be edited. The touch sizes stay KVNsys's: 56px boxes and buttons, 20px typing. |
+| 2026-10-18 | **shadcn's helpers are pinned like everything else:** `cn` 0.5.0, `radix-ui` 1.8.1, `class-variance-authority` 0.7.1, Tailwind 4.3.3, `tw-animate-css` 1.4.0 | `cn` is shadcn's own class-merging package, which its command-line tool now uses instead of writing a `utils.ts`. It isn't a typo. |
+| 2026-10-18 | **`KVNsysUI` is used as source:** an app imports its `.tsx` files and compiles them in its own build; `KVNsysUI`'s own build only type-checks | A shadcn part is meant to be edited where it lives, and the app's build compiles React files anyway. A separately compiled copy would be one more thing to keep in step. |
 
 ## Why Electron
 
@@ -85,6 +88,7 @@ column, its index, and the comments written for the browser design.
 | Which branch goes first, and on what date | The partners, with the branch manager |
 | The refund flow | During the cashier interviews |
 | HQ ↔ branch data as numbered packages, sent over the internet when it's up and on USB with the delivery when it isn't (proposed 2026-10-16) | The partners |
+| Should pressing Sign in again clear the server's last answer? Today "Wrong username or password." stays up beside "Type your password.", and on a first connection the screen then scrolls (it did with the old styling too) (found 2026-10-18) | The partners. It's one line of the sign-in screen. |
 
 ## How we work
 
@@ -104,8 +108,11 @@ column, its index, and the comments written for the browser design.
   confirmed by switching it back and watching the test fail.
 - **A message that exists isn't a message a person can see.** The first sign-in screen put "Wrong
   username or password." below the fold of a short window. Every test passed, because the message
-  was there; only a screenshot showed it was cut off. Errors now sit above the fields, and the
-  worst case (a first connection plus an error) is checked for scrolling.
+  was there; only a screenshot showed it was cut off. Errors now sit above the fields.
+- **A layout checked by eye isn't checked.** This file then said the worst case (a first
+  connection plus an error) was "checked for scrolling". It had only been looked at once. The
+  switch to shadcn made that screen 3px too tall and all 114 tests stayed green; screenshots
+  caught it. A test now measures it, and was made to fail once, at 684px in a 681px window.
 - **Electron's TLS is stricter than Node's.** Electron uses BoringSSL, and it won't accept a pinned
   certificate as a trust anchor unless the certificate is marked as an authority. Plain Node
   (OpenSSL) accepts it either way, so every engine test passed while the real app couldn't

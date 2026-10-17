@@ -10,6 +10,11 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@kvnsys/ui/*": [
+        "./src/KVNsysUI/*"
+      ]
+    }
   }
 }

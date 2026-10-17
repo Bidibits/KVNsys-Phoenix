@@ -8,7 +8,7 @@ import { Button, Panel } from '@kvnsys/ui';
 export function SignedInScreen({ user, onSignOut }: { user: SignedInUser; onSignOut: () => void }) {
   return (
     <Panel title="KVNsys POS & Inventory" subtitle="Selling comes next.">
-      <p className="kv-detail" role="status">
+      <p className="mb-5 text-[17px] leading-normal [&_strong]:font-semibold" role="status">
         Signed in as <strong>{user.displayName}</strong> ({user.username}, role {user.roleCode}).
       </p>
       <Button type="button" variant="secondary" onClick={onSignOut}>

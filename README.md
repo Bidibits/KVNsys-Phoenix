@@ -163,7 +163,7 @@ TypeScript everywhere, on Node 24 with pnpm workspaces.
 | `KVNsysServer` | NestJS |
 | `KVNsysPostgres` | Prisma and PostgreSQL 16 |
 | `KVNsysWire` | zod (the shape of each call, checked on both sides) |
-| `KVNsysUI`, the screens | React |
+| `KVNsysUI`, the screens | React, with shadcn/ui on Tailwind |
 | `KVNsysClientApp`, `KVNsysServerApp` | Electron |
 
 Folders keep their KVNsys names. Package names are lowercase (`@kvnsys/core`), because npm
