@@ -1,0 +1,130 @@
+# Phoenix
+
+The sixth generation of KVNsys. It builds **KVNsys POS & Inventory**, the point of sale and
+stock system for the seven-branch business, and the first KVNsys program made with web
+technology.
+
+To the people using it, it's an ordinary program: install it, double-click the icon, and it opens
+in its own window. Nothing about it looks like a website.
+
+"Phoenix" is only this generation's folder name, as `Release` was before it. Every program inside,
+and everything a user sees, is called KVNsys.
+
+## Status
+
+**Nothing is built yet.** The structure below is decided. `database/` holds the schema carried
+over so far (five tables and their first migration). It moves into `src/KVNsysPostgres/` when
+building starts.
+
+## How it runs
+
+| Where | What runs | Who starts it |
+|---|---|---|
+| The server PC at each branch, and at HQ | **KVNsys Server** and PostgreSQL | It starts with Windows, in the background. Nobody double-clicks it. |
+| Each register | **KVNsys POS & Inventory**, the desktop app | The cashier double-clicks it. It finds the branch server over the shop's own network. |
+
+A branch never needs the internet to sell.
+
+## The structure
+
+The same shape as `Release/`, nearly name for name:
+
+```
+Phoenix/
+├─ src/
+│  ├─ KVNsysCore/        the rules both sides share: prices, discounts, what's allowed
+│  ├─ KVNsysWire/        the calls between client and server, and the shape of each
+│  ├─ KVNsysPostgres/    the only place with SQL: schema, migrations, saving and loading
+│  ├─ KVNsysServer/      the server engine: answers the calls, checks permissions
+│  ├─ KVNsysServerApp/   later: a window for managing the server
+│  ├─ KVNsysClient/      the client engine: connection, sign-in, the cart. No screens.
+│  ├─ KVNsysUI/          shared screen pieces: big buttons, keypad, tables
+│  └─ KVNsysClientApp/   the desktop app cashiers double-click
+└─ tests/                one folder per project, as in Release
+```
+
+Inside each project, every business area gets its own folder: `identity`, `locations`,
+`catalog`, `inventory`, `selling`. Release's `KVNsysCore` was organised the same way. So selling
+lives in `KVNsysCore/selling`, `KVNsysServer/selling`, `KVNsysClientApp/selling`, and so on.
+
+## Who may use whom
+
+Dependencies point inward, as in Release:
+
+| Project | Group | Is | May use |
+|---|---|---|---|
+| `KVNsysCore` | Shared | The rules and records | Nothing |
+| `KVNsysWire` | Shared | The calls and their shapes | Core |
+| `KVNsysPostgres` | Backend | The only project containing SQL | Core |
+| `KVNsysServer` | Backend | The server engine. No screens | Core, Wire, Postgres |
+| `KVNsysServerApp` | Backend | The server's window (later) | Server |
+| `KVNsysClient` | Frontend | The client engine. No screens | Core, Wire |
+| `KVNsysUI` | Frontend | Shared screen pieces | Core |
+| `KVNsysClientApp` | Frontend | The desktop app | Client, UI |
+
+- **`KVNsysCore` uses nothing else:** no framework, no database, no screens.
+- **Only `KVNsysPostgres` contains SQL.**
+- **Nothing in the frontend uses `KVNsysPostgres` or `KVNsysServer`.** A register reaches the
+  database only by asking the server.
+- **Engines hold no screens; screens hold no rules.**
+
+Once there's code, an automatic check enforces these rules on every build. Each rule is proven to
+work by breaking it once on purpose.
+
+| In Release it was | Here |
+|---|---|
+| `KVNsysCore`, `KVNsysWire`, `KVNsysPostgres`, `KVNsysServer`, `KVNsysClient` | The same names |
+| `KVNsysConsoleUI` / `KVNsysWinformUI` (Beta called it `KVNsysUI`) | `KVNsysUI` |
+| `KVNsysServerConsole` / `KVNsysServerWinform` | `KVNsysServerApp` |
+| `KVNsysClientConsole` / `KVNsysClientWinform` | `KVNsysClientApp` |
+
+## Why not just a `backend/` and a `frontend/` folder?
+
+Because some things belong to both. The senior/PWD discount is one: the cashier's screen needs it
+to show the total, and the server needs it to save the sale. It's written once, in `KVNsysCore`,
+and runs on both sides. With only two folders it would be written twice, or exist on one side only.
+
+The backend/frontend picture is still there. It's the **Group** column above.
+
+## Where things go
+
+| Thing | Goes in |
+|---|---|
+| The senior/PWD discount rule | `KVNsysCore/selling` |
+| The "record a sale" call and what it carries | `KVNsysWire/selling` |
+| Checking that this cashier may ring a sale | `KVNsysServer/selling` |
+| Saving the sale to the database | `KVNsysPostgres/selling` |
+| Keeping the cart while the cashier scans | `KVNsysClient/selling` |
+| The big Pay button | `KVNsysUI` (the button) and `KVNsysClientApp/selling` (the screen it's on) |
+| Printing the receipt | `KVNsysClientApp`, whose desktop side talks to the printer |
+
+## The desktop app
+
+`KVNsysClientApp` is built with **Electron**: React screens inside a private copy of Chrome, packed
+into an ordinary Windows program with an installer and a desktop icon. It has two halves:
+
+| Half | Does |
+|---|---|
+| The desktop side | Opens the window (full screen for a till), prints receipts without a dialog, opens the cash drawer, reads the PC's hardware id, and trusts only this branch's server |
+| The screens | Everything the cashier sees, in React |
+
+Why Electron, and what it fixes compared with running in a browser:
+[`docs/decisions.md`](docs/decisions.md).
+
+## Tools
+
+TypeScript everywhere, on Node 24 with pnpm workspaces.
+
+| Project | Built with |
+|---|---|
+| `KVNsysServer` | NestJS |
+| `KVNsysPostgres` | Prisma and PostgreSQL 16 |
+| `KVNsysWire` | zod (the shape of each call, checked on both sides) |
+| `KVNsysUI`, the screens | React |
+| `KVNsysClientApp`, `KVNsysServerApp` | Electron |
+
+Folders keep their KVNsys names. Package names are lowercase (`@kvnsys/core`), because npm
+requires it.
+
+Later, and only when they're wanted: a console face, a phone face, and more KVNsys programs
+beside POS & Inventory.
