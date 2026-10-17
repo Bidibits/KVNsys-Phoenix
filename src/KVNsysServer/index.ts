@@ -1,2 +1,4 @@
-// KVNsysServer's entry point. Empty on purpose: the workspace is set up, no code is written yet.
-export {};
+// KVNsysServer: the server engine. No screens.
+export { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
+export { InstallSeed, type SeedInput, type SeedReport } from './setup/install-seed.js';
+export { readPcIdentity } from './setup/server-identity.js';

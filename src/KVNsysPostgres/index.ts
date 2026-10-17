@@ -1,2 +1,3 @@
-// KVNsysPostgres's entry point. Empty on purpose: the workspace is set up, no code is written yet.
-export {};
+// KVNsysPostgres: the only project that talks to the database (the guard enforces it).
+export { createPrismaClient, type PrismaClient } from './connection.js';
+export { PrismaSetupStore } from './setup/prisma-setup-store.js';

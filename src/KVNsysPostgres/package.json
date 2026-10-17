@@ -11,7 +11,9 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "generate": "prisma generate",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@kvnsys/core": "workspace:*",

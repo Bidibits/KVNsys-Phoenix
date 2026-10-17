@@ -1,2 +1,13 @@
-// KVNsysCore's entry point. Empty on purpose: the workspace is set up, no code is written yet.
-export {};
+// KVNsysCore: the rules and records both sides share. Uses no framework, no database
+// and no screens (the guard enforces it).
+export { newId } from './shared/ids.js';
+export type { Lineage } from './shared/lineage.js';
+export { Refusal, type RefusalKind } from './shared/refusal.js';
+
+export { Accesses, AccessDescriptions, AllAccesses, type AccessName } from './identity/accesses.js';
+export { AdminRoleCode, DefaultRoles, type RoleDefinition } from './identity/roles.js';
+export { PasswordHasher, passwordProblem } from './identity/passwords.js';
+
+export { serverMachineCode, type PcIdentity } from './locations/machines.js';
+
+export { SetupStore, type SetupTransaction } from './setup/setup-store.js';

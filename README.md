@@ -12,10 +12,10 @@ and everything a user sees, is called KVNsys.
 
 ## Status
 
-**No feature code yet.** The structure below is decided and set up. Each project under `src/`
-has its `package.json`, TypeScript settings and an empty entry file. Each test project under
-`tests/` is ready for tests, and the dependencies are installed. The schema carried over so far
-(five tables and their first migration) is in `src/KVNsysPostgres/prisma/`.
+**The first feature is in: the seed.** It's the one-time setup that makes a new install usable:
+the first shop, this PC as its first machine, three roles and the first admin. Everything else is
+still to come. The schema (five tables and their first migration) is in
+`src/KVNsysPostgres/prisma/`.
 
 ## How it runs
 
@@ -45,7 +45,8 @@ Phoenix/
 ```
 
 Inside each project, every business area gets its own folder: `identity`, `locations`,
-`catalog`, `inventory`, `selling`. Release's `KVNsysCore` was organised the same way. So selling
+`catalog`, `inventory`, `selling`. There's also `shared` for basics every area uses, and `setup`
+for the first-install seed. Release's `KVNsysCore` was organised the same way. So selling
 lives in `KVNsysCore/selling`, `KVNsysServer/selling`, `KVNsysClientApp/selling`, and so on.
 
 ## Who may use whom
@@ -143,7 +144,16 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm install` | Installs every project's dependencies |
 | `pnpm build` | Runs the guard, then compiles every project, inner ones first |
 | `pnpm check:structure` | Runs only the guard |
-| `pnpm test` | Runs every test project |
+| `pnpm test` | Runs every test project (after `pnpm build`) |
+| `pnpm db:deploy` | Creates or updates the tables in the database named in `.env` |
+| `pnpm seed` | Prepares a new install's database. Safe to run again. |
+
+**Setting up a new install:** copy `.env.example` to `.env` and fill it in. Then run
+`pnpm install`, `pnpm build`, `pnpm db:deploy` and `pnpm seed`, in that order.
+
+The database tests make their own throwaway database and drop it afterwards, so they never touch
+an existing one. They need `KVNSYS_TEST_POSTGRES_URL` in `.env`; without it they show as
+skipped.
 
 Until a test project has its first test, `pnpm test` says "No test files found" for it and passes.
 Once every project has tests, drop `--passWithNoTests` from the test projects, so a misplaced test
