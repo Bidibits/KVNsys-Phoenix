@@ -82,15 +82,21 @@ try {
     if ($Port -ne $wanted) { Write-Log "Port $wanted is taken, so this PostgreSQL uses $Port." }
   }
 
-  # 2. The programs: only what a server needs. No pgAdmin, StackBuilder, docs or headers.
+  # 2. The programs: only what a server needs. No pgAdmin, StackBuilder, docs or headers. The
+  #    server's setup file puts them in place itself, and then there's nothing to copy.
   if ($existing -and $existing.Status -eq 'Running') { Stop-Service -Name $ServiceName }
-  Write-Log "Copying PostgreSQL's programs to $InstallDir"
-  New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-  foreach ($folder in 'bin', 'lib', 'share') {
-    Copy-Item -Path (Join-Path $SourceDir $folder) -Destination $InstallDir -Recurse -Force
-  }
-  foreach ($licence in 'server_license.txt', 'commandlinetools_3rd_party_licenses.txt') {
-    Copy-Item -Path (Join-Path $SourceDir $licence) -Destination $InstallDir -Force
+  $alreadyInPlace = (Test-Path $InstallDir) -and ((Resolve-Path $SourceDir).Path.TrimEnd('\') -ieq (Resolve-Path $InstallDir).Path.TrimEnd('\'))
+  if ($alreadyInPlace) {
+    Write-Log "PostgreSQL's programs are already in place, in $InstallDir"
+  } else {
+    Write-Log "Copying PostgreSQL's programs to $InstallDir"
+    New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+    foreach ($folder in 'bin', 'lib', 'share') {
+      Copy-Item -Path (Join-Path $SourceDir $folder) -Destination $InstallDir -Recurse -Force
+    }
+    foreach ($licence in 'server_license.txt', 'commandlinetools_3rd_party_licenses.txt') {
+      Copy-Item -Path (Join-Path $SourceDir $licence) -Destination $InstallDir -Force
+    }
   }
 
   # 3. The data folder: made once, then always kept.

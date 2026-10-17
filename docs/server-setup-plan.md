@@ -1,10 +1,13 @@
 # Server setup plan: KVNsys Server Setup.exe, with PostgreSQL inside
 
-**Status (2026-10-18): part 1 of 3 is built and tested.** `scripts/postgresql/install-postgresql.ps1`
-installs KVNsys's own PostgreSQL as a Windows service, and `remove-postgresql.ps1` takes it away again.
-Both were run for real on the development PC. Not built yet:
-- part 2, wrapping this and KVNsys Server into one setup file
-- part 3, KVNsys Server starting with Windows
+**Status (2026-10-18): parts 1 and 2 of 3 are built and tested.**
+- Part 1: `scripts/postgresql/install-postgresql.ps1` installs KVNsys's own PostgreSQL as a Windows
+  service, and `remove-postgresql.ps1` takes it away again.
+- Part 2: `KVNsys Server Setup.exe` (`scripts/server-setup/kvnsys-server.iss`) wraps that and KVNsys
+  Server into one setup file.
+
+Both were run for real on the development PC. Not built yet: part 3, KVNsys Server starting with
+Windows.
 
 It's still for the partners to agree. The versions, support dates and the EDB package were checked on
 18 October 2026 (sources at the end), and the part 1 test settled the rest. See "What the part 1
@@ -157,6 +160,23 @@ The install script, run for real on the development PC next to its own PostgreSQ
   else.
 - **A bug the test caught:** the settings file's comment and the `DATABASE_URL` line came out on one
   line, so the server would never have found its database. That PowerShell trap is fixed.
+
+## What the part 2 test settled (2026-10-18)
+
+- **The setup file** is 78 MB: about 250 MB of server, PostgreSQL and runtime, compressed.
+- **A silent install as administrator** (`/VERYSILENT`) worked:
+  - It put the programs in `C:\Program Files\KVNsys`, and the script then found PostgreSQL's
+    programs already in place, so it didn't copy them again.
+  - It created the service, wrote `C:\ProgramData\KVNsys\Server\server.env`, added the desktop and
+    Start menu icons, and listed "KVNsys Server 0.1.0" in Windows' list of apps.
+  - It skipped the Visual C++ runtime, because the PC already had a newer one.
+- **KVNsys Server, started as its icon starts it,** found its settings in the new machine-wide
+  folder. It brought the old certificate over, set up its database, asked its two questions, and the
+  admin signed in.
+- **Uninstalling** removed the service, `C:\Program Files\KVNsys`, both icons and the app list entry.
+  It kept the database, the stored password, and the server's settings and certificate.
+- Not tried: installing again over the kept data. Part 1's test covered the script's reuse path,
+  which is the same.
 
 ## Building the setup file
 

@@ -44,7 +44,7 @@ and everything a user sees, is called KVNsys.
 Everything else is still to come.
 
 **For IT:**
-- The server's certificate is in `%LOCALAPPDATA%\KVNsys\Server` (or `KVNSYS_SERVER_DATA`) on the
+- The server's certificate is in `C:\ProgramData\KVNsys\Server` (or `KVNSYS_SERVER_DATA`) on the
   server PC. Back it up: if it's lost, every register has to be reset.
 - To reset a register's trust, for example after replacing the server PC, delete
   `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
@@ -188,7 +188,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's password; any other database must already be KVNsys's, or it refuses to start. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
-| `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register. None of them needs Node or pnpm on the PC that runs it. |
+| `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register, and `KVNsys Server Setup.exe` for the server PC. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
 | `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
 | `pnpm fetch:installer-parts` | Downloads what the server's setup file will carry into `vendor/`, which isn't committed: PostgreSQL 18.6 for Windows from EDB (unpacked), and Microsoft's Visual C++ runtime. Each file is checked against its recorded fingerprint. |
 
@@ -198,10 +198,17 @@ Needs Node 24 and pnpm 10. Run from this folder:
 **The installed programs.** Double-click **KVNsys Server** and it runs in its own window, showing
 the address registers use; close the window to stop it. If something's wrong, such as no
 database, it says what and waits for Enter before closing. It reads its settings from
-`server.env`, beside its certificate in `%LOCALAPPDATA%\KVNsys\Server`, written like `.env`. On
+`server.env`, beside its certificate in `C:\ProgramData\KVNsys\Server`, written like `.env`. On
 this PC, `pnpm install:here` fills that in from `.env`. Windows may ask, the first time it starts,
 whether to let it through the firewall: allow it on private networks, or other PCs can't reach it.
 Double-click **KVNsys POS & Inventory** for the app.
+
+**For the server PC:** copy `out\KVNsys Server Setup.exe` to it and double-click it. Windows asks
+once for administrator rights, because a service needs them. It installs Microsoft's Visual C++ runtime
+if the PC lacks it, its own PostgreSQL as a Windows service (port 5433, this PC only, passwords
+nobody sees), and KVNsys Server with a desktop and a Start menu icon. Its last page offers to start
+the server, which then asks its two first-start questions. Remove it from Windows' list of apps: the
+programs and the service go, and the shop's data stays in `C:\ProgramData\KVNsys`.
 
 **For a register:** copy `out\KVNsys POS & Inventory Setup.exe` to it, on a USB stick for example,
 and double-click it. It installs the app for the person signed in to Windows, asking nothing and

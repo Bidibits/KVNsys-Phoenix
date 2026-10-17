@@ -14,16 +14,21 @@ import {
 import { DefaultPort } from '@kvnsys/wire';
 import { createServer } from './http/create-server.js';
 import { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
-import { defaultServerDataDir, loadOrCreateServerCertificate } from './security/server-certificate.js';
+import { defaultServerDataDir, earlierServerDataDir, loadOrCreateServerCertificate } from './security/server-certificate.js';
 import { consoleQuestions, NoAnswer } from './setup/console-questions.js';
 import { setUpFirstShop } from './setup/first-shop.js';
 import { InstallSeed } from './setup/install-seed.js';
 import { readPcIdentity } from './setup/server-identity.js';
-import { loadServerSettings } from './setup/server-settings.js';
+import { adoptEarlierServerData, loadServerSettings } from './setup/server-settings.js';
 
 async function main(): Promise<void> {
   // The server's own folder: its certificate, and its settings file.
-  const dataDir = process.env.KVNSYS_SERVER_DATA || defaultServerDataDir();
+  const chosen = process.env.KVNSYS_SERVER_DATA;
+  const dataDir = chosen || defaultServerDataDir();
+  if (!chosen) {
+    const moved = adoptEarlierServerData(earlierServerDataDir(), dataDir);
+    if (moved.length > 0) console.log(`Brought ${moved.join(', ')} over to ${dataDir}. The originals stay where they were.`);
+  }
   const settings = loadServerSettings(dataDir);
 
   const port = Number(process.env.KVNSYS_PORT ?? DefaultPort);

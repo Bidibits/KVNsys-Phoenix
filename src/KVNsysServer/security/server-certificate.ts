@@ -17,8 +17,10 @@ export interface ServerCertificate {
   fingerprint256: string;
 }
 
-const KeyFile = 'server-key.pem';
-const CertificateFile = 'server-certificate.pem';
+export const ServerKeyFile = 'server-key.pem';
+export const ServerCertificateFile = 'server-certificate.pem';
+const KeyFile = ServerKeyFile;
+const CertificateFile = ServerCertificateFile;
 
 /**
  * Makes a new self-signed certificate. The dates are deliberately wide: a register whose clock
@@ -82,15 +84,26 @@ export async function loadOrCreateServerCertificate(dir: string): Promise<Server
 
   const made = await createServerCertificate();
   mkdirSync(dir, { recursive: true });
-  // Owner-only where the system supports it. On Windows the folder is the signed-in account's own.
+  // Owner-only where the system supports it. On Windows, the folder's permissions decide who can read it.
   writeFileSync(keyPath, made.key, { mode: 0o600 });
   writeFileSync(certPath, made.cert);
   return { ...made, created: true };
 }
 
-/** Where the server keeps its own files when KVNSYS_SERVER_DATA doesn't say otherwise. */
+/**
+ * Where the server keeps its own files when KVNSYS_SERVER_DATA doesn't say otherwise. On Windows
+ * it's machine-wide, C:\ProgramData\KVNsys\Server: a server belongs to the PC, not to whoever is
+ * signed in, and it has to be found in the same place once it runs as a Windows service.
+ */
 export function defaultServerDataDir(): string {
   return process.platform === 'win32'
-    ? join(process.env.LOCALAPPDATA ?? join(homedir(), 'AppData', 'Local'), 'KVNsys', 'Server')
+    ? join(process.env.ProgramData ?? 'C:\ProgramData', 'KVNsys', 'Server')
     : join(homedir(), '.kvnsys', 'server');
+}
+
+/** Where earlier versions kept them on Windows: the signed-in account's own folder. */
+export function earlierServerDataDir(): string | null {
+  return process.platform === 'win32'
+    ? join(process.env.LOCALAPPDATA ?? join(homedir(), 'AppData', 'Local'), 'KVNsys', 'Server')
+    : null;
 }

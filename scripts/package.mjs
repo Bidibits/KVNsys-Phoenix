@@ -3,6 +3,7 @@
 //   out/KVNsys POS & Inventory/            the app for each register: Electron, with its own Chrome and Node
 //   out/KVNsys POS & Inventory Setup.exe   that app as one setup file, to carry to a register
 //   out/KVNsys Server/                     the server: KVNsys Server.exe, a console program, with its own Node
+//   out/KVNsys Server Setup.exe            the server PC's setup file: that server, plus its own PostgreSQL
 //
 // None of them needs Node or pnpm on the PC it runs on. `pnpm install:here` installs the app and the
 // server on this PC.
@@ -186,10 +187,38 @@ async function packageServer() {
   return target;
 }
 
+/**
+ * The server PC's setup file, built by Inno Setup from scripts/server-setup/kvnsys-server.iss. It
+ * carries the server packageServer made, PostgreSQL and the Visual C++ runtime from vendor/, and
+ * the scripts that install PostgreSQL as a service and remove it again.
+ */
+function makeServerSetup() {
+  const candidates = [
+    process.env.ISCC,
+    join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Inno Setup 7', 'ISCC.exe'),
+    join(process.env.ProgramFiles ?? '', 'Inno Setup 7', 'ISCC.exe'),
+  ];
+  const iscc = candidates.find((path) => path && existsSync(path));
+  if (!iscc) {
+    console.log("Skipped KVNsys Server Setup.exe: Inno Setup 7 isn't installed on this PC (see the README).");
+    return null;
+  }
+  for (const needed of [join('vendor', 'postgresql', 'pgsql', 'bin', 'postgres.exe'), join('vendor', 'vc-redist', 'VC_redist.x64.exe')]) {
+    if (!existsSync(join(root, needed))) throw new Error(`${needed} is missing. Run \`pnpm fetch:installer-parts\` first.`);
+  }
+  const { version } = readJson(join(root, 'src', 'KVNsysServer', 'package.json'));
+  // No path here ends in a backslash: before a closing quote, Windows reads that as an escaped quote.
+  execFileSync(iscc, ['/Qp', `/DAppVersion=${version}`, `/O${out}`, join(root, 'scripts', 'server-setup', 'kvnsys-server.iss')], {
+    stdio: 'inherit',
+  });
+  return join(out, 'KVNsys Server Setup.exe');
+}
+
 const client = await packageClient();
-for (const made of [client, await makeClientSetup(client), await packageServer()]) {
-  if (!existsSync(made)) throw new Error(`Packaging finished but ${made} isn't there.`);
-  console.log(`Made ${made}`);
+const made = [client, await makeClientSetup(client), await packageServer(), makeServerSetup()].filter(Boolean);
+for (const path of made) {
+  if (!existsSync(path)) throw new Error(`Packaging finished but ${path} isn't there.`);
+  console.log(`Made ${path}`);
 }
 console.log('Run `pnpm install:here` to install the app and the server on this PC, with icons on the desktop.');
 console.log('A register gets the app from the setup file instead.');
