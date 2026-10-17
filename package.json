@@ -1,0 +1,24 @@
+{
+  "name": "phoenix",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "check:structure": "depcruise apps/api/src apps/pos-web/src modules/src packages/contracts/src packages/api-client/src database/src --config .dependency-cruiser.cjs",
+    "db:migrate": "pnpm --filter @phoenix/database migrate",
+    "db:deploy": "pnpm --filter @phoenix/database deploy:db",
+    "seed": "pnpm --filter @phoenix/api seed",
+    "dev:api": "pnpm --filter @phoenix/api dev",
+    "dev:pos": "pnpm --filter @phoenix/pos-web dev"
+  },
+  "devDependencies": {
+    "dependency-cruiser": "18.6.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}

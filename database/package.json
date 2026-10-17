@@ -1,0 +1,28 @@
+{
+  "name": "@phoenix/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "migrate": "prisma migrate dev",
+    "deploy:db": "prisma migrate deploy",
+    "test": "echo \"database: no tests of its own (exercised by apps/api)\""
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "dotenv": "17.2.3",
+    "prisma": "7.10.1"
+  }
+}

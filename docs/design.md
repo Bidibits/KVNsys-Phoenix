@@ -139,20 +139,29 @@ into `schema.prisma`, using `@map`/`@@map` so PostgreSQL keeps `snake_case` name
 | Add `outbox_events` | Records "this happened" in the same transaction, so nothing downstream misses or doubles it |
 | Add `receipts.client_key` (unique) | A sale retried after a dropped connection is recognised, not doubled |
 | Add a per-machine receipt counter | Sequential receipt numbers; BIR will want them |
-| `machines.machine_uuid` becomes a random device token; drop `machine_name` | A browser can't read the computer's hardware id or name (§8) |
+| Add `machines.device_token_hash` (unique). Keep `machine_uuid` and `machine_name`, but only the server PC fills them. | A browser can't read the computer's hardware id or name (§8), so a register is known by its token. The server PC *can* read both, so SCHEMA-PLAN's columns stay for it. |
 | Keep `transfer_imports`, `sales_imports`, `consolidated_sales` | Branches stay disconnected, so data moves as documents (§5) |
+
+**The eight lineage columns are not foreign keys**, on purpose. A product created at HQ arrives
+at a branch carrying the id of an HQ user and an HQ machine, and neither exists in the branch's
+database. A foreign key would refuse every delivery. KVNsysRelease made the same choice.
+
+**Built so far** (`database/prisma/schema.prisma`): `locations`, `roles`, `accesses`, `users`,
+`machines`. The PSGC codes on `locations` are nullable and not yet foreign keys, until the PSGC
+tables arrive.
 
 ## 8. Build order
 
 **First goal: the walking skeleton.** The thinnest version that goes through every layer and is
 **installed on a real branch PC**, opened from another device on the shop's Wi-Fi.
 
-| # | Build | Notes |
+| # | Build | Status |
 |---|---|---|
-| 1 | **Seed the database** | First location (HQ), the roles, the first admin, and the server PC as the first machine. PSGC address tables wait until their format is checked against the PSA list. |
-| 2 | **Machine recording (device registration)** | See below |
-| 3 | **Machine CRUD** | List, rename, move to another location, decommission, replace a device |
+| 1 | **Seed the database**: first location (HQ), the roles, the first admin, and the server PC as the first machine. PSGC address tables wait until their format is checked against the PSA list. | ✅ 2026-10-17 · `pnpm seed` |
+| 2 | **Machine recording (device registration)**, see below | ✅ 2026-10-17 · `pos-web` + `/api/devices` |
+| 3 | **Machine CRUD**: list, rename, move to another location, decommission, replace a device | Next |
 | then | Sign in → products + spreadsheet import → selling → receipt printing → close shift | The first-launch list |
+| also | Install on a real branch PC, HTTPS on the LAN, nightly backup | Still to do for the walking skeleton |
 
 ### Device registration
 
@@ -169,6 +178,28 @@ and Windows machine id. It's recorded during seeding.
 
 **If someone clears the browser's data,** the token is lost. Machine CRUD needs **"replace this
 device"**, which gives a new token to the *existing* machine row instead of creating a duplicate.
+
+**As built:**
+
+- The token is 32 random bytes in an `HttpOnly`, `SameSite=Strict` cookie, so page scripts can't
+  read it and other sites can't send it. The database keeps only its SHA-256, so a copy of the
+  `machines` table can't be turned back into a working register.
+- Browsers cap a cookie's life at **400 days**, so the server re-issues the device cookie every
+  time a register checks in. A register in daily use never expires; one switched off for over a
+  year has to be registered again.
+- The manager is **signed out automatically** once registration finishes, so a register is never
+  left signed in as a manager.
+- A register's row is stamped as created by the manager, **on the register itself**, at its
+  location.
+- Only a role holding `machines.register` can do it (Administrator and Branch manager by default,
+  not Cashier).
+
+### Sessions
+
+Sign-in gives a cookie holding the session, signed with HMAC-SHA256, valid for 12 hours. Nothing is
+stored on the server, so a restart of the branch PC doesn't sign everyone out. The trade-off: a
+session can't be cancelled before it expires. Passwords are hashed with scrypt from Node's own
+crypto (no native package to compile on a branch PC).
 
 ## 9. The first launch list
 

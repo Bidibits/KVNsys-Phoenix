@@ -1,0 +1,152 @@
+// Phoenix's schema. Source: Release/SCHEMA-PLAN.md, brought across a few tables at a time.
+//
+// Every table keeps SCHEMA-PLAN's standard column order:
+//   id · code · name · [this table's own columns] · status · description
+//   updated_by_user · updated_at_machine · updated_at_location · updated_at_date
+//   created_by_user · created_at_machine · created_at_location · created_at_date
+//
+// Names stay snake_case in PostgreSQL (@map / @@map); the fields are camelCase in code.
+//
+// The eight lineage columns are deliberately NOT foreign keys. A product created at HQ
+// travels to a branch carrying the id of an HQ user and an HQ machine, and neither of
+// those exists in the branch's database. A foreign key would refuse every delivery.
+// KVNsysRelease made the same choice.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  runtime                = "nodejs"
+  importFileExtension    = "js"
+  generatedFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A shop: HQ or a branch. Holds stock, rings sales, and owns machines.
+model Location {
+  id               String  @id @db.Uuid
+  code             String  @unique
+  name             String
+  /// PSGC codes. Nullable, and not yet foreign keys: the five PSGC tables come later,
+  /// once their format is checked against the PSA list (SCHEMA-PLAN "Still open" #1).
+  countryCode      String? @map("country_code")
+  regionCode       String? @map("region_code")
+  provinceCode     String? @map("province_code")
+  municipalityCode String? @map("municipality_code")
+  barangayCode     String? @map("barangay_code")
+  /// The street, building and barangay as written on paper.
+  address          String?
+  status           String  @default("Active")
+  description      String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  machines Machine[]
+
+  @@map("locations")
+}
+
+/// What a person is allowed to do, as a level plus named accesses.
+model Role {
+  id          String  @id @db.Uuid
+  code        String  @unique
+  name        String
+  level       Int     @default(0)
+  status      String  @default("Active")
+  description String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  accesses Access[]
+  users    User[]
+
+  @@map("roles")
+}
+
+/// One named right a role holds, such as "machines.register". A join row: no code, no name.
+model Access {
+  id          String  @id @db.Uuid
+  roleId      String  @map("role_id") @db.Uuid
+  access      String
+  description String?
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, access])
+  @@map("accesses")
+}
+
+/// A person who signs in. Has `username` where other tables have `code`.
+model User {
+  id           String  @id @db.Uuid
+  username     String  @unique
+  firstName    String  @map("first_name")
+  lastName     String  @map("last_name")
+  middleName   String? @map("middle_name")
+  /// Goes in, never comes out: checked at sign-in, never sent anywhere.
+  passwordHash String  @map("password_hash")
+  roleId       String  @map("role_id") @db.Uuid
+  status       String  @default("Active")
+  description  String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@map("users")
+}
+
+/// A register, or the server PC itself. Every row in the system records which machine wrote it.
+model Machine {
+  id              String  @id @db.Uuid
+  code            String  @unique
+  name            String
+  /// The server PC's hardware id (Windows MachineGuid). A browser cannot read one, so
+  /// this is null for every register.
+  machineUuid     String? @unique @map("machine_uuid")
+  /// The server PC's computer name, as the OS reports it. Null for registers.
+  machineName     String? @map("machine_name")
+  /// A register's identity: the SHA-256 of the random token kept in its browser cookie.
+  /// The token itself is never stored, so a copy of this table cannot impersonate a register.
+  deviceTokenHash String? @unique @map("device_token_hash")
+  locationId      String  @map("location_id") @db.Uuid
+  status          String  @default("Active")
+  description     String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@map("machines")
+}
