@@ -17,10 +17,12 @@ const serverUrl = process.env.KVNSYS_TEST_POSTGRES_URL;
 export const describeWithDatabase = serverUrl ? describe : describe.skip;
 
 /**
- * A brand-new database with every migration applied, made for one test file and dropped
- * after it. Tests never touch an existing database, so they can't damage one.
+ * A brand-new database with every migration applied (or none, with `migrate: false`), made for
+ * one test and dropped after it. Tests never touch an existing database, so they can't damage one.
  */
-export async function createThrowawayDatabase(): Promise<{ url: string; drop: () => Promise<void> }> {
+export async function createThrowawayDatabase(
+  options: { migrate?: boolean } = {},
+): Promise<{ url: string; drop: () => Promise<void> }> {
   const name = `kvnsys_test_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const admin = createPrismaClient(serverUrl!);
   await admin.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
@@ -29,13 +31,15 @@ export async function createThrowawayDatabase(): Promise<{ url: string; drop: ()
   const url = new URL(serverUrl!);
   url.pathname = `/${name}`;
 
-  const postgresDir = fileURLToPath(new URL('../../src/KVNsysPostgres/', import.meta.url));
-  const prismaCli = createRequire(`${postgresDir}package.json`).resolve('prisma/build/index.js');
-  execFileSync(process.execPath, [prismaCli, 'migrate', 'deploy'], {
-    cwd: postgresDir,
-    env: { ...process.env, DATABASE_URL: url.toString() },
-    stdio: 'pipe',
-  });
+  if (options.migrate !== false) {
+    const postgresDir = fileURLToPath(new URL('../../src/KVNsysPostgres/', import.meta.url));
+    const prismaCli = createRequire(`${postgresDir}package.json`).resolve('prisma/build/index.js');
+    execFileSync(process.execPath, [prismaCli, 'migrate', 'deploy'], {
+      cwd: postgresDir,
+      env: { ...process.env, DATABASE_URL: url.toString() },
+      stdio: 'pipe',
+    });
+  }
 
   return {
     url: url.toString(),

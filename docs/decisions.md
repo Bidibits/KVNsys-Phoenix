@@ -26,7 +26,10 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-17 | **The default port lives in `KVNsysWire`**, shared by client and server | So the two can't disagree about it |
 | 2026-10-17 | **KVNsys Server listens on port 9000** by default (`KVNSYS_PORT`), on every network address of the PC | 9000 is the port the old KVNsys used. Listening on every address is what lets registers on the shop's network reach it. |
 | 2026-10-17 | **The first call is "hello":** what the server is, its version, and its protocol number. A client and a server only talk when their protocol numbers match. | A branch that updated one side but not the other gets a clear message instead of strange errors |
-| 2026-10-17 | **Plain HTTP for now.** HTTPS, with the server's own certificate pinned by the app, comes before any shop data travels between PCs. | "Hello" carries no shop data. |
+| 2026-10-17 | **Plain HTTP for now — and HTTPS before the app sends a sign-in.** HTTPS, with the server's own certificate pinned by the app, comes before any password or shop data travels between PCs. | "Hello" carries no secrets. Sign-in exists on the server, but nothing sends a password over the network yet (only tests, on one PC). |
+| 2026-10-17 | **Sign-in answers yes or no.** Yes comes with the person's name and role; no comes with a plain reason (400 nothing typed, 401 wrong, 403 switched off). A wrong password and an unknown username get the same answer and take the same time. "Switched off" is only said once the password is right. | Sign-in mustn't help anyone guess which usernames exist |
+| 2026-10-17 | **Protocol 2:** sign-in was added | A new app needs a server that knows sign-in, and the protocol number is how they find out |
+| 2026-10-17 | **The server refuses to start unless its database has exactly the KVNsys updates it ships with.** It reads the record Prisma keeps of applied updates and compares it with its own list. It tells apart: can't reach, not set up, missing updates, and updates it doesn't recognise. | The first version only looked for a `users` table, and started happily against another program's database on this PC that had one |
 | 2026-10-17 | **The seed** creates the location, this PC as machine `<code>-SRV`, the three default roles and the first admin, all in one transaction. It's safe to run again, and it never creates a second admin. Seeded rows are stamped as written by nobody, on this PC, at this location. | A new install has no users, so nobody could sign in to create the first one |
 | 2026-10-17 | **Core describes what it needs; other projects provide it.** For example `SetupStore` and `PasswordHasher` are defined in `KVNsysCore`, provided by `KVNsysPostgres` and `KVNsysServer` | The rules never depend on the database or on how passwords are scrambled. Release did the same. |
 | 2026-10-17 | Settings use the `KVNSYS_` prefix | "Phoenix" is only the folder name |
@@ -92,5 +95,10 @@ column, its index, and the comments written for the browser design.
 - **Electron's main file opens the window with `app.whenReady().then(...)`, never a top-level
   `await app.whenReady()`.** The top-level version never finishes under Playwright. That was
   confirmed by switching it back and watching the test fail.
+- **"Is there a users table?" doesn't prove a database is yours.** Another program's database on
+  this PC had one, and the server started against it. Check the record of applied updates instead.
+- **The same failure can arrive in different shapes.** "Nothing at that port" came back as a bare
+  `ECONNREFUSED` for `localhost`, and as a sentence wrapped in Prisma's header for `127.0.0.1`.
+  Both now come out as words a person can act on.
 - **On Windows, never pass a folder path ending in `\` as a program argument.** Before the closing
   quote it reads as an escaped quote, and the program gets a broken path.

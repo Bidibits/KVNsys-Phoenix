@@ -1,0 +1,45 @@
+import { displayName, maySignIn, PasswordHasher, UserDirectory } from '@kvnsys/core';
+
+/** One answer for "no such user" and "wrong password", so sign-in can't be used to find usernames. */
+export const WrongCredentials = 'Wrong username or password.';
+export const SwitchedOff = 'This account is switched off. Ask a manager.';
+
+export type SignInOutcome =
+  | { ok: true; user: { id: string; username: string; displayName: string; roleCode: string } }
+  | { ok: false; problem: 'wrong-credentials' | 'switched-off'; message: string };
+
+/** Checks a username and password against the users in the database. */
+export class SignIn {
+  /** Checked against when the username doesn't exist, so both kinds of "no" take as long. */
+  private standIn: Promise<string> | undefined;
+
+  constructor(
+    private readonly users: UserDirectory,
+    private readonly hasher: PasswordHasher,
+  ) {}
+
+  async run(username: string, password: string): Promise<SignInOutcome> {
+    const user = await this.users.findForSignIn(username);
+    if (!user) {
+      this.standIn ??= this.hasher.hash('kvnsys-equal-time');
+      await this.hasher.verify(password, await this.standIn);
+      return { ok: false, problem: 'wrong-credentials', message: WrongCredentials };
+    }
+    if (!(await this.hasher.verify(password, user.passwordHash))) {
+      return { ok: false, problem: 'wrong-credentials', message: WrongCredentials };
+    }
+    // Only checked once the password is right, so this never tells a stranger an account exists.
+    if (!maySignIn(user)) {
+      return { ok: false, problem: 'switched-off', message: SwitchedOff };
+    }
+    return {
+      ok: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: displayName(user.firstName, user.middleName, user.lastName),
+        roleCode: user.role.code,
+      },
+    };
+  }
+}

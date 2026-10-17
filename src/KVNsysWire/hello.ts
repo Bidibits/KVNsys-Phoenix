@@ -3,9 +3,11 @@ import { z } from 'zod';
 /**
  * The version of the calls between client and server. They only talk when both have the same
  * number, so a branch that updated one but not the other gets a clear message instead of
- * strange errors. Raise it whenever a call changes shape.
+ * strange errors. Raise it whenever a call is added or changes shape.
+ *
+ * 1: hello. 2: sign-in.
  */
-export const ProtocolVersion = 1;
+export const ProtocolVersion = 2;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

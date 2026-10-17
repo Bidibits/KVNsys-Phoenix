@@ -26,6 +26,10 @@ and everything a user sees, is called KVNsys.
   look. It asks for the server address and shows whether it connected. Once it has connected,
   it remembers the address on this PC and connects on its own the next time it opens. There's
   no sign-in yet.
+- **The server can check a sign-in.** Given a username and password, it answers yes, with the
+  person's name and role, or no, with a plain reason. A wrong password and a name that doesn't
+  exist get the same answer, so nobody can use it to find usernames. The app has no sign-in
+  screen yet. **HTTPS comes first**, so passwords never cross the shop's network as plain text.
 
 Everything else is still to come. The schema (five tables and their first migration) is in
 `src/KVNsysPostgres/prisma/`.
@@ -163,7 +167,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm test` | Runs every test project (after `pnpm build`) |
 | `pnpm db:deploy` | Creates or updates the tables in the database named in `.env` |
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
-| `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it |
+| `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`), set up with `pnpm db:deploy` and `pnpm seed`, and refuses to start without it. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
 
 **Setting up a new install:** copy `.env.example` to `.env` and fill it in. Then run
