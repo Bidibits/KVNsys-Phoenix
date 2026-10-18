@@ -148,3 +148,32 @@ model Machine {
 
   @@map("machines")
 }
+
+/// Something the shop sells. HQ encodes it; later, branches receive it with the delivery.
+/// Only the launch list's columns so far. SCHEMA-PLAN's others (classification, unit, cost and
+/// the other prices, warranty, image) come with the steps that need them.
+model Product {
+  id          String  @id @db.Uuid
+  /// What staff type: PRD-0042.
+  code        String  @unique
+  /// What the scanner reads. Loose goods have none; when present it's unique.
+  barcode     String? @unique
+  /// What a person calls it: Sack of rice 25kg.
+  name        String
+  /// The shelf price in pesos, exact to the centavo: numeric, never floating point. The migration
+  /// also refuses a negative one. KVNsysCore works in whole centavos.
+  retailPrice Decimal @map("retail_price") @db.Decimal(14, 2)
+  status      String  @default("Active")
+  description String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  @@map("products")
+}

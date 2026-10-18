@@ -40,6 +40,10 @@ and everything a user sees, is called KVNsys.
   certificate the first time it starts, and keeps it. The app trusts the first certificate it meets
   at an address, and from then on refuses any other there. So a different machine answering at the
   server's address, an impostor, is turned away before anything is sent.
+- **Products, in the database.** The start of the product catalog: a product has a code (what
+  staff type), a barcode (what the scanner reads, if it has one), a name, a price and a status.
+  Prices are exact to the centavo. A code or barcode belongs to one product only, so a scan can
+  never find two. Nothing on screen yet: adding and editing products from the app comes next.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
@@ -52,8 +56,8 @@ building a screen.
   `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
   trust the next server it connects to.
 - The server prints its certificate fingerprint when it starts, so the first connection can be
-  checked against it. The schema (five tables and their first migration) is in
-`src/KVNsysPostgres/prisma/`.
+  checked against it. The schema (six tables, in two database updates) is in
+  `src/KVNsysPostgres/prisma/`.
 
 ## How it runs
 
