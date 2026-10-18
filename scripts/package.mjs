@@ -189,8 +189,8 @@ async function packageServer() {
 
 /**
  * The server PC's setup file, built by Inno Setup from scripts/server-setup/kvnsys-server.iss. It
- * carries the server packageServer made, PostgreSQL and the Visual C++ runtime from vendor/, and
- * the scripts that install PostgreSQL as a service and remove it again.
+ * carries the server packageServer made, PostgreSQL and the Visual C++ runtime from vendor/, the
+ * scripts that install PostgreSQL as a service and remove it again, and the nightly backup's.
  */
 function makeServerSetup() {
   const candidates = [

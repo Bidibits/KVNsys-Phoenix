@@ -1,6 +1,7 @@
 ; KVNsys Server Setup.exe: installs KVNsys Server and its own PostgreSQL on a shop's server PC, both as
-; Windows services that start with Windows. `pnpm package` builds it with Inno Setup 7, passing the
-; version. Paths are relative to this folder. The reasoning is in docs/server-setup-plan.md.
+; Windows services that start with Windows, and the nightly backup. `pnpm package` builds it with
+; Inno Setup 7, passing the version. Paths are relative to this folder. The reasoning is in
+; docs/server-setup-plan.md.
 
 #ifndef AppVersion
   #error Build this with pnpm package, which says which version it is.
@@ -40,10 +41,12 @@ FinishedLabelNoIcons=KVNsys Server is installed and running. It's a Windows serv
 Name: firewall; Description: "Let the shop's registers reach KVNsys Server through Windows Firewall (private networks only)"
 
 [Dirs]
-; The server's settings and certificate, and the logs. Never removed by uninstalling: they're the
-; shop's. Who may use the settings folder is set below, once the service exists.
+; The server's settings and certificate, the logs and the backups. Never removed by uninstalling:
+; they're the shop's. Who may use the settings folder is set below, once the service exists; the
+; backups folder, by install-backup-task.ps1.
 Name: "{commonappdata}\KVNsys\Server"; Flags: uninsneveruninstall
 Name: "{commonappdata}\KVNsys\Logs"; Flags: uninsneveruninstall
+Name: "{commonappdata}\KVNsys\Backups"; Flags: uninsneveruninstall
 
 [Files]
 Source: "..\..\out\KVNsys Server\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -52,6 +55,9 @@ Source: "..\..\vendor\winsw\WinSW.NET461.exe"; DestDir: "{app}"; DestName: "kvns
 Source: "kvnsys-server-service.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\postgresql\install-postgresql.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 Source: "..\postgresql\remove-postgresql.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
+Source: "..\postgresql\install-backup-task.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
+Source: "..\postgresql\backup-database.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
+Source: "..\postgresql\check-backup.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 ; PostgreSQL's programs, trimmed to what a server needs.
 Source: "..\..\vendor\postgresql\pgsql\bin\*"; DestDir: "{autopf}\KVNsys\PostgreSQL\18\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\vendor\postgresql\pgsql\lib\*"; DestDir: "{autopf}\KVNsys\PostgreSQL\18\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -61,8 +67,9 @@ Source: "..\..\vendor\postgresql\pgsql\commandlinetools_3rd_party_licenses.txt";
 Source: "..\..\vendor\vc-redist\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [UninstallRun]
-; In this order, before any file goes: the server's service, its firewall rule, then PostgreSQL's
-; service and programs. The shop's data stays.
+; In this order, before any file goes: the nightly backup's task, the server's service, its firewall
+; rule, then PostgreSQL's service and programs. The shop's data and its backups stay.
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""KVNsys Nightly Backup"" /F"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveBackupTask"
 Filename: "{app}\kvnsys-server-service.exe"; Parameters: "stop"; Flags: runhidden waituntilterminated; RunOnceId: "StopServer"
 Filename: "{app}\kvnsys-server-service.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "UninstallServer"
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""KVNsys Server"""; Flags: runhidden waituntilterminated; RunOnceId: "RemoveFirewallRule"; Tasks: firewall
@@ -252,6 +259,15 @@ begin
     if Run(Sys('net.exe'), 'start ' + ServerService) <> 0 then
       ReportFailure('starting the KVNsys Server service', ExpandConstant('{commonappdata}\KVNsys\Logs'));
   end;
+
+  { A copy of the database every night at 11 PM, or soon after the PC starts if it was off then. }
+  WizardForm.StatusLabel.Caption := 'Setting up the nightly backup...';
+  if Run(Sys('WindowsPowerShell\v1.0\powershell.exe'),
+      '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{app}\setup\install-backup-task.ps1') + '"' +
+      ' -BackupScript "' + ExpandConstant('{app}\setup\backup-database.ps1') + '"' +
+      ' -BackupDir "' + ExpandConstant('{commonappdata}\KVNsys\Backups') + '"' +
+      ' -LogFile "' + ExpandConstant('{commonappdata}\KVNsys\Logs\install-backup-task.log') + '"') <> 0 then
+    ReportFailure('setting up the nightly backup', ExpandConstant('{commonappdata}\KVNsys\Logs\install-backup-task.log'));
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

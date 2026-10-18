@@ -209,12 +209,23 @@ shop's name and an administrator's password. Then it installs:
 - Microsoft's Visual C++ runtime, if the PC lacks it
 - its own PostgreSQL (port 5433, this PC only, passwords nobody sees)
 - KVNsys Server
+- a nightly backup of the shop's database
 
 PostgreSQL and KVNsys Server both run as Windows services that start whenever the PC starts, so there's
 no window or icon to open. One option, ticked by default, lets the shop's registers reach the server
 through Windows Firewall, on private networks only. To remove it, use Windows' list of apps: the
-programs, the services and the firewall rule go, and the shop's data stays in `C:\ProgramData\KVNsys`.
-Installing again picks that data up, so the shop and its accounts are still there.
+programs, the services, the backup task and the firewall rule go, and the shop's data and backups stay
+in `C:\ProgramData\KVNsys`. Installing again picks that data up, so the shop and its accounts are still
+there.
+
+**The nightly backup.** A Windows scheduled task, "KVNsys Nightly Backup", saves a copy of the
+database to `C:\ProgramData\KVNsys\Backups` every night at 11 PM. If the PC was off at 11 PM, it makes
+the copy soon after the PC next starts. It keeps the newest 14 copies, and only Administrators can open
+them. What each night did is in `C:\ProgramData\KVNsys\Logs\backup.log`. To prove a copy can be put
+back, run `C:\Program Files\KVNsys\Server\setup\check-backup.ps1` from an administrator PowerShell. It
+restores the newest copy into a throwaway database, compares every table with the live one, and
+removes the throwaway database again. The copies are on the same PC, so they don't survive that PC
+dying; a USB copy is a later step.
 
 **For a register:** copy `out\KVNsys POS & Inventory Setup.exe` to it, on a USB stick for example,
 and double-click it. It installs the app for the person signed in to Windows, asking nothing and

@@ -1,13 +1,14 @@
 # Server setup plan: KVNsys Server Setup.exe, with PostgreSQL inside
 
-**Status (2026-10-18): all 3 parts are built and tested.**
+**Status (2026-10-18): all 3 parts are built and tested, and the nightly backup with them.**
 - Part 1: `scripts/postgresql/install-postgresql.ps1` installs KVNsys's own PostgreSQL as a Windows
   service, and `remove-postgresql.ps1` takes it away again.
 - Part 2: `KVNsys Server Setup.exe` (`scripts/server-setup/kvnsys-server.iss`) wraps that and KVNsys
   Server into one setup file.
-
 - Part 3: KVNsys Server runs as a Windows service through WinSW, and the setup asks the shop's name
   and the administrator's password on its own page.
+- The nightly backup: a scheduled task saves the database every night and keeps 14 copies, and
+  `check-backup.ps1` proves a copy can be put back. See "The nightly backup".
 
 All of it was run for real on the development PC.
 
@@ -19,9 +20,9 @@ test settled".
 
 1. Copy `KVNsys Server Setup.exe` to the branch's server PC and double-click it.
 2. Windows asks once for administrator rights. A Windows service can't be installed without them.
-3. The setup installs PostgreSQL and KVNsys Server, starts them, and opens KVNsys Server's window.
-   That window asks the two first-start questions (shop name, administrator password), which
-   already exist.
+3. On a new install, one page asks the shop's name and an administrator's password.
+4. The setup installs PostgreSQL, KVNsys Server and the nightly backup, and starts them. Both run as
+   Windows services from then on, so there's no window to open.
 
 Nothing about PostgreSQL is ever shown to anyone or asked of them.
 
@@ -69,8 +70,8 @@ Owning the steps is more work once, and fewer surprises at every branch.
   moves them to `C:\ProgramData\KVNsys\Server\`.
 - **Who can read the data.** Only PostgreSQL's service account, SYSTEM and Administrators can read
   the data folder.
-- **Backups:** nightly backups and the USB copy are their own step. The folder is planned here so
-  it's in the right place from the start.
+- **Backups:** the nightly backup writes here (see "The nightly backup"). Only Administrators and
+  SYSTEM can open the folder. The USB copy is its own later step.
 
 ## Accounts and passwords
 
@@ -112,9 +113,8 @@ writes it into the settings.
   - On its own, a PostgreSQL service logs to Windows' Event Viewer. Turn `logging_collector` on so
     the logs land as files in the data folder's `log` folder, where someone helping a branch can
     find them.
-- **KVNsys Server** becomes a service in its own later step, "starts with Windows". A Node
-  program can't answer Windows' service manager by itself, so it needs a small wrapper (WinSW is
-  the first candidate). Until then, the setup opens it the way the desktop icon does today.
+- **KVNsys Server** runs as a service through WinSW (part 3), because a Node program can't answer
+  Windows' service manager by itself.
 - **Windows Firewall.** The setup adds one inbound rule, for KVNsys Server's port (9000), on private
   networks only. There's no rule for PostgreSQL, because nothing outside the PC should reach it.
 
@@ -200,6 +200,55 @@ The install script, run for real on the development PC next to its own PostgreSQ
   first install's password. An ordinary account can't read the settings folder.
 - **Uninstalling** removed both services, the programs and the app list entry, and kept the data.
 - Not tried: the firewall option (left unticked), and a real restart of the PC.
+
+## The nightly backup (2026-10-18)
+
+- **When:** a Windows scheduled task, "KVNsys Nightly Backup", runs every night at 11 PM as SYSTEM.
+  If the PC was off at 11 PM, it runs soon after the PC next starts, and waits up to five minutes for
+  PostgreSQL to answer.
+- **What:** `backup-database.ps1` saves the whole `kvnsys` database with `pg_dump --format=custom`,
+  one file per copy, `kvnsys-<date>-<time>.dump`, in `C:\ProgramData\KVNsys\Backups`. It signs in as
+  `kvnsys` with the server's own settings, so it can read the shop's data and nothing else.
+- **Only whole copies count:** a copy is written under a temporary name, read back in full
+  (`pg_restore` to NUL), and only then given its real name. A copy cut short by a full disk or a power
+  cut never stands in for a good one.
+- **Keeping 14:** after a good copy, all but the newest 14 are deleted. A failed night deletes
+  nothing. The copy just made always stays, even if the PC's clock has gone wrong, and the log then
+  asks whether the date is right.
+- **Who can open them:** Administrators and SYSTEM only. A copy holds the whole shop, including the
+  accounts (passwords only as scrypt hashes).
+- **The record:** one line a night in `C:\ProgramData\KVNsys\Logs\backup.log`. Don't rely on Task
+  Scheduler's "last run time": after the task is re-registered (every reinstall does that), runs
+  happen without updating it.
+- **Checking a copy:** `check-backup.ps1`, from an administrator PowerShell, restores the newest copy
+  (or the one named) into a throwaway database. It compares every table with the live database, by
+  row count and a fingerprint of every row, then drops the throwaway database. Differences are normal
+  once the shop has used KVNsys since the copy; `-RequireMatch` makes them a failure, for tests.
+- **Uninstalling** removes the task and keeps the copies.
+- **Not yet:** a copy that leaves the PC (the USB copy), and a restore that replaces the live database
+  (the launch plan's week 8).
+
+## What the backup test settled (2026-10-18)
+
+- **A dry run** on the development PC, against a throwaway database on its own PostgreSQL 16 with
+  16's tools, passed all 18 checks:
+  - A copy is made and read back. A half copy fails the read-back.
+  - 14 are kept, the oldest go first, and a copy dated 2030 doesn't push out the new one.
+  - Files that aren't copies are left alone, and no password reaches a log.
+  - A fresh copy restores and matches. After a change to the live database, the check names the
+    changed table.
+- **The real test**, run once with administrator rights (21 checks, 20 passed), went through:
+  - Install: the task is registered as SYSTEM, daily at 23:00, catching up after a missed night. The
+    folder and the copies are for Administrators and SYSTEM only.
+  - Windows ran it, and the copy restored on PostgreSQL 18.6 and matched the live database row for row.
+  - Installing again replaced the task (still one), kept the copy, and a second night ran and matched
+    too, though the `kvnsys` password had changed with the reinstall.
+  - Uninstalling removed the task and both services and kept both copies. The PC was then cleaned
+    back to how it was.
+- **The one failed check was the test's, not the backup's.** The test watched Task Scheduler's "last
+  run time" to see the second run finish, and after a re-registration that time doesn't move. A
+  separate probe started a task four times: four runs, one frozen time.
+- Not tried: a night with the PC off (the catch-up after startup), and a real restart.
 
 ## Building the setup file
 
