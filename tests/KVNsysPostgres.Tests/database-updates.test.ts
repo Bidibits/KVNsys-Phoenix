@@ -58,7 +58,7 @@ describeWithDatabase("setting up an empty database without Prisma's tool", () =>
     const theirs = await createThrowawayDatabase();
     const ours = await createThrowawayDatabase({ migrate: false });
     try {
-      expect((await applyDatabaseUpdates(ours.url)).applied).toEqual(knownMigrations());
+      expect(await applyDatabaseUpdates(ours.url)).toEqual(knownMigrations());
       expect(await shapeOf(ours.url)).toEqual(await shapeOf(theirs.url));
       expect(await updateRecord(ours.url)).toEqual(await updateRecord(theirs.url));
       const db = createPrismaClient(ours.url);
@@ -77,7 +77,7 @@ describeWithDatabase("setting up an empty database without Prisma's tool", () =>
     const database = await createThrowawayDatabase({ migrate: false });
     try {
       await applyDatabaseUpdates(database.url);
-      expect(await applyDatabaseUpdates(database.url)).toEqual({ applied: [], granted: [] });
+      expect(await applyDatabaseUpdates(database.url)).toEqual([]);
     } finally {
       await database.drop();
     }
@@ -104,101 +104,6 @@ describeWithDatabase("setting up an empty database without Prisma's tool", () =>
       expect(await query(database.url, "SELECT column_name FROM information_schema.columns WHERE table_name = 'locations'")).toEqual([
         { column_name: 'note' },
       ]);
-    } finally {
-      await database.drop();
-    }
-  }, 120_000);
-});
-
-describeWithDatabase('bringing a database from an older KVNsys up to date', () => {
-  const [first, ...later] = knownMigrations();
-  /** A database as the first version of KVNsys left it: only the first update applied. */
-  async function olderDatabase() {
-    const database = await createThrowawayDatabase({ migrate: false });
-    await applyDatabaseUpdates(database.url, { migrations: [first!] });
-    return database;
-  }
-  const roleRow = (code: string) =>
-    `INSERT INTO roles (id, code, name) VALUES ('${'0199c7a0-0000-7000-8000-00000000000' + code.length}', '${code}', '${code}')`;
-
-  it("applies only the updates it's missing, and ends up exactly where Prisma's own tool would", async () => {
-    expect(later.length).toBeGreaterThan(0);
-    const theirs = await createThrowawayDatabase();
-    const ours = await olderDatabase();
-    try {
-      expect(await applyDatabaseUpdates(ours.url)).toEqual({ applied: later, granted: [] });
-      expect(await shapeOf(ours.url)).toEqual(await shapeOf(theirs.url));
-      expect(await updateRecord(ours.url)).toEqual(await updateRecord(theirs.url));
-    } finally {
-      await theirs.drop();
-      await ours.drop();
-    }
-  }, 120_000);
-
-  it('gives existing roles the rights the new updates brought in, once, and skips roles that are not there', async () => {
-    const database = await olderDatabase();
-    try {
-      await execute(database.url, roleRow('ADMIN'));
-      await execute(database.url, roleRow('CASHIER'));
-      // The cashier somehow has one already: it isn't given twice.
-      await execute(database.url, `INSERT INTO accesses (id, role_id, access) SELECT '0199c7a0-0000-7000-8000-0000000000aa', id, 'products.view' FROM roles WHERE code = 'CASHIER'`);
-      const asked: string[][] = [];
-      const rightsFor = (applied: string[]) => {
-        asked.push(applied);
-        return [
-          { roleCode: 'ADMIN', access: 'products.manage', description: 'Add and change products' },
-          { roleCode: 'CASHIER', access: 'products.view', description: 'See products' },
-          { roleCode: 'NOBODY', access: 'products.view', description: 'See products' },
-        ];
-      };
-      expect(await applyDatabaseUpdates(database.url, { rightsFor })).toEqual({
-        applied: later,
-        granted: [{ roleCode: 'ADMIN', access: 'products.manage' }],
-      });
-      expect(asked).toEqual([later]);
-      expect(
-        await query(database.url, 'SELECT r.code, a.access, a.description FROM accesses a JOIN roles r ON r.id = a.role_id ORDER BY r.code, a.access'),
-      ).toEqual([
-        { code: 'ADMIN', access: 'products.manage', description: 'Add and change products' },
-        { code: 'CASHIER', access: 'products.view', description: null },
-      ]);
-    } finally {
-      await database.drop();
-    }
-  }, 120_000);
-
-  it('lets two servers starting at once take turns: one applies, the other finds nothing to do', async () => {
-    const database = await olderDatabase();
-    try {
-      const results = await Promise.all([applyDatabaseUpdates(database.url), applyDatabaseUpdates(database.url)]);
-      expect(results.map((result) => result.applied).sort()).toEqual([[], later]);
-      expect(await query(database.url, 'SELECT migration_name FROM _prisma_migrations ORDER BY migration_name')).toEqual(
-        knownMigrations().map((migration_name) => ({ migration_name })),
-      );
-    } finally {
-      await database.drop();
-    }
-  }, 120_000);
-
-  it('refuses to go on top of an update that stopped halfway, and changes nothing', async () => {
-    const database = await olderDatabase();
-    try {
-      await execute(database.url, `INSERT INTO _prisma_migrations (id, checksum, migration_name) VALUES ('half', 'x', '${later[0]}')`);
-      await expect(applyDatabaseUpdates(database.url)).rejects.toThrow(/stopped halfway.*nothing was changed|nothing was changed.*stopped halfway/);
-      expect(await query(database.url, "SELECT to_regclass('products')::text AS table")).toEqual([{ table: null }]);
-    } finally {
-      await database.drop();
-    }
-  }, 120_000);
-
-  it("refuses a database with updates it doesn't recognise", async () => {
-    const database = await olderDatabase();
-    try {
-      await execute(
-        database.url,
-        `INSERT INTO _prisma_migrations (id, checksum, migration_name, finished_at) VALUES ('future', 'x', '29991231000000_from_the_future', now())`,
-      );
-      await expect(applyDatabaseUpdates(database.url)).rejects.toThrow(/doesn't recognise \(29991231000000_from_the_future\)/);
     } finally {
       await database.drop();
     }

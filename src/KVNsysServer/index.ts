@@ -17,5 +17,4 @@ export { readPcIdentity } from './setup/server-identity.js';
 export { adoptEarlierServerData, loadServerSettings, serverSettingsFile } from './setup/server-settings.js';
 export { answersFrom, FirstAdminUsername, FirstShopCode, setUpFirstShop } from './setup/first-shop.js';
 export { NoAnswer, type Questions } from './setup/questions.js';
-export { RightsAddedBy, RightsInFirstUpdate, rightsToGrant } from './setup/rights-added.js';
 export { consoleQuestions } from './setup/console-questions.js';

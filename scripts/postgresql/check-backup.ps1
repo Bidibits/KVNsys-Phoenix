@@ -17,9 +17,7 @@ param(
   [string] $ServerSettingsFile = (Join-Path $env:ProgramData 'KVNsys\Server\server.env'),
   [string] $SuperuserPasswordFile = (Join-Path $env:ProgramData 'KVNsys\PostgreSQL\superuser.dpapi'),
   [string] $Superuser = 'postgres',
-  # ProgramW6432 is the real Program Files even from a 32-bit PowerShell, where ProgramFiles means
-  # Program Files (x86), where KVNsys isn't.
-  [string] $InstallDir = (Join-Path $(if ($env:ProgramW6432) { $env:ProgramW6432 } else { $env:ProgramFiles }) 'KVNsys\PostgreSQL\18'),
+  [string] $InstallDir = (Join-Path $env:ProgramFiles 'KVNsys\PostgreSQL\18'),
   # Made, filled, compared and dropped again by this script. One already called this is replaced.
   [string] $CheckDatabase = 'kvnsys_backup_check',
   # Fail unless every table matches: for a test, where nothing changes between the copy and the check.

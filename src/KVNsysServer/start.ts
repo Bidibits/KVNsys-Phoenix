@@ -19,15 +19,13 @@ import { consoleQuestions } from './setup/console-questions.js';
 import { answersFrom, setUpFirstShop } from './setup/first-shop.js';
 import { InstallSeed } from './setup/install-seed.js';
 import { NoAnswer } from './setup/questions.js';
-import { rightsToGrant } from './setup/rights-added.js';
 import { readPcIdentity } from './setup/server-identity.js';
 import { adoptEarlierServerData, loadServerSettings } from './setup/server-settings.js';
 
-// `KVNsys Server.exe --set-up` is what the server's setup file runs, with administrator rights, on
-// every install. It makes and sets up the database, or brings an older one up to date. On a new
-// install it takes the shop's name and the administrator's password from KVNSYS_LOCATION_NAME and
-// KVNSYS_ADMIN_PASSWORD, which the setup's own page fills in. Then it stops without serving: the
-// Windows service does the serving.
+// `KVNsys Server.exe --set-up` is what the server's setup file runs once, with administrator rights.
+// It makes and sets up the database. On a new install it takes the shop's name and the administrator's
+// password from KVNSYS_LOCATION_NAME and KVNSYS_ADMIN_PASSWORD, which the setup's own page fills in.
+// Then it stops without serving: the Windows service does the serving.
 const setUpOnly = process.argv.includes('--set-up');
 
 // Someone is at a window that can show a message and wait for Enter. A Windows service has no window,
@@ -69,23 +67,15 @@ async function main(): Promise<void> {
   }
 
   // Refuse to start without a working database, rather than failing at the first sign-in. An
-  // empty one gets set up here, and one from an older KVNsys Server is brought up to date, so
-  // neither a new install nor an upgrade needs pnpm.
+  // empty one gets set up here, so a new install needs no pnpm.
   const db = createPrismaClient(databaseUrl);
   try {
     let check = await checkDatabase(db);
-    const empty = !check.ok && check.problem === 'not-set-up' && (await isEmptyDatabase(databaseUrl));
-    const behind = !check.ok && check.problem === 'out-of-date';
-    if (empty || behind) {
-      console.log(
-        empty
-          ? 'The database is empty, so KVNsys Server is setting it up.'
-          : `The database is missing newer KVNsys updates (${check.ok ? '' : check.detail}), so KVNsys Server is bringing it up to date.`,
-      );
+    if (!check.ok && check.problem === 'not-set-up' && (await isEmptyDatabase(databaseUrl))) {
+      console.log('The database is empty, so KVNsys Server is setting it up.');
       try {
-        const { applied, granted } = await applyDatabaseUpdates(databaseUrl, { rightsFor: rightsToGrant });
+        const applied = await applyDatabaseUpdates(databaseUrl);
         console.log(`  Applied ${applied.length} database ${applied.length === 1 ? 'update' : 'updates'}.`);
-        for (const right of granted) console.log(`  Role ${right.roleCode} now has the right ${right.access}, which came with the update.`);
       } catch (error) {
         return stop(error instanceof Error ? error.message : String(error));
       }
@@ -97,7 +87,7 @@ async function main(): Promise<void> {
         'not-set-up':
           "That database already has tables in it, and they aren't KVNsys's: it may belong to another program.\n" +
           'Give KVNsys Server an empty database of its own, or check DATABASE_URL.',
-        'out-of-date': `That database is still missing KVNsys updates (${check.detail}), though they were just applied. Check its log.`,
+        'out-of-date': `That database is missing KVNsys updates (${check.detail}). Run \`pnpm db:deploy\`.`,
         unrecognised:
           `That database has updates this server doesn't recognise (${check.detail}). ` +
           'It may belong to another program, or to a newer KVNsys Server. Check DATABASE_URL.',

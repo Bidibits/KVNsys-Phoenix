@@ -135,28 +135,6 @@ writes it into the settings.
 **A data folder that already exists is kept and used, never initialised again.** That's what makes
 reinstalling or updating safe.
 
-## Upgrading a server PC (2026-10-19)
-
-Installing a newer `KVNsys Server Setup.exe` over the old one is the upgrade. It:
-
-1. Stops both services and replaces the programs, keeping the data.
-2. Starts PostgreSQL again (the install script reuses the data folder and gives `kvnsys` a fresh password).
-3. Saves a copy of the database to the backups folder, with the nightly backup's script.
-4. Runs `KVNsys Server.exe --set-up`. That applies the database updates the shop is missing, and
-   hands the default roles the rights those updates brought in, all in one transaction.
-5. Starts KVNsys Server again.
-
-**Tested for real on 2026-10-19:**
-- **Setup files:** the setup file built before products existed was installed first, then today's
-  over it.
-- **The database:** the server saw it was behind and applied the one missing update. The roles got
-  the product rights, and a copy was saved first.
-- **Sign-in:** the old install's administrator signed in, and added and listed a product.
-- **Uninstalling** kept the data.
-- **The first run caught a bug:** PowerShell started by the setup is 32-bit, so the copy looked for
-  PostgreSQL in Program Files (x86). The setup now passes every path, and the second run passed all
-  14 checks.
-
 ## Uninstalling
 
 Uninstalling removes the programs and the services, but keeps the data folder, the settings and the

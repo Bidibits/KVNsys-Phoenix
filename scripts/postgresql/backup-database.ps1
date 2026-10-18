@@ -17,9 +17,7 @@
 param(
   [string] $ServerSettingsFile = (Join-Path $env:ProgramData 'KVNsys\Server\server.env'),
   [string] $BackupDir = (Join-Path $env:ProgramData 'KVNsys\Backups'),
-  # ProgramW6432 is the real Program Files even when a 32-bit program, such as the setup, runs this.
-  # There, ProgramFiles means Program Files (x86), where KVNsys isn't.
-  [string] $InstallDir = (Join-Path $(if ($env:ProgramW6432) { $env:ProgramW6432 } else { $env:ProgramFiles }) 'KVNsys\PostgreSQL\18'),
+  [string] $InstallDir = (Join-Path $env:ProgramFiles 'KVNsys\PostgreSQL\18'),
   [ValidateRange(1, 1000)] [int] $Keep = 14,
   [string] $LogFile = (Join-Path $env:ProgramData 'KVNsys\Logs\backup.log')
 )

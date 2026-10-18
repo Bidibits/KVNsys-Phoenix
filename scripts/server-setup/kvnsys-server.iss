@@ -221,25 +221,8 @@ begin
     Exit;
   end;
 
-  { Installing over a shop that's already here: a copy of its database first, made by the nightly
-    backup's own script, before KVNsys Server brings the database up to date. The update itself is
-    all or nothing; the copy is there in case the new version turns out to be wrong. }
-  if not IsNewShop then
-  begin
-    { Every path is handed over: PowerShell started from here runs as 32-bit, and would take
-      "Program Files" to mean Program Files (x86). }
-    WizardForm.StatusLabel.Caption := 'Saving a copy of the database before updating it...';
-    if Run(Sys('WindowsPowerShell\v1.0\powershell.exe'),
-        '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{app}\setup\backup-database.ps1') + '"' +
-        ' -InstallDir "' + ExpandConstant('{autopf}\KVNsys\PostgreSQL\18') + '"' +
-        ' -ServerSettingsFile "' + ExpandConstant('{commonappdata}\KVNsys\Server\server.env') + '"' +
-        ' -BackupDir "' + ExpandConstant('{commonappdata}\KVNsys\Backups') + '"' +
-        ' -LogFile "' + ExpandConstant('{commonappdata}\KVNsys\Logs\backup.log') + '"') <> 0 then
-      ReportFailure('saving a copy of the database before updating it', ExpandConstant('{commonappdata}\KVNsys\Logs\backup.log'));
-  end;
-
-  { KVNsys Server sets up its tables, or brings them up to date, and on a new install the shop. The
-    answers reach it in its environment for this one run, never on disk or on a command line. }
+  { KVNsys Server sets up its tables, and on a new install the shop. The answers reach it in its
+    environment for this one run, never on disk or on a command line. }
   WizardForm.StatusLabel.Caption := 'Setting up the shop...';
   SetUpLog := ExpandConstant('{commonappdata}\KVNsys\Logs\set-up.log');
   if IsNewShop then
