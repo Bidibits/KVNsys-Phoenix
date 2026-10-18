@@ -2,11 +2,27 @@
 // requests through the bridge. The client engine runs here, not in the screens.
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { connectToServer, listProducts, signIn, signOut, type ProductListResult, type SessionPass } from '@kvnsys/client';
+import {
+  connectToServer,
+  listProducts,
+  loadProductForm,
+  saveProductForm,
+  signIn,
+  signOut,
+  type ProductCallOptions,
+  type ProductForm,
+  type ProductFormResult,
+  type ProductListResult,
+  type ProductResult,
+  type ProductsProblem,
+  type SessionPass,
+} from '@kvnsys/client';
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ConnectChannel,
   ListProductsChannel,
+  ProductFormChannel,
+  SaveProductChannel,
   SavedAddressChannel,
   SignInChannel,
   SignOutChannel,
@@ -101,15 +117,54 @@ ipcMain.handle(SignOutChannel, async (): Promise<void> => {
   if (!result.ok) console.error(`Couldn't tell the server about the sign-out, so the pass will end on its own: ${result.message}`);
 });
 
-ipcMain.handle(ListProductsChannel, async (): Promise<ProductListResult> => {
+type Refused = { ok: false; reason: ProductsProblem; message: string };
+
+/**
+ * Runs a call that needs the signed-in pass, against the server that gave it. A pass the server
+ * has ended is no use any more, so it's forgotten here too.
+ */
+async function withPass<T extends { ok: true } | Refused>(
+  call: (address: string, pass: SessionPass, options: ProductCallOptions) => Promise<T>,
+): Promise<T | Refused> {
   if (!session) return { ok: false, reason: 'ended', message: 'Sign in first.' };
   const { address, pass } = session;
   const trusted = trustFile.read();
   if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
-  const result = await listProducts(address, pass, { pin: trusted.servers[address] ?? null });
-  // A pass the server has ended is no use any more, so it's forgotten here too.
-  if (!result.ok && result.reason === 'ended' && session?.pass === pass) session = null;
+  const result = await call(address, pass, { pin: trusted.servers[address] ?? null });
+  if (!result.ok && (result as Refused).reason === 'ended' && session?.pass === pass) session = null;
   return result;
+}
+
+/** A product id from the screens, or null for a new product. Anything else isn't one. */
+function asProductId(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  return typeof value === 'string' && value.length > 0 && value.length <= 100 ? value : undefined;
+}
+
+/** The form as the screens sent it: six pieces of text, none absurdly long, or nothing. */
+function asProductForm(value: unknown): ProductForm | undefined {
+  const fields = ['code', 'barcode', 'name', 'retailPrice', 'status', 'description'] as const;
+  if (typeof value !== 'object' || value === null) return undefined;
+  const form = value as Record<string, unknown>;
+  if (!fields.every((field) => typeof form[field] === 'string' && (form[field] as string).length <= 2000)) return undefined;
+  return Object.fromEntries(fields.map((field) => [field, form[field]])) as unknown as ProductForm;
+}
+
+const NotAForm: Refused = { ok: false, reason: 'refused', message: "The form didn't arrive whole. Close it and try again." };
+
+ipcMain.handle(ListProductsChannel, (): Promise<ProductListResult> => withPass(listProducts));
+
+ipcMain.handle(ProductFormChannel, async (_event, id: unknown): Promise<ProductFormResult> => {
+  const productId = asProductId(id);
+  if (productId === undefined) return NotAForm;
+  return withPass((address, pass, options) => loadProductForm(address, pass, productId, options));
+});
+
+ipcMain.handle(SaveProductChannel, async (_event, id: unknown, typed: unknown): Promise<ProductResult> => {
+  const productId = asProductId(id);
+  const form = asProductForm(typed);
+  if (productId === undefined || !form) return NotAForm;
+  return withPass((address, pass, options) => saveProductForm(address, pass, productId, form, options));
 });
 
 function openWindow(): void {

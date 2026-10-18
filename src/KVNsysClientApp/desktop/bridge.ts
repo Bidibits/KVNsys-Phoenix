@@ -1,4 +1,12 @@
-import type { ConnectResult, ProductListResult, SignedInUser, SignInResult } from '@kvnsys/client';
+import type {
+  ConnectResult,
+  ProductForm,
+  ProductFormResult,
+  ProductListResult,
+  ProductResult,
+  SignedInUser,
+  SignInResult,
+} from '@kvnsys/client';
 
 /**
  * A connect result, plus whether this PC managed to save the address for next time. It's only
@@ -27,6 +35,13 @@ export interface KvnsysBridge {
   signOut(): Promise<void>;
   /** Every product, by name, if the signed-in person may see them. Prices are whole centavos. */
   listProducts(): Promise<ProductListResult>;
+  /** The form to fill in: blank for a new product (null), or the product as the server has it now. */
+  productForm(id: string | null): Promise<ProductFormResult>;
+  /**
+   * Saves what was typed, as a new product (null) or over the one with that id. The screens send
+   * the text as typed; what it means (a price, a status) is decided here and at the server.
+   */
+  saveProduct(id: string | null, form: ProductForm): Promise<ProductResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -35,3 +50,5 @@ export const SavedAddressChannel = 'kvnsys:saved-server-address';
 export const SignInChannel = 'kvnsys:sign-in';
 export const SignOutChannel = 'kvnsys:sign-out';
 export const ListProductsChannel = 'kvnsys:list-products';
+export const ProductFormChannel = 'kvnsys:product-form';
+export const SaveProductChannel = 'kvnsys:save-product';

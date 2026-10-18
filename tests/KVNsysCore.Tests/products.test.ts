@@ -1,4 +1,15 @@
-import { checkProduct, displayPesos, isCentavos, MaxCentavos, parsePesos, pesosText, type ProductDetails } from '@kvnsys/core';
+import {
+  blankProductForm,
+  checkProduct,
+  displayPesos,
+  isCentavos,
+  MaxCentavos,
+  parsePesos,
+  pesosText,
+  productFormFor,
+  readProductForm,
+  type ProductDetails,
+} from '@kvnsys/core';
 import { describe, expect, it } from 'vitest';
 
 describe('money', () => {
@@ -110,5 +121,52 @@ describe('a product', () => {
   it('is Active or Inactive, nothing else', () => {
     expect(refusal({ status: 'Inactive' })).toBeNull();
     expect(refusal({ status: 'active' as never })?.message).toBe('A product is Active or Inactive, not "active".');
+  });
+});
+
+describe('the product form', () => {
+  const typed = { code: ' PRD-0042 ', barcode: ' ', name: 'Sack of rice 25kg', retailPrice: '1,450.5', status: 'Active', description: '' };
+  const refusalOf = (form: typeof typed) => {
+    try {
+      readProductForm(form);
+    } catch (error) {
+      return error as { kind: string; message: string };
+    }
+    return null;
+  };
+
+  it('starts a new product empty, and Active', () => {
+    expect(blankProductForm()).toEqual({ code: '', barcode: '', name: '', retailPrice: '', status: 'Active', description: '' });
+  });
+
+  it('reads what was typed into a product that meets the rules', () => {
+    expect(readProductForm(typed)).toEqual({
+      code: 'PRD-0042',
+      barcode: null,
+      name: 'Sack of rice 25kg',
+      retailPrice: 145050,
+      status: 'Active',
+      description: null,
+    });
+  });
+
+  it('shows a product for editing exactly as it reads back', () => {
+    const rice: ProductDetails = { code: 'PRD-0042', barcode: '4800016641503', name: 'Rice', retailPrice: 29, status: 'Inactive', description: 'Brown' };
+    expect(productFormFor(rice)).toEqual({ code: 'PRD-0042', barcode: '4800016641503', name: 'Rice', retailPrice: '0.29', status: 'Inactive', description: 'Brown' });
+    expect(readProductForm(productFormFor(rice))).toEqual(rice);
+  });
+
+  it('refuses a price it cannot read, and an empty one, saying how to type it', () => {
+    expect(refusalOf({ ...typed, retailPrice: '12.555' })).toMatchObject({
+      kind: 'invalid',
+      message: '"12.555" isn\'t a price. Type it in pesos, like 1450.50, with at most two decimals.',
+    });
+    expect(refusalOf({ ...typed, retailPrice: '  ' })?.message).toBe('Type the price, in pesos, like 1450.50.');
+    expect(readProductForm({ ...typed, retailPrice: '0' }).retailPrice).toBe(0);
+  });
+
+  it('refuses a status that is not one of the two, and keeps every product rule', () => {
+    expect(refusalOf({ ...typed, status: 'Gone' })?.message).toBe('A product is Active or Inactive, not "Gone".');
+    expect(refusalOf({ ...typed, name: ' ' })?.message).toBe('A product needs a name.');
   });
 });

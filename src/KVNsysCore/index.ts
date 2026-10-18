@@ -21,5 +21,12 @@ export {
   type ProductDetails,
   type ProductStatus,
 } from './catalog/products.js';
+export {
+  blankProductForm,
+  productFormFor,
+  readProductForm,
+  readRetailPrice,
+  type ProductForm,
+} from './catalog/product-form.js';
 
 export { SetupStore, type SetupTransaction } from './setup/setup-store.js';

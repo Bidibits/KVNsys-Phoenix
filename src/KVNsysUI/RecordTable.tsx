@@ -7,6 +7,8 @@ export interface Column<Row> {
   cell: (row: Row) => ReactNode;
   /** Amounts line up on the right. */
   align?: 'left' | 'right';
+  /** For a column of buttons: the heading is there for screen readers, not shown. */
+  hiddenHeading?: boolean;
 }
 
 /**
@@ -38,7 +40,7 @@ export function RecordTable<Row>({
           <TableRow className="border-0 hover:bg-transparent">
             {columns.map((column) => (
               <TableHead key={column.heading} className={cn('h-11 px-4 font-semibold', alignment(column))}>
-                {column.heading}
+                {column.hiddenHeading ? <span className="sr-only">{column.heading}</span> : column.heading}
               </TableHead>
             ))}
           </TableRow>

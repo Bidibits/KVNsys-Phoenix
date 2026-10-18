@@ -30,5 +30,6 @@ export {
   type ProductResult,
   type ProductsProblem,
 } from './catalog/products.js';
+export { loadProductForm, saveProductForm, type ProductFormResult } from './catalog/product-form.js';
 export type { SessionPass, SignedInUser } from '@kvnsys/wire';
-export type { AccessName, Product, ProductDetails, ProductStatus } from '@kvnsys/core';
+export type { AccessName, Product, ProductDetails, ProductForm, ProductStatus } from '@kvnsys/core';

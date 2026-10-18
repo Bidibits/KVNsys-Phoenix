@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Post, Put, Query } from '@nestjs/common';
 import {
   Accesses,
-  parsePesos,
   pesosText,
+  readRetailPrice,
   Refusal,
   type AccessName,
   type Lineage,
@@ -29,11 +29,12 @@ function toWire(product: Product): ProductOnWire {
 function readDetails(body: unknown): ProductDetails {
   const fields = ProductFields.safeParse(body);
   if (!fields.success) throw problem(400, "The product's details didn't arrive in a form the server understands.");
-  const retailPrice = parsePesos(fields.data.retailPrice);
-  if (retailPrice === null) {
-    throw problem(400, `"${fields.data.retailPrice}" isn't a price. Type it in pesos, like 1450.50, with at most two decimals.`);
+  try {
+    return { ...fields.data, retailPrice: readRetailPrice(fields.data.retailPrice) };
+  } catch (error) {
+    if (error instanceof Refusal) throw problem(400, error.message);
+    throw error;
   }
-  return { ...fields.data, retailPrice };
 }
 
 /** Who saved it. Which register, and so which shop, the request came from comes with recording registers. */

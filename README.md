@@ -51,9 +51,14 @@ and everything a user sees, is called KVNsys.
 - **The window frame, Home, and the products list.** Once signed in, the app shows a dark grey
   title bar (Home, the screen's name, who's signed in, Sign out) over Home: one tile per area,
   greyed out, with the reason, where the role lacks the right. The Products tile opens every
-  product in a table, with prices in pesos and statuses as coloured labels. It's read-only:
-  adding and changing products comes next. The screens follow Beta's Standard colours
-  ([`docs/design-direction.md`](docs/design-direction.md)).
+  product in a table, with prices in pesos and statuses as coloured labels. The screens follow
+  Beta's Standard colours ([`docs/design-direction.md`](docs/design-direction.md)).
+- **Adding and changing products.** Someone whose role may manage products gets Add product
+  above the list and Edit on every row. Each opens a panel from the right with the code,
+  barcode, name, price and status. Save checks it and sends it to the server, and the list
+  shows the result; a refusal says what to fix and keeps what was typed. Editing starts from
+  the product as the server has it now. A barcode scanner's Enter in the Barcode box moves on
+  to Name instead of saving.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

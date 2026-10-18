@@ -34,7 +34,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
     >
       {area === 'home' && <HomeScreen user={user} onOpen={setArea} />}
       {/* The server has already ended this pass, so there's nothing left to sign out of. */}
-      {area === 'products' && <ProductsScreen onSignInAgain={onSignedOut} />}
+      {area === 'products' && <ProductsScreen user={user} onSignInAgain={onSignedOut} />}
     </AppFrame>
   );
 }

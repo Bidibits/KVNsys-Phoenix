@@ -10,6 +10,8 @@ const SavedAddressChannel = 'kvnsys:saved-server-address';
 const SignInChannel = 'kvnsys:sign-in';
 const SignOutChannel = 'kvnsys:sign-out';
 const ListProductsChannel = 'kvnsys:list-products';
+const ProductFormChannel = 'kvnsys:product-form';
+const SaveProductChannel = 'kvnsys:save-product';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
@@ -17,6 +19,8 @@ const bridge: KvnsysBridge = {
   signIn: (username, password) => ipcRenderer.invoke(SignInChannel, username, password),
   signOut: () => ipcRenderer.invoke(SignOutChannel),
   listProducts: () => ipcRenderer.invoke(ListProductsChannel),
+  productForm: (id) => ipcRenderer.invoke(ProductFormChannel, id),
+  saveProduct: (id, form) => ipcRenderer.invoke(SaveProductChannel, id, form),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

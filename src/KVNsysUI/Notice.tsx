@@ -10,7 +10,9 @@ export function Notice({ tone, children }: { tone: 'good' | 'problem'; children:
   return (
     <Alert
       role={tone === 'problem' ? 'alert' : 'status'}
-      variant={tone === 'problem' ? 'destructive' : 'default'}
+      // Always shadcn's plain style, with the colours set here. Its "destructive" style paints the
+      // message in the theme's red, which with Beta's softer red is too faint to read on pink.
+      variant="default"
       className={cn(
         // A notice that opens the card sits under the title like a field would, without adding a gap.
         'mt-4 rounded-lg border-transparent px-4 py-3 first:mt-0',

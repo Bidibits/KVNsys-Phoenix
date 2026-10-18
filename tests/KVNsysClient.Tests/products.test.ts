@@ -7,6 +7,8 @@ import {
   findProduct,
   getProduct,
   listProducts,
+  loadProductForm,
+  saveProductForm,
   type ProductDetails,
   type ServerPin,
   type SessionPass,
@@ -129,5 +131,47 @@ describe('the product calls', () => {
     server = await fakeServer(certificate, 201, { product: { ...riceOnWire, id } });
     expect(await addProduct(server.address, pass, { ...rice, retailPrice: 12.5 }, pinned())).toMatchObject({ ok: false, reason: 'refused' });
     expect(server.received).toEqual([]);
+  });
+});
+
+describe('the product form', () => {
+  const typed = { code: 'PRD-0042', barcode: '4800016641503', name: 'Sack of rice 25kg', retailPrice: '1,450.5', status: 'Active', description: '' };
+
+  it('hands back a blank form for a new product, without asking the server', async () => {
+    server = await fakeServer(certificate, 200, {});
+    expect(await loadProductForm(server.address, pass, null, pinned())).toEqual({
+      ok: true,
+      form: { code: '', barcode: '', name: '', retailPrice: '', status: 'Active', description: '' },
+    });
+    expect(server.received).toEqual([]);
+  });
+
+  it('fetches a product afresh from the server to edit it, with its price as plain pesos', async () => {
+    server = await fakeServer(certificate, 200, { product: { ...riceOnWire, id } });
+    expect(await loadProductForm(server.address, pass, id, pinned())).toEqual({
+      ok: true,
+      form: { code: 'PRD-0042', barcode: '4800016641503', name: 'Sack of rice 25kg', retailPrice: '1450.50', status: 'Active', description: '' },
+    });
+    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual([`GET /api/products/${id}`]);
+  });
+
+  it('catches a mistake before asking the server', async () => {
+    server = await fakeServer(certificate, 201, { product: { ...riceOnWire, id } });
+    expect(await saveProductForm(server.address, pass, null, { ...typed, retailPrice: '12.555' }, pinned())).toEqual({
+      ok: false,
+      reason: 'refused',
+      message: '"12.555" isn\'t a price. Type it in pesos, like 1450.50, with at most two decimals.',
+    });
+    expect(server.received).toEqual([]);
+  });
+
+  it('adds a new product, or changes the one being edited, sending exact pesos', async () => {
+    server = await fakeServer(certificate, 201, { product: { ...riceOnWire, id } });
+    expect(await saveProductForm(server.address, pass, null, typed, pinned())).toEqual({ ok: true, product: { ...rice, id } });
+    await saveProductForm(server.address, pass, id, typed, pinned());
+    expect(server.received.map((r) => [r.method, r.url, (r.body as { retailPrice: string }).retailPrice])).toEqual([
+      ['POST', '/api/products', '1450.50'],
+      ['PUT', `/api/products/${id}`, '1450.50'],
+    ]);
   });
 });
