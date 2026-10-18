@@ -4,6 +4,9 @@ import type { SignedInPerson } from './sign-in.js';
 /** How long a pass stays good: a long shift, with room to spare. After that, the person signs in again. */
 export const SessionHours = 12;
 
+/** What a register is told when its pass is unknown, cancelled or expired. */
+export const SignInEnded = 'Your sign-in has ended. Sign in again.';
+
 export interface Session {
   user: SignedInPerson;
   startedAt: Date;

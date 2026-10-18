@@ -1,3 +1,4 @@
+import { DefaultRoles } from '@kvnsys/core';
 import { createPrismaClient, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import { InstallSeed, ScryptPasswordHasher } from '@kvnsys/server';
 import { afterAll, beforeAll, expect, it } from 'vitest';
@@ -33,12 +34,12 @@ describeWithDatabase('the seed, against a real database', () => {
     expect(await db.machine.findMany({ select: { code: true, machineName: true, machineUuid: true } })).toEqual([
       { code: 'HQ-SRV', machineName: 'TEST-SERVER', machineUuid: 'test-hardware-id' },
     ]);
+    // The rule, not today's count: each role holds exactly the rights KVNsysCore gives it.
     const roles = await db.role.findMany({ include: { accesses: true }, orderBy: { level: 'desc' } });
-    expect(roles.map((r) => [r.code, r.accesses.length])).toEqual([
-      ['ADMIN', 3],
-      ['MANAGER', 3],
-      ['CASHIER', 0],
-    ]);
+    expect(roles.map((r) => [r.code, r.accesses.map((a) => a.access).sort()])).toEqual(
+      DefaultRoles.map((role) => [role.code, [...role.accesses].sort()]),
+    );
+    expect(roles.map((r) => r.code)).toEqual(['ADMIN', 'MANAGER', 'CASHIER']);
     const admin = await db.user.findUniqueOrThrow({ where: { username: 'admin' }, include: { role: true } });
     expect(admin.role.code).toBe('ADMIN');
     expect(admin.passwordHash).toMatch(/^scrypt\$/);

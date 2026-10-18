@@ -43,7 +43,11 @@ and everything a user sees, is called KVNsys.
 - **Products, in the database.** The start of the product catalog: a product has a code (what
   staff type), a barcode (what the scanner reads, if it has one), a name, a price and a status.
   Prices are exact to the centavo. A code or barcode belongs to one product only, so a scan can
-  never find two. Nothing on screen yet: adding and editing products from the app comes next.
+  never find two.
+- **Products over the network.** A signed-in register can list, find, add and change products
+  through the server, if the person's role allows it: a cashier can look products up, a manager
+  can also add and change them. Rights are checked on every request, so taking one away, or
+  switching an account off, works at once. Nothing on screen yet: the products screen comes next.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

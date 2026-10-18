@@ -41,7 +41,7 @@ const PinMismatch = 'KVNSYS_PIN_MISMATCH';
 export function requestJson(options: {
   address: string;
   path: string;
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'PUT';
   body?: unknown;
   /** The pass from a sign-in, sent as "Authorization: Bearer". Only ever sent to a pinned server. */
   pass?: string;

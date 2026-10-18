@@ -7,6 +7,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@kvnsys/client": "workspace:*",
     "@kvnsys/core": "workspace:*",
     "@kvnsys/postgres": "workspace:*",
     "@kvnsys/server": "workspace:*",

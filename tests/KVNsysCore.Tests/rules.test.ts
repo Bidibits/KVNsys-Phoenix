@@ -16,7 +16,15 @@ describe('default roles', () => {
   });
 
   it('give a cashier no rights over machines', () => {
-    expect(DefaultRoles.find((r) => r.code === 'CASHIER')?.accesses).toEqual([]);
+    const cashier = DefaultRoles.find((r) => r.code === 'CASHIER')!;
+    expect(cashier.accesses.filter((access) => access.startsWith('machines.'))).toEqual([]);
+  });
+
+  it('let a cashier look products up, but not change them; a manager may do both', () => {
+    const accesses = (code: string) => DefaultRoles.find((r) => r.code === code)!.accesses;
+    expect(accesses('CASHIER')).toContain('products.view');
+    expect(accesses('CASHIER')).not.toContain('products.manage');
+    expect(accesses('MANAGER')).toEqual(expect.arrayContaining(['products.view', 'products.manage']));
   });
 
   it('have unique codes, and rank administrator over manager over cashier', () => {

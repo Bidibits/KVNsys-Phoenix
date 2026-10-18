@@ -1,9 +1,7 @@
 import { Controller, Get, Headers, HttpCode, HttpException, Inject, Post } from '@nestjs/common';
 import type { SessionReply, SignOutReply } from '@kvnsys/wire';
-import { Sessions } from '../identity/sessions.js';
-
-/** What a register is told when its pass is unknown, cancelled or expired. */
-export const SignInEnded = 'Your sign-in has ended. Sign in again.';
+import { SignInEnded, Sessions } from '../identity/sessions.js';
+import { bearerToken } from './problems.js';
 
 @Controller()
 export class SessionController {
@@ -29,10 +27,4 @@ export class SessionController {
     if (token) this.sessions.cancel(token);
     return { signedOut: true };
   }
-}
-
-/** The pass from an "Authorization: Bearer <token>" header, or null when there isn't one. */
-function bearerToken(header: string | undefined): string | null {
-  const match = /^Bearer (\S+)$/i.exec(header ?? '');
-  return match?.[1] ?? null;
 }

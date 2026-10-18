@@ -264,6 +264,9 @@ importers:
 
   tests/KVNsysServer.Tests:
     dependencies:
+      '@kvnsys/client':
+        specifier: workspace:*
+        version: link:../../src/KVNsysClient
       '@kvnsys/core':
         specifier: workspace:*
         version: link:../../src/KVNsysCore

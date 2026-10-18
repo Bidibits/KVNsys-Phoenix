@@ -6,8 +6,9 @@ import { z } from 'zod';
  * strange errors. Raise it whenever a call is added or changes shape.
  *
  * 1: hello. 2: sign-in. 3: sessions (sign-in hands back a pass; session check; sign-out).
+ * 4: products (list, find, get, add, change).
  */
-export const ProtocolVersion = 3;
+export const ProtocolVersion = 4;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

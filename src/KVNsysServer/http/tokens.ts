@@ -5,3 +5,6 @@ export const DatabaseClient = Symbol('DatabaseClient');
 
 /** The sign-in check, or null when there's no database to check against. */
 export const SignInOperation = Symbol('SignInOperation');
+
+/** The product catalog and the rights check in front of it, or null when there's no database. */
+export const ProductsOperation = Symbol('ProductsOperation');

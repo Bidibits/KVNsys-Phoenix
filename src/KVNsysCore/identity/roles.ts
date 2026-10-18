@@ -17,7 +17,14 @@ export const DefaultRoles: readonly RoleDefinition[] = [
     code: 'MANAGER',
     name: 'Branch manager',
     level: 50,
-    accesses: [Accesses.MachinesRegister, Accesses.MachinesView, Accesses.MachinesManage],
+    accesses: [
+      Accesses.MachinesRegister,
+      Accesses.MachinesView,
+      Accesses.MachinesManage,
+      Accesses.ProductsView,
+      Accesses.ProductsManage,
+    ],
   },
-  { code: 'CASHIER', name: 'Cashier', level: 10, accesses: [] },
+  // A cashier looks products up to sell them, but can't change a price.
+  { code: 'CASHIER', name: 'Cashier', level: 10, accesses: [Accesses.ProductsView] },
 ];

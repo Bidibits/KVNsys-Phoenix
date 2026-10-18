@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, HttpException, Inject, Post } from '@nestjs
 import { SignInRequest, type SignInReply } from '@kvnsys/wire';
 import { Sessions } from '../identity/sessions.js';
 import type { SignIn } from '../identity/sign-in.js';
+import { NoDatabase } from './problems.js';
 import { SignInOperation } from './tokens.js';
 
 const no = (message: string): SignInReply => ({ signedIn: false, message });
@@ -22,7 +23,7 @@ export class SignInController {
   async signIn(@Body() body: unknown): Promise<SignInReply> {
     const signIn = this.operation.signIn;
     if (!signIn) {
-      throw new HttpException(no("KVNsys Server isn't connected to its database. Check DATABASE_URL in its settings."), 503);
+      throw new HttpException(no(NoDatabase), 503);
     }
     const request = SignInRequest.safeParse(body);
     if (!request.success) {

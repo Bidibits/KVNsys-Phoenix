@@ -8,7 +8,7 @@ export { Refusal, type RefusalKind } from './shared/refusal.js';
 export { Accesses, AccessDescriptions, AllAccesses, type AccessName } from './identity/accesses.js';
 export { AdminRoleCode, DefaultRoles, type RoleDefinition } from './identity/roles.js';
 export { PasswordHasher, passwordProblem } from './identity/passwords.js';
-export { displayName, maySignIn, UserDirectory, type UserForSignIn } from './identity/users.js';
+export { displayName, maySignIn, UserDirectory, type UserForSignIn, type UserStanding } from './identity/users.js';
 
 export { serverMachineCode, type PcIdentity } from './locations/machines.js';
 
