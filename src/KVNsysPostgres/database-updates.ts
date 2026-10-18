@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { newId } from '@kvnsys/core';
 import pg from 'pg';
 import { knownMigrations, migrationsFolder } from './check-database.js';
 
@@ -72,26 +73,63 @@ function sqlState(error: unknown): unknown {
   return (error as { code?: unknown }).code;
 }
 
+/** A right for a role, given only if the role exists and hasn't got it already. */
+export interface RightToGrant {
+  roleCode: string;
+  access: string;
+  description: string;
+}
+
+export interface DatabaseUpdateOptions {
+  /** The updates this copy of KVNsys ships with. Tests pass fewer, to stand in for an older version. */
+  migrations?: string[];
+  /** The rights the updates just applied bring in, for roles that already exist. */
+  rightsFor?: (applied: string[]) => RightToGrant[];
+}
+
+export interface DatabaseUpdateResult {
+  /** The updates applied this time, oldest first. */
+  applied: string[];
+  /** The rights handed to existing roles this time. */
+  granted: { roleCode: string; access: string }[];
+}
+
+/** The number Prisma's own tool locks with while it applies updates, so the two never run at once. */
+const UpdateLock = 72707369;
+
 /**
  * Applies the schema updates this copy of KVNsys ships with that the database doesn't have yet,
- * oldest first, and records each one the way Prisma's own tool does, checksum and all. Returns the
- * names of the ones it applied.
+ * oldest first, and records each one the way Prisma's own tool does, checksum and all. Then it hands
+ * existing roles the rights those updates brought in (see `rightsFor`).
  *
- * It all happens in one transaction: if any update fails, none of them is applied, and a database
- * that was empty is empty again, not half set up.
+ * It all happens in one transaction: if anything fails, nothing is applied, and the database is as
+ * it was, never half updated. Two servers starting at once take turns: the second waits, then finds
+ * nothing left to do.
  */
-export async function applyDatabaseUpdates(databaseUrl: string): Promise<string[]> {
+export async function applyDatabaseUpdates(databaseUrl: string, options: DatabaseUpdateOptions = {}): Promise<DatabaseUpdateResult> {
+  const expected = options.migrations ?? knownMigrations();
   return withConnection(databaseUrl, async (client) => {
     const applied: string[] = [];
+    const granted: DatabaseUpdateResult['granted'] = [];
     await client.query('BEGIN');
     let current = '';
     try {
+      await client.query('SELECT pg_advisory_xact_lock($1)', [UpdateLock]);
       await client.query(CreateUpdateRecord);
-      const { rows } = await client.query<{ migration_name: string }>(
-        'SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL',
+      const { rows } = await client.query<{ migration_name: string; finished: boolean; rolled_back: boolean }>(
+        'SELECT migration_name, finished_at IS NOT NULL AS finished, rolled_back_at IS NOT NULL AS rolled_back FROM "_prisma_migrations"',
       );
-      const done = new Set(rows.map((row) => row.migration_name));
-      for (const name of knownMigrations().filter((n) => !done.has(n))) {
+      // Prisma's own tool can leave one of these behind. It needs a person to look at it first.
+      const halfDone = rows.filter((row) => !row.finished && !row.rolled_back).map((row) => row.migration_name);
+      if (halfDone.length > 0) {
+        throw new Error(`an earlier update (${halfDone.join(', ')}) stopped halfway, and someone needs to look at it before more go on top`);
+      }
+      const done = new Set(rows.filter((row) => row.finished && !row.rolled_back).map((row) => row.migration_name));
+      const unknown = [...done].filter((name) => !expected.includes(name));
+      if (unknown.length > 0) {
+        throw new Error(`the database has updates this KVNsys doesn't recognise (${unknown.join(', ')}); it may belong to a newer KVNsys Server`);
+      }
+      for (const name of expected.filter((n) => !done.has(n))) {
         current = name;
         const script = readFileSync(new URL(`${name}/migration.sql`, migrationsFolder()));
         // The whole file at once, as Prisma runs it. With no parameters, PostgreSQL takes it as
@@ -103,12 +141,22 @@ export async function applyDatabaseUpdates(databaseUrl: string): Promise<string[
         );
         applied.push(name);
       }
+      current = '';
+      for (const right of options.rightsFor?.(applied) ?? []) {
+        const { rowCount } = await client.query(
+          `INSERT INTO accesses (id, role_id, access, description)
+           SELECT $1, id, $2, $3 FROM roles WHERE code = $4
+           ON CONFLICT (role_id, access) DO NOTHING`,
+          [newId(), right.access, right.description, right.roleCode],
+        );
+        if (rowCount) granted.push({ roleCode: right.roleCode, access: right.access });
+      }
       await client.query('COMMIT');
-      return applied;
+      return { applied, granted };
     } catch (error) {
       await client.query('ROLLBACK');
       const reason = error instanceof Error ? error.message : String(error);
-      throw new Error(`Setting up the database failed${current ? ` at update ${current}` : ''}, so nothing was changed: ${reason}`);
+      throw new Error(`Updating the database failed${current ? ` at update ${current}` : ''}, so nothing was changed: ${reason}`);
     }
   });
 }

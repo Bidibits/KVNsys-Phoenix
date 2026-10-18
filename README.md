@@ -237,7 +237,8 @@ no window or icon to open. One option, ticked by default, lets the shop's regist
 through Windows Firewall, on private networks only. To remove it, use Windows' list of apps: the
 programs, the services, the backup task and the firewall rule go, and the shop's data and backups stay
 in `C:\ProgramData\KVNsys`. Installing again picks that data up, so the shop and its accounts are still
-there.
+there. **Installing a newer version is how a server PC is upgraded:** the setup saves a copy of the
+database first, then KVNsys Server brings the database up to date by itself.
 
 **The nightly backup.** A Windows scheduled task, "KVNsys Nightly Backup", saves a copy of the
 database to `C:\ProgramData\KVNsys\Backups` every night at 11 PM. If the PC was off at 11 PM, it makes
@@ -265,6 +266,12 @@ to create databases (PostgreSQL's own `postgres` account is). On an empty databa
 creates its tables and asks two questions, just this once: the shop's name, and a password
 for the first administrator, `admin` (typed twice, shown as stars). No pnpm is needed. A database
 that already holds someone else's tables is refused, never written into.
+
+**An older database brings itself up to date.** When KVNsys Server starts on a database from an
+earlier version, it applies the updates that database is missing, all in one transaction, so it's
+never left half updated. The default roles get the rights those updates brought in, once. A
+database with an update that stopped halfway, or with updates from a newer KVNsys, is refused, with
+the reason. `pnpm db:deploy` still works for a developer's database.
 
 The database tests make their own throwaway database and drop it afterwards, so they never touch
 an existing one. The app's tests do the same with its settings: each run gets a throwaway folder
