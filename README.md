@@ -16,8 +16,8 @@ and everything a user sees, is called KVNsys.
 - **The seed:** the one-time setup that makes a new install usable. It creates the first shop,
   this PC as its first machine, three roles and the first admin.
 - **KVNsys Server starts and answers on the shop's network.** Other PCs can ask it what it is,
-  which version it is, and which protocol it speaks. It does nothing else yet: no sign-in, no
-  screens. For now it's started by hand; starting with Windows comes later.
+  which version it is, and which protocol it speaks. On a shop's server PC it installs from one
+  setup file and starts with Windows, with a nightly backup (see "For the server PC" below).
 - **The client engine can connect to a server.** Given an address the way a person types it
   (`192.168.0.111`), it checks the server is a KVNsys Server speaking the same protocol. If not,
   it says why in plain words: a bad address, nothing there, not a KVNsys Server, or a different
@@ -41,7 +41,9 @@ and everything a user sees, is called KVNsys.
   at an address, and from then on refuses any other there. So a different machine answering at the
   server's address, an impostor, is turned away before anything is sent.
 
-Everything else is still to come.
+Everything else is still to come. How the screens will look and work, and which features come
+before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
+building a screen.
 
 **For IT:**
 - The server's certificate is in `C:\ProgramData\KVNsys\Server` (or `KVNSYS_SERVER_DATA`) on the
