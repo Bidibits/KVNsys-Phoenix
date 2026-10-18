@@ -14,6 +14,11 @@ export const SignedInUser = z.object({
   username: z.string(),
   displayName: z.string(),
   roleCode: z.string(),
+  /**
+   * The role's rights at sign-in, so a register can grey out what this person can't open. Only a
+   * courtesy: the server checks the real rights on every request.
+   */
+  rights: z.array(z.string()),
 });
 export type SignedInUser = z.infer<typeof SignedInUser>;
 

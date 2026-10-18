@@ -15,8 +15,8 @@ export class SessionController {
     if (!session) {
       throw new HttpException({ signedIn: false, message: SignInEnded } satisfies SessionReply, 401);
     }
-    const { username, displayName, roleCode } = session.user;
-    return { signedIn: true, user: { username, displayName, roleCode }, expiresAt: session.expiresAt.toISOString() };
+    const { username, displayName, roleCode, rights } = session.user;
+    return { signedIn: true, user: { username, displayName, roleCode, rights }, expiresAt: session.expiresAt.toISOString() };
   }
 
   /** Cancels the pass. Always 200: a pass that's already gone is just as signed out. */

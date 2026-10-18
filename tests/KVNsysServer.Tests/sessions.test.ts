@@ -7,6 +7,7 @@ const ana: SignedInPerson = {
   username: 'ana',
   displayName: 'Ana Cruz',
   roleCode: 'MANAGER',
+  rights: [],
 };
 
 /** A keeper whose clock the test moves by hand. */

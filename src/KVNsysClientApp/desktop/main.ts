@@ -2,10 +2,11 @@
 // requests through the bridge. The client engine runs here, not in the screens.
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { connectToServer, signIn, signOut, type SessionPass } from '@kvnsys/client';
+import { connectToServer, listProducts, signIn, signOut, type ProductListResult, type SessionPass } from '@kvnsys/client';
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ConnectChannel,
+  ListProductsChannel,
   SavedAddressChannel,
   SignInChannel,
   SignOutChannel,
@@ -100,6 +101,17 @@ ipcMain.handle(SignOutChannel, async (): Promise<void> => {
   if (!result.ok) console.error(`Couldn't tell the server about the sign-out, so the pass will end on its own: ${result.message}`);
 });
 
+ipcMain.handle(ListProductsChannel, async (): Promise<ProductListResult> => {
+  if (!session) return { ok: false, reason: 'ended', message: 'Sign in first.' };
+  const { address, pass } = session;
+  const trusted = trustFile.read();
+  if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
+  const result = await listProducts(address, pass, { pin: trusted.servers[address] ?? null });
+  // A pass the server has ended is no use any more, so it's forgotten here too.
+  if (!result.ok && result.reason === 'ended' && session?.pass === pass) session = null;
+  return result;
+});
+
 function openWindow(): void {
   const window = new BrowserWindow({
     title: AppName,
@@ -108,7 +120,8 @@ function openWindow(): void {
     minWidth: 720,
     minHeight: 520,
     show: false,
-    backgroundColor: '#eef2f0',
+    // Standard's surface grey (KVNsysUI's styles.css), so the window never flashes another colour.
+    backgroundColor: '#e0e0e0',
     webPreferences: {
       preload: fileURLToPath(new URL('./preload.cjs', import.meta.url)),
       contextIsolation: true,

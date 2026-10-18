@@ -9,7 +9,7 @@ export class PrismaUserDirectory extends UserDirectory {
   async findForSignIn(username: string): Promise<UserForSignIn | null> {
     const user = await this.db.user.findUnique({
       where: { username },
-      include: { role: { select: { code: true, status: true } } },
+      include: { role: { select: { code: true, status: true, accesses: { select: { access: true } } } } },
     });
     if (!user) return null;
     return {
@@ -20,7 +20,7 @@ export class PrismaUserDirectory extends UserDirectory {
       lastName: user.lastName,
       passwordHash: user.passwordHash,
       status: user.status,
-      role: user.role,
+      role: { code: user.role.code, status: user.role.status, accesses: user.role.accesses.map((a) => a.access) },
     };
   }
 

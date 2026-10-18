@@ -80,12 +80,10 @@ describeWithDatabase('signing in from the real app, against a real server and da
     expect(page.height).toBeLessThanOrEqual(page.window);
   });
 
-  it('signs in with the right password, and says who', async () => {
+  it('signs in with the right password, opens Home, and says who in the title bar', async () => {
     await signIn('admin', AdminPassword);
-    // Wait for this text specifically: the sign-in screen's "Connected to…" notice is a status too.
-    const who = window.getByRole('status').filter({ hasText: 'Signed in as' });
-    await who.waitFor();
-    expect(await who.textContent()).toBe('Signed in as System Administrator (admin, role ADMIN).');
+    await window.getByRole('navigation', { name: 'Areas' }).waitFor();
+    expect(await window.getByLabel('Signed in').innerText()).toBe('System Administrator\nadmin');
     // The server handed this register a pass, and is keeping exactly one.
     expect(server.get(Sessions).activeCount()).toBe(1);
   });
@@ -105,7 +103,10 @@ describeWithDatabase('signing in from the real app, against a real server and da
       (password) => (globalThis as unknown as { kvnsys: Bridge }).kvnsys.signIn('admin', password),
       AdminPassword,
     );
-    expect(reply).toEqual({ ok: true, user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' } });
+    expect(reply).toEqual({
+      ok: true,
+      user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: expect.arrayContaining(['products.view']) },
+    });
     expect(server.get(Sessions).activeCount()).toBe(1);
     await window.evaluate(() => (globalThis as unknown as { kvnsys: Bridge }).kvnsys.signOut());
     expect(server.get(Sessions).activeCount()).toBe(0);

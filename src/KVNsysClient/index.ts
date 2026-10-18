@@ -31,4 +31,4 @@ export {
   type ProductsProblem,
 } from './catalog/products.js';
 export type { SessionPass, SignedInUser } from '@kvnsys/wire';
-export type { Product, ProductDetails, ProductStatus } from '@kvnsys/core';
+export type { AccessName, Product, ProductDetails, ProductStatus } from '@kvnsys/core';

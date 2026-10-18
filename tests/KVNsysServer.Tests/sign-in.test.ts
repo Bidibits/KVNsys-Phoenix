@@ -24,7 +24,7 @@ beforeAll(async () => {
     lastName: 'Cruz',
     passwordHash: await hasher.hash('right-password'),
     status: 'Active',
-    role: { code: 'MANAGER', status: 'Active' },
+    role: { code: 'MANAGER', status: 'Active', accesses: ['products.view', 'machines.view'] },
   };
 });
 
@@ -32,7 +32,7 @@ describe('SignIn', () => {
   it('says yes to the right password, with the name and role', async () => {
     expect(await signInWith([ana]).run('ana', 'right-password')).toEqual({
       ok: true,
-      user: { id: ana.id, username: 'ana', displayName: 'Ana Cruz', roleCode: 'MANAGER' },
+      user: { id: ana.id, username: 'ana', displayName: 'Ana Cruz', roleCode: 'MANAGER', rights: ['machines.view', 'products.view'] },
     });
   });
 

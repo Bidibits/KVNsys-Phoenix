@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader } from './components/ui/
 export function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-[540px] gap-0 rounded-2xl shadow-none">
+      <Card className="w-full max-w-[540px] gap-0 rounded-lg shadow-none">
         <CardHeader className="px-8 pb-5">
           <h1 className="text-[26px] leading-tight font-semibold">{title}</h1>
           {subtitle && <CardDescription className="text-[17px]">{subtitle}</CardDescription>}

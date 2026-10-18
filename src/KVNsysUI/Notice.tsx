@@ -13,8 +13,8 @@ export function Notice({ tone, children }: { tone: 'good' | 'problem'; children:
       variant={tone === 'problem' ? 'destructive' : 'default'}
       className={cn(
         // A notice that opens the card sits under the title like a field would, without adding a gap.
-        'mt-4 rounded-xl border-transparent px-4 py-3 first:mt-0',
-        tone === 'good' ? 'bg-success text-success-foreground' : 'bg-destructive/10 text-destructive',
+        'mt-4 rounded-lg border-transparent px-4 py-3 first:mt-0',
+        tone === 'good' ? 'bg-success text-success-foreground' : 'bg-destructive/10 text-danger-ink',
       )}
     >
       <AlertDescription className="col-span-2 col-start-1 text-base leading-normal text-current">{children}</AlertDescription>

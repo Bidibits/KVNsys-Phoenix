@@ -1,4 +1,4 @@
-import type { ConnectResult, SignedInUser, SignInResult } from '@kvnsys/client';
+import type { ConnectResult, ProductListResult, SignedInUser, SignInResult } from '@kvnsys/client';
 
 /**
  * A connect result, plus whether this PC managed to save the address for next time. It's only
@@ -25,6 +25,8 @@ export interface KvnsysBridge {
   signIn(username: string, password: string): Promise<SignInForScreens>;
   /** Cancels this register's pass at the server, and forgets it here. Always ends signed out. */
   signOut(): Promise<void>;
+  /** Every product, by name, if the signed-in person may see them. Prices are whole centavos. */
+  listProducts(): Promise<ProductListResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -32,3 +34,4 @@ export const ConnectChannel = 'kvnsys:connect-to-server';
 export const SavedAddressChannel = 'kvnsys:saved-server-address';
 export const SignInChannel = 'kvnsys:sign-in';
 export const SignOutChannel = 'kvnsys:sign-out';
+export const ListProductsChannel = 'kvnsys:list-products';

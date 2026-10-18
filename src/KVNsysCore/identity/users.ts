@@ -7,7 +7,8 @@ export interface UserForSignIn {
   lastName: string;
   passwordHash: string;
   status: string;
-  role: { code: string; status: string };
+  /** The role's rights come along so a register can grey out what this person can't open. */
+  role: { code: string; status: string; accesses: string[] };
 }
 
 /**
@@ -33,6 +34,6 @@ export function displayName(first: string, middle: string | null, last: string):
 }
 
 /** Only an active user with an active role may sign in. */
-export function maySignIn(user: Pick<UserForSignIn, 'status' | 'role'>): boolean {
+export function maySignIn(user: { status: string; role: { status: string } }): boolean {
   return user.status === 'Active' && user.role.status === 'Active';
 }

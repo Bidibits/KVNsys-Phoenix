@@ -1,4 +1,4 @@
-import { checkProduct, isCentavos, MaxCentavos, parsePesos, pesosText, type ProductDetails } from '@kvnsys/core';
+import { checkProduct, displayPesos, isCentavos, MaxCentavos, parsePesos, pesosText, type ProductDetails } from '@kvnsys/core';
 import { describe, expect, it } from 'vitest';
 
 describe('money', () => {
@@ -40,6 +40,16 @@ describe('money', () => {
     for (const centavos of [0, 1, 99, 100, 12345, MaxCentavos]) expect(parsePesos(pesosText(centavos))).toBe(centavos);
     expect(() => pesosText(1.5)).toThrow();
     expect(() => pesosText(-100)).toThrow();
+  });
+
+  it('shows pesos the way a person reads them, with the peso sign and thousands commas', () => {
+    expect(displayPesos(0)).toBe('₱0.00');
+    expect(displayPesos(29)).toBe('₱0.29');
+    expect(displayPesos(99999)).toBe('₱999.99');
+    expect(displayPesos(100000)).toBe('₱1,000.00');
+    expect(displayPesos(145050)).toBe('₱1,450.50');
+    expect(displayPesos(123456789)).toBe('₱1,234,567.89');
+    expect(displayPesos(MaxCentavos)).toBe('₱999,999,999,999.99');
   });
 });
 

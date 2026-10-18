@@ -34,10 +34,10 @@ export class SignInController {
       throw new HttpException(no(outcome.message), outcome.problem === 'switched-off' ? 403 : 401);
     }
     const pass = this.sessions.start(outcome.user);
-    const { username, displayName, roleCode } = outcome.user;
+    const { username, displayName, roleCode, rights } = outcome.user;
     return {
       signedIn: true,
-      user: { username, displayName, roleCode },
+      user: { username, displayName, roleCode, rights },
       session: { token: pass.token, expiresAt: pass.expiresAt.toISOString() },
     };
   }

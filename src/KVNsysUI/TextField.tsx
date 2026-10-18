@@ -22,10 +22,10 @@ export function TextField({ label, error, ...input }: Props) {
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className="h-14 rounded-xl px-4 text-xl md:text-xl"
+        className="h-14 rounded-lg bg-field px-4 text-xl md:text-xl"
       />
       {error && (
-        <p id={errorId} className="text-[15px] text-destructive">
+        <p id={errorId} className="text-[15px] text-danger-ink">
           {error}
         </p>
       )}

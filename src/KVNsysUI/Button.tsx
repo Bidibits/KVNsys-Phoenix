@@ -14,7 +14,7 @@ export function Button({ className, variant = 'primary', ...button }: Props) {
       {...button}
       variant={variant === 'primary' ? 'default' : 'outline'}
       className={cn(
-        'h-14 w-full rounded-xl text-[19px] font-semibold',
+        'h-14 w-full rounded-lg text-[19px] font-semibold',
         variant === 'secondary' && 'mt-3 text-secondary-foreground',
         className,
       )}

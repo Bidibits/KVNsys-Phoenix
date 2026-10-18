@@ -31,3 +31,9 @@ export function pesosText(centavos: number): string {
   if (!isCentavos(centavos)) throw new RangeError(`${centavos} isn't a whole, non-negative number of centavos.`);
   return `${Math.trunc(centavos / 100)}.${String(centavos % 100).padStart(2, '0')}`;
 }
+
+/** Centavos the way a person reads them on a screen or a receipt: 123450 is "₱1,234.50". */
+export function displayPesos(centavos: number): string {
+  const [pesos, fraction] = pesosText(centavos).split('.') as [string, string];
+  return `₱${pesos.replace(/\B(?=(\d{3})+$)/g, ',')}.${fraction}`;
+}

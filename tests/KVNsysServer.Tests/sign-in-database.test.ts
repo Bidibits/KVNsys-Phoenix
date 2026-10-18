@@ -1,5 +1,6 @@
 import type { AddressInfo } from 'node:net';
 import type { INestApplication } from '@nestjs/common';
+import { AllAccesses } from '@kvnsys/core';
 import { checkDatabase, createPrismaClient, knownMigrations, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import {
   createServer,
@@ -77,7 +78,7 @@ describeWithDatabase('sign-in and sessions, over HTTP, against a real database',
       status: 200,
       reply: {
         signedIn: true,
-        user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' },
+        user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: [...AllAccesses].sort() },
         session: { token: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/), expiresAt: expect.any(String) },
       },
     });

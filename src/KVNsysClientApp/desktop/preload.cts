@@ -9,12 +9,14 @@ const ConnectChannel = 'kvnsys:connect-to-server';
 const SavedAddressChannel = 'kvnsys:saved-server-address';
 const SignInChannel = 'kvnsys:sign-in';
 const SignOutChannel = 'kvnsys:sign-out';
+const ListProductsChannel = 'kvnsys:list-products';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
   savedServerAddress: () => ipcRenderer.invoke(SavedAddressChannel),
   signIn: (username, password) => ipcRenderer.invoke(SignInChannel, username, password),
   signOut: () => ipcRenderer.invoke(SignOutChannel),
+  listProducts: () => ipcRenderer.invoke(ListProductsChannel),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

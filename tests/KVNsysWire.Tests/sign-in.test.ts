@@ -11,7 +11,7 @@ import {
 } from '@kvnsys/wire';
 import { describe, expect, it } from 'vitest';
 
-const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' };
+const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'] };
 const session = { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' };
 
 describe('the sign-in call', () => {

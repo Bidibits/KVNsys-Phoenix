@@ -204,7 +204,7 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Products (list, form, search) | Products with codes, prices, classification and images | 🟢 Code (barcode), name, price, status, and **importing the product list from a spreadsheet**, since nobody can type thousands of items before launch · ⏭ classification, images, a search screen |
+| Products (list, form, search) | Products with codes, prices, classification and images | ✅ The list, read-only (2026-10-18) · 🟢 the form: code, barcode, name, price, status, and **importing the product list from a spreadsheet**, since nobody can type thousands of items before launch · ⏭ classification, images, a search screen |
 | Brands, Categories, Manufacturers, Suppliers (list, form, search each) | The classification lists | ⏭ |
 | Affiliations | Links between them, so picking a brand narrows the manufacturers, then the suppliers, then the categories | ⏭ |
 | Markup Manager | A markup rule per category, brand, supplier or manufacturer | ⏭ |
@@ -223,10 +223,10 @@ Key:
 
 | Feature | Phoenix |
 |---|---|
-| One window with the top bar, Home tiles, and Back, Forward and Home | 🟢 It's the frame everything else sits in |
-| A list, form and search for each table, built from one description | 🟢 The list and form, and a simple search box · ⏭ Advance Search |
+| One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · 🟢 Back and Forward, search, the register's name |
+| A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18) · 🟢 the form, a simple search box, and building them from one description · ⏭ Advance Search |
 | Pop-up notices and themed dialogs | 🟢 |
-| Light theme (Standard) | 🟢 · ⏭ dark theme |
+| Light theme (Standard) | ✅ (2026-10-18) · ⏭ dark theme |
 | Per-person table settings (columns, stripes, sort) | ⏭ |
 | Forms in their own window (Ctrl+click) | ⏭ |
 

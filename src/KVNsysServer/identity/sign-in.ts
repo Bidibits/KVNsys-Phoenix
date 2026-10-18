@@ -9,6 +9,11 @@ export interface SignedInPerson {
   username: string;
   displayName: string;
   roleCode: string;
+  /**
+   * The role's rights as they were at sign-in, for the register to grey out what this person
+   * can't open. The server never trusts this copy: every request re-reads the real ones.
+   */
+  rights: string[];
 }
 
 export type SignInOutcome =
@@ -46,6 +51,7 @@ export class SignIn {
         username: user.username,
         displayName: displayName(user.firstName, user.middleName, user.lastName),
         roleCode: user.role.code,
+        rights: [...user.role.accesses].sort(),
       },
     };
   }

@@ -1,5 +1,5 @@
 /* KVNsys's look, shared by every screen: Tailwind, with shadcn's colour slots filled in with
-   KVNsys's own greens. An app imports this once. */
+   Beta's Standard theme (docs/design-direction.md). An app imports this once. */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -9,29 +9,38 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Beta's Standard theme, by job: a dark grey title bar over light grey surfaces, white fields
+   with thin grey borders, slightly darker alternate rows, green to confirm, red to delete. The
+   green and red are the softer ones from Beta's Dark theme; text on them is near-black, as on
+   Standard's own green, so it stays readable. */
 :root {
-  --radius: 0.75rem;
-  --background: #eef2f0;
-  --foreground: #1c2a24;
-  --card: #ffffff;
-  --card-foreground: #1c2a24;
+  --radius: 0.5rem;
+  --background: #e0e0e0; /* Surface */
+  --foreground: #1a1a1a; /* SurfaceText */
+  --card: #f2f2f2;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #1c2a24;
-  --primary: #1f7a55;
-  --primary-foreground: #ffffff;
-  --secondary: #eef2f0;
-  --secondary-foreground: #17603f;
-  --muted: #eef2f0;
-  --muted-foreground: #5a6b63;
-  --accent: #e3f4ea;
-  --accent-foreground: #145a36;
-  --destructive: #b42318;
-  --border: #cfd9d4;
-  --input: #cfd9d4;
-  --ring: #1f7a55;
-  /* KVNsys's own: the green "it worked" notice. shadcn only has a red one. */
-  --success: #e3f4ea;
-  --success-foreground: #145a36;
+  --popover-foreground: #1a1a1a;
+  --primary: #3dbb78; /* Success: confirm */
+  --primary-foreground: #0d0d0d;
+  --secondary: #e0e0e0; /* Control */
+  --secondary-foreground: #1a1a1a;
+  --muted: #eaeaea; /* FieldReadOnly */
+  --muted-foreground: #606060; /* FieldReadOnlyText */
+  --accent: #d4d4d4;
+  --accent-foreground: #1a1a1a;
+  --destructive: #e74c3c; /* Danger: delete */
+  --border: #c2c2c2;
+  --input: #7a7a7a; /* FieldBorder */
+  --ring: #3dbb78;
+  /* KVNsys's own slots, for jobs shadcn has no name for. */
+  --title-bar: #404040; /* TitleBar */
+  --title-bar-foreground: #ffffff; /* TitleBarText */
+  --field: #ffffff; /* Field */
+  --row-alt: #ececec; /* RowAlt, against white rows */
+  --success: #dff3e7; /* the "it worked" notice; shadcn only has a red one */
+  --success-foreground: #1d5e3a;
+  --danger-ink: #a8281a; /* red text on a light ground, dark enough to read */
 }
 
 @theme inline {
@@ -60,6 +69,11 @@
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-title-bar: var(--title-bar);
+  --color-title-bar-foreground: var(--title-bar-foreground);
+  --color-field: var(--field);
+  --color-row-alt: var(--row-alt);
+  --color-danger-ink: var(--danger-ink);
 }
 
 @layer base {

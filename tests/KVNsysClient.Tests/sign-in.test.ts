@@ -46,7 +46,7 @@ describe('signIn', () => {
   });
 
   it('says who signed in when the server says yes, with the pass it hands back', async () => {
-    const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' };
+    const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'] };
     const session = { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' };
     server = await fakeServer(certificate, 200, { signedIn: true, user, session });
     expect(await signIn(server.address, credentials, { pin: pinOf(certificate) })).toEqual({ ok: true, user, session });
@@ -63,13 +63,13 @@ describe('signIn', () => {
   });
 
   it('never sends a password to a server this register has not trusted yet', async () => {
-    server = await fakeServer(certificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x' } });
+    server = await fakeServer(certificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x', rights: [] } });
     expect(await signIn(server.address, credentials, { pin: null })).toMatchObject({ ok: false, reason: 'not-connected' });
     expect(server.received).toEqual([]);
   });
 
   it('never lets the password reach an impostor: it stops at the handshake', async () => {
-    server = await fakeServer(otherCertificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x' } });
+    server = await fakeServer(otherCertificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x', rights: [] } });
     const result = await signIn(server.address, credentials, { pin: pinOf(certificate) });
     expect(result).toMatchObject({ ok: false, reason: 'not-trusted' });
     expect(server.received).toEqual([]);

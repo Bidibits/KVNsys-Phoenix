@@ -1,15 +1,15 @@
 import type { SignedInUser } from '@kvnsys/client';
 import { useState } from 'react';
 import { ConnectScreen, type Connected } from './connection/ConnectScreen';
-import { SignedInScreen } from './identity/SignedInScreen';
 import { SignInScreen } from './identity/SignInScreen';
+import { SignedIn } from './SignedIn';
 
 type Stage =
   | { kind: 'connect'; autoConnect: boolean }
   | { kind: 'sign-in'; connected: Connected }
   | { kind: 'signed-in'; connected: Connected; user: SignedInUser };
 
-/** The way through the app so far: connect to the server, then sign in. */
+/** The way through the app: connect to the server, sign in, then the frame with Home. */
 export function App() {
   const [stage, setStage] = useState<Stage>({ kind: 'connect', autoConnect: true });
 
@@ -28,8 +28,6 @@ export function App() {
         />
       );
     case 'signed-in':
-      return (
-        <SignedInScreen user={stage.user} onSignedOut={() => setStage({ kind: 'sign-in', connected: stage.connected })} />
-      );
+      return <SignedIn user={stage.user} onSignedOut={() => setStage({ kind: 'sign-in', connected: stage.connected })} />;
   }
 }

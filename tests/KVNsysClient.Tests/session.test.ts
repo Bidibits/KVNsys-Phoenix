@@ -32,7 +32,7 @@ async function fakeServer(certificate: ServerCertificate, status: number, reply:
 
 const pinOf = (c: ServerCertificate): ServerPin => ({ fingerprint256: c.fingerprint256, certificate: c.cert });
 const pass: SessionPass = { token: 'the-pass-the-pass-the-pass-the-pass-the-pas', expiresAt: '2026-10-18T20:00:00.000Z' };
-const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN' };
+const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'] };
 const Ended = 'Your sign-in has ended. Sign in again.';
 
 let certificate: ServerCertificate;
