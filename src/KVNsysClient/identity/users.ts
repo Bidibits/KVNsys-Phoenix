@@ -2,7 +2,6 @@ import {
   blankUserForm,
   readNewPassword,
   readUserForm,
-  Refusal,
   userFormFor,
   type Account,
   type AccountStatus,
@@ -11,8 +10,8 @@ import {
 } from '@kvnsys/core';
 import {
   PasswordResetReply,
-  RoleListReply,
-  RolesPath,
+  RoleChoiceListReply,
+  RoleChoicesPath,
   UserListReply,
   UserReply,
   UsersPath,
@@ -21,7 +20,7 @@ import {
   type AccountOnWire,
   type SessionPass,
 } from '@kvnsys/wire';
-import { callServer, type CallOptions, type Refused } from '../connection/server-call.js';
+import { callServer, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
 export type UserListResult = { ok: true; users: Account[] } | Refused;
 export type UserResult = { ok: true; user: Account } | Refused;
@@ -30,16 +29,6 @@ export type UserFormResult = { ok: true; form: UserForm; roles: RoleChoice[] } |
 export type PasswordResult = { ok: true } | Refused;
 
 const fromWire = (user: AccountOnWire): Account => ({ ...user, status: user.status as AccountStatus });
-
-/** Mistakes caught here, before anything is sent, come back as the same kind of answer as the server's. */
-function readOrRefuse<T>(read: () => T): { ok: true; value: T } | Refused {
-  try {
-    return { ok: true, value: read() };
-  } catch (error) {
-    if (error instanceof Refusal) return { ok: false, reason: 'refused', message: error.message };
-    throw error;
-  }
-}
 
 /** Every account, by name. */
 export async function listUsers(address: string, pass: SessionPass, options: CallOptions): Promise<UserListResult> {
@@ -52,7 +41,7 @@ export async function listUsers(address: string, pass: SessionPass, options: Cal
  * the first active role, or the account as the server has it now. Its password is never shown.
  */
 export async function loadUserForm(address: string, pass: SessionPass, id: string | null, options: CallOptions): Promise<UserFormResult> {
-  const roles = await callServer(address, pass, options, { path: RolesPath }, RoleListReply);
+  const roles = await callServer(address, pass, options, { path: RoleChoicesPath }, RoleChoiceListReply);
   if (!roles.ok) return roles;
   if (id === null) {
     const first = roles.reply.roles.find((role) => role.status === 'Active') ?? roles.reply.roles[0];

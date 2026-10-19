@@ -41,6 +41,17 @@ export {
   type UserListResult,
   type UserResult,
 } from './identity/users.js';
+export {
+  listRoles,
+  loadRoleForm,
+  saveRoleForm,
+  type ListedRole,
+  type RightBox,
+  type RightBoxGroup,
+  type RoleFormResult,
+  type RoleListResult,
+  type RoleResult,
+} from './identity/roles.js';
 export type { CallOptions, CallProblem } from './connection/server-call.js';
 export type { SessionPass, SignedInUser } from '@kvnsys/wire';
 export type {
@@ -51,6 +62,9 @@ export type {
   ProductDetails,
   ProductForm,
   ProductStatus,
+  Role,
   RoleChoice,
+  RoleForm,
+  RoleStatus,
   UserForm,
 } from '@kvnsys/core';

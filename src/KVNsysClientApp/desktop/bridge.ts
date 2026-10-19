@@ -5,6 +5,10 @@ import type {
   ProductListResult,
   PasswordResult,
   ProductResult,
+  RoleForm,
+  RoleFormResult,
+  RoleListResult,
+  RoleResult,
   SignedInUser,
   SignInResult,
   UserForm,
@@ -55,6 +59,12 @@ export interface KvnsysBridge {
   saveUser(id: string | null, form: UserForm): Promise<UserResult>;
   /** Gives an account a new password, typed twice. That person has to sign in again, wherever they are. */
   resetPassword(id: string, password: string, again: string): Promise<PasswordResult>;
+  /** Every role, the Administrator first, if the signed-in person may see them. */
+  listRoles(): Promise<RoleListResult>;
+  /** The role form and its tick boxes: blank for a new role (null), or the role as the server has it now. */
+  roleForm(id: string | null): Promise<RoleFormResult>;
+  /** Saves what was typed and ticked, as a new role (null) or over the one with that id. */
+  saveRole(id: string | null, form: RoleForm): Promise<RoleResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -69,3 +79,6 @@ export const ListUsersChannel = 'kvnsys:list-users';
 export const UserFormChannel = 'kvnsys:user-form';
 export const SaveUserChannel = 'kvnsys:save-user';
 export const ResetPasswordChannel = 'kvnsys:reset-password';
+export const ListRolesChannel = 'kvnsys:list-roles';
+export const RoleFormChannel = 'kvnsys:role-form';
+export const SaveRoleChannel = 'kvnsys:save-role';

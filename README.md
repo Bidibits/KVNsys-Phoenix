@@ -66,6 +66,12 @@ and everything a user sees, is called KVNsys.
   "Set new password", which signs that person out wherever they are. Switching an account off
   signs it out at once too. Usernames ignore capitals ("Ana" is ana). No change may leave nobody
   able to manage users, so nobody can lock the shop out, themselves included.
+- **Roles.** The Roles tile lists every role with its rights in a few words and how many accounts
+  have it. Someone whose role may change roles gets Add role and Edit: a name, Active or switched
+  off, and a tick box per right, grouped by area (Registers, Products, Users, Roles). Ticking
+  "change" ticks "see" with it. A change counts at once; switching a role off signs out everyone
+  who has it. The Administrator always holds every right, including any a later version adds, and
+  stays switched on: only its name can change.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

@@ -3,9 +3,10 @@ import { AppFrame } from '@kvnsys/ui';
 import { useState } from 'react';
 import { HomeScreen, type Area } from './home/HomeScreen';
 import { ProductsScreen } from './products/ProductsScreen';
+import { RolesScreen } from './roles/RolesScreen';
 import { UsersScreen } from './users/UsersScreen';
 
-const Titles: Record<Area | 'home', string> = { home: 'Home', products: 'Products', users: 'Users' };
+const Titles: Record<Area | 'home', string> = { home: 'Home', products: 'Products', users: 'Users', roles: 'Roles' };
 
 /**
  * The app once someone is signed in: the frame, with Home or an area inside it. Signing out
@@ -37,6 +38,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
       {/* The server has already ended this pass, so there's nothing left to sign out of. */}
       {area === 'products' && <ProductsScreen user={user} onSignInAgain={onSignedOut} />}
       {area === 'users' && <UsersScreen user={user} onSignInAgain={onSignedOut} />}
+      {area === 'roles' && <RolesScreen user={user} onSignInAgain={onSignedOut} />}
     </AppFrame>
   );
 }

@@ -3,6 +3,7 @@ export { checkDatabase, knownMigrations, type DatabaseCheck, type DatabaseProble
 export { applyDatabaseUpdates, createDatabaseIfMissing, isEmptyDatabase } from './database-updates.js';
 export { createPrismaClient, type PrismaClient } from './connection.js';
 export { PrismaProductCatalog } from './catalog/prisma-product-catalog.js';
+export { PrismaRoleCatalog } from './identity/prisma-role-catalog.js';
 export { PrismaUserAccounts } from './identity/prisma-user-accounts.js';
 export { PrismaUserDirectory } from './identity/prisma-user-directory.js';
 export { PrismaSetupStore } from './setup/prisma-setup-store.js';

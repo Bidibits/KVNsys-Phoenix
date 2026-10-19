@@ -1,4 +1,4 @@
-import { UserDirectory, type UserForSignIn, type UserStanding } from '@kvnsys/core';
+import { roleRights, UserDirectory, type UserForSignIn, type UserStanding } from '@kvnsys/core';
 import type { PrismaClient } from '../generated/prisma/client.js';
 
 export class PrismaUserDirectory extends UserDirectory {
@@ -20,7 +20,7 @@ export class PrismaUserDirectory extends UserDirectory {
       lastName: user.lastName,
       passwordHash: user.passwordHash,
       status: user.status,
-      role: { code: user.role.code, status: user.role.status, accesses: user.role.accesses.map((a) => a.access) },
+      role: standingOf(user.role),
     };
   }
 
@@ -32,7 +32,14 @@ export class PrismaUserDirectory extends UserDirectory {
     if (!user) return null;
     return {
       status: user.status,
-      role: { code: user.role.code, status: user.role.status, accesses: user.role.accesses.map((a) => a.access) },
+      role: standingOf(user.role),
     };
   }
+}
+
+type RoleRow = { code: string; status: string; accesses: { access: string }[] };
+
+/** A role's rights as KVNsysCore counts them: the Administrator holds every right, whatever its rows say. */
+function standingOf(role: RoleRow): UserStanding['role'] {
+  return { code: role.code, status: role.status, accesses: roleRights(role.code, role.accesses.map((a) => a.access)) };
 }

@@ -70,6 +70,6 @@ describe('the first window, driven like a person would', () => {
 
   it('cannot be turned into a browser: the page has no access to Node', async () => {
     expect(await window.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined');
-    expect(await window.evaluate(() => Object.keys((globalThis as unknown as { kvnsys: object }).kvnsys).sort())).toEqual(['connectToServer', 'listProducts', 'listUsers', 'productForm', 'resetPassword', 'saveProduct', 'saveUser', 'savedServerAddress', 'signIn', 'signOut', 'userForm']);
+    expect(await window.evaluate(() => Object.keys((globalThis as unknown as { kvnsys: object }).kvnsys).sort())).toEqual(['connectToServer', 'listProducts', 'listRoles', 'listUsers', 'productForm', 'resetPassword', 'roleForm', 'saveProduct', 'saveRole', 'saveUser', 'savedServerAddress', 'signIn', 'signOut', 'userForm']);
   });
 });

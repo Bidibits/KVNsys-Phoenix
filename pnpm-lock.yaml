@@ -254,6 +254,9 @@ importers:
 
   tests/KVNsysPostgres.Tests:
     dependencies:
+      '@kvnsys/core':
+        specifier: workspace:*
+        version: link:../../src/KVNsysCore
       '@kvnsys/postgres':
         specifier: workspace:*
         version: link:../../src/KVNsysPostgres

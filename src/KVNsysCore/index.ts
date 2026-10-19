@@ -5,8 +5,33 @@ export type { Lineage } from './shared/lineage.js';
 export { displayPesos, isCentavos, MaxCentavos, parsePesos, pesosText } from './shared/money.js';
 export { Refusal, type RefusalKind } from './shared/refusal.js';
 
-export { Accesses, AccessDescriptions, AllAccesses, type AccessName } from './identity/accesses.js';
-export { AdminRoleCode, DefaultRoles, type RoleDefinition } from './identity/roles.js';
+export {
+  Accesses,
+  AccessDescriptions,
+  AllAccesses,
+  RightGroups,
+  type AccessName,
+  type RightChoice,
+  type RightGroup,
+} from './identity/accesses.js';
+export { AdminRoleCode, DefaultRoles, isFixedRole, roleRights, type RoleDefinition } from './identity/roles.js';
+export {
+  blankRoleForm,
+  checkRoleChange,
+  checkRoleDetails,
+  readRoleForm,
+  rightsInWords,
+  roleCodeFor,
+  roleFormFor,
+  RoleCatalog,
+  RoleLimits,
+  RoleStatuses,
+  withNeededRights,
+  type Role,
+  type RoleDetails,
+  type RoleForm,
+  type RoleStatus,
+} from './identity/role-catalog.js';
 export { PasswordHasher, passwordProblem } from './identity/passwords.js';
 export { displayName, maySignIn, UserDirectory, type UserForSignIn, type UserStanding } from './identity/users.js';
 export {

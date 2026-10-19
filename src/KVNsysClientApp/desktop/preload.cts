@@ -16,6 +16,9 @@ const ListUsersChannel = 'kvnsys:list-users';
 const UserFormChannel = 'kvnsys:user-form';
 const SaveUserChannel = 'kvnsys:save-user';
 const ResetPasswordChannel = 'kvnsys:reset-password';
+const ListRolesChannel = 'kvnsys:list-roles';
+const RoleFormChannel = 'kvnsys:role-form';
+const SaveRoleChannel = 'kvnsys:save-role';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
@@ -29,6 +32,9 @@ const bridge: KvnsysBridge = {
   userForm: (id) => ipcRenderer.invoke(UserFormChannel, id),
   saveUser: (id, form) => ipcRenderer.invoke(SaveUserChannel, id, form),
   resetPassword: (id, password, again) => ipcRenderer.invoke(ResetPasswordChannel, id, password, again),
+  listRoles: () => ipcRenderer.invoke(ListRolesChannel),
+  roleForm: (id) => ipcRenderer.invoke(RoleFormChannel, id),
+  saveRole: (id, form) => ipcRenderer.invoke(SaveRoleChannel, id, form),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

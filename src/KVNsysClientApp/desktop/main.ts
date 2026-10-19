@@ -5,15 +5,22 @@ import { fileURLToPath } from 'node:url';
 import {
   connectToServer,
   listProducts,
+  listRoles,
   listUsers,
   loadProductForm,
+  loadRoleForm,
   loadUserForm,
   resetPassword,
   saveProductForm,
+  saveRoleForm,
   saveUserForm,
   signIn,
   signOut,
   type PasswordResult,
+  type RoleForm,
+  type RoleFormResult,
+  type RoleListResult,
+  type RoleResult,
   type UserForm,
   type UserFormResult,
   type UserListResult,
@@ -30,10 +37,13 @@ import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ConnectChannel,
   ListProductsChannel,
+  ListRolesChannel,
   ListUsersChannel,
   ProductFormChannel,
   ResetPasswordChannel,
+  RoleFormChannel,
   SaveProductChannel,
+  SaveRoleChannel,
   SaveUserChannel,
   UserFormChannel,
   SavedAddressChannel,
@@ -172,6 +182,15 @@ function asUserForm(value: unknown): UserForm | undefined {
   return Object.fromEntries(fields.map((field) => [field, form[field]])) as unknown as UserForm;
 }
 
+/** The role form as the screens sent it: a name and a status as text, and the names of the rights ticked. */
+function asRoleForm(value: unknown): RoleForm | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const { name, status, rights } = value as Record<string, unknown>;
+  if (typeof name !== 'string' || name.length > 2000 || typeof status !== 'string' || status.length > 2000) return undefined;
+  if (!Array.isArray(rights) || rights.length > 100 || !rights.every((right) => typeof right === 'string' && right.length <= 100)) return undefined;
+  return { name, status, rights: [...(rights as string[])] };
+}
+
 const asText = (value: unknown): string | undefined => (typeof value === 'string' && value.length <= 2000 ? value : undefined);
 
 const NotAForm: Refused = { ok: false, reason: 'refused', message: "The form didn't arrive whole. Close it and try again." };
@@ -213,6 +232,21 @@ ipcMain.handle(ResetPasswordChannel, async (_event, id: unknown, password: unkno
   if (!userId || first === undefined || second === undefined) return NotAForm;
   // The new password is used for this one request and kept nowhere: not logged, not stored.
   return withPass((address, pass, options) => resetPassword(address, pass, userId, first, second, options));
+});
+
+ipcMain.handle(ListRolesChannel, (): Promise<RoleListResult> => withPass(listRoles));
+
+ipcMain.handle(RoleFormChannel, async (_event, id: unknown): Promise<RoleFormResult> => {
+  const roleId = asProductId(id);
+  if (roleId === undefined) return NotAForm;
+  return withPass((address, pass, options) => loadRoleForm(address, pass, roleId, options));
+});
+
+ipcMain.handle(SaveRoleChannel, async (_event, id: unknown, typed: unknown): Promise<RoleResult> => {
+  const roleId = asProductId(id);
+  const form = asRoleForm(typed);
+  if (roleId === undefined || !form) return NotAForm;
+  return withPass((address, pass, options) => saveRoleForm(address, pass, roleId, form, options));
 });
 
 function openWindow(): void {

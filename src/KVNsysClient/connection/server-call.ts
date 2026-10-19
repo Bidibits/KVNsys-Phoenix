@@ -1,3 +1,4 @@
+import { Refusal } from '@kvnsys/core';
 import { ProblemReply, type SessionPass } from '@kvnsys/wire';
 import { describeTransportFailure, type TransportProblem } from './failures.js';
 import { requestJson, type ServerPin } from './secure-request.js';
@@ -26,6 +27,16 @@ export interface Shape<T> {
 }
 
 const DefaultTimeoutMs = 5000;
+
+/** Mistakes caught here, before anything is sent, come back as the same kind of answer as the server's. */
+export function readOrRefuse<T>(read: () => T): { ok: true; value: T } | Refused {
+  try {
+    return { ok: true, value: read() };
+  } catch (error) {
+    if (error instanceof Refusal) return { ok: false, reason: 'refused', message: error.message };
+    throw error;
+  }
+}
 
 /**
  * One call that shows the signed-in pass. The pass only ever goes to a pinned server, and every

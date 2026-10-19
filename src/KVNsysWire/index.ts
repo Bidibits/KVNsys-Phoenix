@@ -16,14 +16,15 @@ export {
   NewAccountFields,
   PasswordReset,
   PasswordResetReply,
-  RoleListReply,
-  RolesPath,
+  RoleChoiceListReply,
+  RoleChoicesPath,
   UserListReply,
   UserReply,
   UsersPath,
   userPasswordPath,
   userPath,
 } from './users.js';
+export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
 export {
   SessionPass,
   SessionPath,

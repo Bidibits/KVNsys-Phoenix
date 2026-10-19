@@ -5,20 +5,17 @@ import {
   readRetailPrice,
   Refusal,
   type AccessName,
-  type Lineage,
   type Product,
   type ProductCatalog,
   type ProductDetails,
-  type RefusalKind,
 } from '@kvnsys/core';
 import { ProductFields, type ProductListReply, type ProductOnWire, type ProductReply } from '@kvnsys/wire';
 import type { Authorizer } from '../identity/authorizer.js';
-import type { SignedInPerson } from '../identity/sign-in.js';
 import { bearerToken, NoDatabase, problem } from './problems.js';
+import { lineageOf, saving } from './saving.js';
 import { ProductsOperation } from './tokens.js';
 
 const NotInCatalog = "That product isn't in the catalog.";
-const StatusFor: Record<RefusalKind, number> = { invalid: 400, unauthenticated: 401, forbidden: 403, 'not-found': 404, conflict: 409 };
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function toWire(product: Product): ProductOnWire {
@@ -35,11 +32,6 @@ function readDetails(body: unknown): ProductDetails {
     if (error instanceof Refusal) throw problem(400, error.message);
     throw error;
   }
-}
-
-/** Who saved it. Which register, and so which shop, the request came from comes with recording registers. */
-function lineageOf(person: SignedInPerson): Lineage {
-  return { userId: person.id, machineId: null, locationId: null };
 }
 
 /** The product calls (see KVNsysWire's products.ts). Each one checks the pass and the right first. */
@@ -112,15 +104,5 @@ export class ProductsController {
     const verdict = await products.authorizer.check(bearerToken(authorization), access);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
     return { catalog: products.catalog, person: verdict.person };
-  }
-}
-
-/** A refusal from the rules or the catalog becomes the matching status, with its message. */
-async function saving(work: () => Promise<Product>): Promise<Product> {
-  try {
-    return await work();
-  } catch (error) {
-    if (error instanceof Refusal) throw problem(StatusFor[error.kind], error.message);
-    throw error;
   }
 }

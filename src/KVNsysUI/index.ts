@@ -9,4 +9,5 @@ export { RecordTable, type Column } from './RecordTable.js';
 export { SelectField } from './SelectField.js';
 export { StatusLabel } from './StatusLabel.js';
 export { TextField } from './TextField.js';
+export { TickBox } from './TickBox.js';
 export { Tile } from './Tile.js';

@@ -11,3 +11,6 @@ export const ProductsOperation = Symbol('ProductsOperation');
 
 /** The accounts, the rights check, the password hasher and the sessions, or null when there's no database. */
 export const UsersOperation = Symbol('UsersOperation');
+
+/** The roles, the rights check and the sessions, or null when there's no database. */
+export const RolesOperation = Symbol('RolesOperation');

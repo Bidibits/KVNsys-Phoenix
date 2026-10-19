@@ -57,7 +57,7 @@ let certificate: ServerCertificate;
 let server: Awaited<ReturnType<typeof fakeServer>> | undefined;
 const pinned = () => ({ pin: { fingerprint256: certificate.fingerprint256, certificate: certificate.cert } satisfies ServerPin });
 const byPath = (method: string, url: string): [number, unknown] => {
-  if (url === '/api/roles') return [200, { roles }];
+  if (url === '/api/role-choices') return [200, { roles }];
   if (url === `/api/users/${id}/password`) return [200, { passwordChanged: true }];
   if (url.startsWith('/api/users/')) return [200, { user: ana }];
   return method === 'POST' ? [201, { user: ana }] : [200, { users: [ana] }];
@@ -82,7 +82,7 @@ describe('the account calls', () => {
     server = await fakeServer(certificate, byPath);
     const result = await loadUserForm(server.address, pass, null, pinned());
     expect(result).toMatchObject({ ok: true, roles, form: { username: '', roleId: 'role-cashier', status: 'Active' } });
-    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/roles']);
+    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/role-choices']);
   });
 
   it('fetch an account afresh to change it, with empty password boxes', async () => {
@@ -91,7 +91,7 @@ describe('the account calls', () => {
       ok: true,
       form: { username: 'ana', middleName: '', password: '', passwordAgain: '' },
     });
-    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/roles', `GET /api/users/${id}`]);
+    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/role-choices', `GET /api/users/${id}`]);
   });
 
   it('send a new account with its password once, and changes to one without any password', async () => {

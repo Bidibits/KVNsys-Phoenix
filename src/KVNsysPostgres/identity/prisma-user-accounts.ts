@@ -1,5 +1,4 @@
 import {
-  Accesses,
   accountDisplayName,
   checkAccountDetails,
   newId,
@@ -12,6 +11,7 @@ import {
   type RoleChoice,
 } from '@kvnsys/core';
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
+import { requireSomeoneWhoCanManageUsers } from './user-managers.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NotFound = "That account isn't there any more.";
@@ -135,23 +135,5 @@ async function refuseTaken(tx: Prisma.TransactionClient, username: string, ownId
 async function requireRole(tx: Prisma.TransactionClient, roleId: string) {
   if (!Uuid.test(roleId) || !(await tx.role.findUnique({ where: { id: roleId }, select: { id: true } }))) {
     throw new Refusal('invalid', "That role isn't there any more. Choose another.");
-  }
-}
-
-/**
- * Checked after every save, inside its transaction: at least one active account whose active role
- * may manage users. Otherwise nobody could add, fix or switch on an account again, so the save is
- * refused and undone.
- */
-async function requireSomeoneWhoCanManageUsers(tx: Prisma.TransactionClient) {
-  const rows = await tx.$queryRaw<{ managers: number }[]>`
-    SELECT count(*)::int AS managers
-      FROM users u JOIN roles r ON r.id = u.role_id JOIN accesses a ON a.role_id = r.id
-     WHERE u.status = 'Active' AND r.status = 'Active' AND a.access = ${Accesses.UsersManage}`;
-  if ((rows[0]?.managers ?? 0) === 0) {
-    throw new Refusal(
-      'conflict',
-      "That would leave nobody able to manage users. Keep at least one active account whose role can manage users.",
-    );
   }
 }

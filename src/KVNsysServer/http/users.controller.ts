@@ -2,12 +2,8 @@ import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Post, Put } fr
 import {
   Accesses,
   passwordProblem,
-  Refusal,
   type AccessName,
-  type Account,
-  type Lineage,
   type PasswordHasher,
-  type RefusalKind,
   type UserAccounts,
 } from '@kvnsys/core';
 import {
@@ -15,24 +11,18 @@ import {
   NewAccountFields,
   PasswordReset,
   type PasswordResetReply,
-  type RoleListReply,
+  type RoleChoiceListReply,
   type UserListReply,
   type UserReply,
 } from '@kvnsys/wire';
 import type { Authorizer } from '../identity/authorizer.js';
 import type { Sessions } from '../identity/sessions.js';
-import type { SignedInPerson } from '../identity/sign-in.js';
 import { bearerToken, NoDatabase, problem } from './problems.js';
+import { lineageOf, saving } from './saving.js';
 import { UsersOperation } from './tokens.js';
 
 const NotThere = "That account isn't there any more.";
 const NotUnderstood = "The account's details didn't arrive in a form the server understands.";
-const StatusFor: Record<RefusalKind, number> = { invalid: 400, unauthenticated: 401, forbidden: 403, 'not-found': 404, conflict: 409 };
-
-/** Who made the change. Which register, and so which shop, comes with recording registers. */
-function lineageOf(person: SignedInPerson): Lineage {
-  return { userId: person.id, machineId: null, locationId: null };
-}
 
 export interface UsersOperationParts {
   accounts: UserAccounts;
@@ -60,8 +50,8 @@ export class UsersController {
     return { user };
   }
 
-  @Get('roles')
-  async roles(@Headers('authorization') authorization: string | undefined): Promise<RoleListReply> {
+  @Get('role-choices')
+  async roles(@Headers('authorization') authorization: string | undefined): Promise<RoleChoiceListReply> {
     const { accounts } = await this.allow(authorization, Accesses.UsersView);
     return { roles: await accounts.roles() };
   }
@@ -123,14 +113,4 @@ function readPassword(password: string): string {
   const trouble = passwordProblem(password);
   if (trouble) throw problem(400, trouble);
   return password;
-}
-
-/** A refusal from the rules or the store becomes the matching status, with its message. */
-async function saving<T extends Account | void>(work: () => Promise<T>): Promise<T> {
-  try {
-    return await work();
-  } catch (error) {
-    if (error instanceof Refusal) throw problem(StatusFor[error.kind], error.message);
-    throw error;
-  }
 }
