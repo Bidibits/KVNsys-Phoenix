@@ -5,10 +5,19 @@ import { fileURLToPath } from 'node:url';
 import {
   connectToServer,
   listProducts,
+  listUsers,
   loadProductForm,
+  loadUserForm,
+  resetPassword,
   saveProductForm,
+  saveUserForm,
   signIn,
   signOut,
+  type PasswordResult,
+  type UserForm,
+  type UserFormResult,
+  type UserListResult,
+  type UserResult,
   type ProductCallOptions,
   type ProductForm,
   type ProductFormResult,
@@ -21,8 +30,12 @@ import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ConnectChannel,
   ListProductsChannel,
+  ListUsersChannel,
   ProductFormChannel,
+  ResetPasswordChannel,
   SaveProductChannel,
+  SaveUserChannel,
+  UserFormChannel,
   SavedAddressChannel,
   SignInChannel,
   SignOutChannel,
@@ -135,7 +148,7 @@ async function withPass<T extends { ok: true } | Refused>(
   return result;
 }
 
-/** A product id from the screens, or null for a new product. Anything else isn't one. */
+/** A record's id from the screens, or null for a new one. Anything else isn't one. */
 function asProductId(value: unknown): string | null | undefined {
   if (value === null) return null;
   return typeof value === 'string' && value.length > 0 && value.length <= 100 ? value : undefined;
@@ -149,6 +162,17 @@ function asProductForm(value: unknown): ProductForm | undefined {
   if (!fields.every((field) => typeof form[field] === 'string' && (form[field] as string).length <= 2000)) return undefined;
   return Object.fromEntries(fields.map((field) => [field, form[field]])) as unknown as ProductForm;
 }
+
+/** The account form as the screens sent it: eight pieces of text, none absurdly long, or nothing. */
+function asUserForm(value: unknown): UserForm | undefined {
+  const fields = ['username', 'firstName', 'middleName', 'lastName', 'roleId', 'status', 'password', 'passwordAgain'] as const;
+  if (typeof value !== 'object' || value === null) return undefined;
+  const form = value as Record<string, unknown>;
+  if (!fields.every((field) => typeof form[field] === 'string' && (form[field] as string).length <= 2000)) return undefined;
+  return Object.fromEntries(fields.map((field) => [field, form[field]])) as unknown as UserForm;
+}
+
+const asText = (value: unknown): string | undefined => (typeof value === 'string' && value.length <= 2000 ? value : undefined);
 
 const NotAForm: Refused = { ok: false, reason: 'refused', message: "The form didn't arrive whole. Close it and try again." };
 
@@ -165,6 +189,30 @@ ipcMain.handle(SaveProductChannel, async (_event, id: unknown, typed: unknown): 
   const form = asProductForm(typed);
   if (productId === undefined || !form) return NotAForm;
   return withPass((address, pass, options) => saveProductForm(address, pass, productId, form, options));
+});
+
+ipcMain.handle(ListUsersChannel, (): Promise<UserListResult> => withPass(listUsers));
+
+ipcMain.handle(UserFormChannel, async (_event, id: unknown): Promise<UserFormResult> => {
+  const userId = asProductId(id);
+  if (userId === undefined) return NotAForm;
+  return withPass((address, pass, options) => loadUserForm(address, pass, userId, options));
+});
+
+ipcMain.handle(SaveUserChannel, async (_event, id: unknown, typed: unknown): Promise<UserResult> => {
+  const userId = asProductId(id);
+  const form = asUserForm(typed);
+  if (userId === undefined || !form) return NotAForm;
+  return withPass((address, pass, options) => saveUserForm(address, pass, userId, form, options));
+});
+
+ipcMain.handle(ResetPasswordChannel, async (_event, id: unknown, password: unknown, again: unknown): Promise<PasswordResult> => {
+  const userId = asProductId(id);
+  const first = asText(password);
+  const second = asText(again);
+  if (!userId || first === undefined || second === undefined) return NotAForm;
+  // The new password is used for this one request and kept nowhere: not logged, not stored.
+  return withPass((address, pass, options) => resetPassword(address, pass, userId, first, second, options));
 });
 
 function openWindow(): void {

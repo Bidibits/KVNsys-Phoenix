@@ -19,6 +19,12 @@ describeWithDatabase('the window frame, Home and the products list, in the real 
   let app: ElectronApplication;
   let window: Page;
 
+  /** A role made by hand, as a shop makes one: a new install has only the Administrator. */
+  async function addRole(code: string, rights: string[]): Promise<void> {
+    const role = await db.role.create({ data: { id: randomUUID(), code, name: code, level: 10 } });
+    for (const access of rights) await db.access.create({ data: { id: randomUUID(), roleId: role.id, access } });
+  }
+
   async function addUser(username: string, roleCode: string): Promise<void> {
     const role = await db.role.findUniqueOrThrow({ where: { code: roleCode } });
     const passwordHash = await new ScryptPasswordHasher().hash(Password);
@@ -35,6 +41,7 @@ describeWithDatabase('the window frame, Home and the products list, in the real 
       adminPassword: Password,
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
+    await addRole('CASHIER', ['products.view']);
     await addUser('cashier', 'CASHIER');
     await db.role.create({ data: { id: randomUUID(), code: 'GUEST', name: 'Guest', level: 0 } });
     await addUser('guest', 'GUEST');

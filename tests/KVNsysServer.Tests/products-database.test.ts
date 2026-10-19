@@ -48,6 +48,12 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
   let pin: ServerPin;
   const passes: Record<string, SessionPass> = {};
 
+  /** A role made by hand, as a shop makes one: a new install has only the Administrator. */
+  async function addRole(code: string, rights: string[]): Promise<void> {
+    const role = await db.role.create({ data: { id: randomUUID(), code, name: code, level: 10 } });
+    for (const access of rights) await db.access.create({ data: { id: randomUUID(), roleId: role.id, access } });
+  }
+
   async function addUser(username: string, roleCode: string): Promise<void> {
     const role = await db.role.findUniqueOrThrow({ where: { code: roleCode } });
     await db.user.create({
@@ -80,6 +86,8 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
       adminPassword: Password,
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
+    await addRole('MANAGER', ['products.view', 'products.manage']);
+    await addRole('CASHIER', ['products.view']);
     await addUser('manager', 'MANAGER');
     await addUser('cashier', 'CASHIER');
     // A role that holds no rights at all.

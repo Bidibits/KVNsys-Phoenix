@@ -7,8 +7,9 @@ import { z } from 'zod';
  *
  * 1: hello. 2: sign-in. 3: sessions (sign-in hands back a pass; session check; sign-out).
  * 4: products (list, find, get, add, change). 5: sign-in also says which rights the role holds.
+ * 6: accounts (list, get, add, change, new password) and the roles an account can be given.
  */
-export const ProtocolVersion = 5;
+export const ProtocolVersion = 6;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

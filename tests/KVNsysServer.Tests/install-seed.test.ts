@@ -57,10 +57,10 @@ function setup() {
 }
 
 describe('InstallSeed', () => {
-  it('creates the location, this PC as its machine, three roles and the administrator', async () => {
+  it('creates the location, this PC as its machine, the Administrator role and the administrator', async () => {
     const { store, seed } = setup();
     await seed.run(input);
-    expect([store.count('locations'), store.count('machines'), store.count('roles'), store.count('users')]).toEqual([1, 1, 3, 1]);
+    expect([store.count('locations'), store.count('machines'), store.count('roles'), store.count('users')]).toEqual([1, 1, 1, 1]);
   });
 
   it('records this PC under its computer name and hardware id', async () => {
@@ -88,7 +88,7 @@ describe('InstallSeed', () => {
     await seed.run(input);
     const second = await seed.run({ ...input, adminPassword: undefined });
     expect(second.created).toEqual([]);
-    expect([store.count('locations'), store.count('machines'), store.count('roles'), store.count('users')]).toEqual([1, 1, 3, 1]);
+    expect([store.count('locations'), store.count('machines'), store.count('roles'), store.count('users')]).toEqual([1, 1, 1, 1]);
   });
 
   it('still recognises this PC after it has been renamed', async () => {

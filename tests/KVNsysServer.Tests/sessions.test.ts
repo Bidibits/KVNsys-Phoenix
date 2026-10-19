@@ -60,6 +60,17 @@ describe('Sessions', () => {
     expect(sessions.find(kept)).not.toBeNull();
   });
 
+  it("ends every pass one person holds, on every register, and leaves everyone else's", () => {
+    const { sessions } = sessionsWithClock();
+    const first = sessions.start(ana).token;
+    const second = sessions.start(ana).token;
+    const ben = sessions.start({ ...ana, id: '0192f3c1-0000-7000-8000-000000000002', username: 'ben' }).token;
+    expect(sessions.cancelFor(ana.id)).toBe(2);
+    expect([sessions.find(first), sessions.find(second)]).toEqual([null, null]);
+    expect(sessions.find(ben)).not.toBeNull();
+    expect(sessions.cancelFor(ana.id)).toBe(0);
+  });
+
   it('counts only the passes that are still good, and forgets the rest', () => {
     const { sessions, advance } = sessionsWithClock();
     sessions.start(ana);

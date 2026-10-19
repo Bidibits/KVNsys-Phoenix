@@ -1,4 +1,4 @@
-import { displayName, maySignIn, PasswordHasher, UserDirectory } from '@kvnsys/core';
+import { displayName, maySignIn, normalizeUsername, PasswordHasher, UserDirectory } from '@kvnsys/core';
 
 /** One answer for "no such user" and "wrong password", so sign-in can't be used to find usernames. */
 export const WrongCredentials = 'Wrong username or password.';
@@ -31,7 +31,8 @@ export class SignIn {
   ) {}
 
   async run(username: string, password: string): Promise<SignInOutcome> {
-    const user = await this.users.findForSignIn(username);
+    // Usernames are kept in lowercase, so "Ana" signs in as ana.
+    const user = await this.users.findForSignIn(normalizeUsername(username));
     if (!user) {
       this.standIn ??= this.hasher.hash('kvnsys-equal-time');
       await this.hasher.verify(password, await this.standIn);

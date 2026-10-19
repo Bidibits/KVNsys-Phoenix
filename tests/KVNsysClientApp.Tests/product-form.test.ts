@@ -17,6 +17,12 @@ describeWithDatabase('adding and changing products from the real app', () => {
   let app: ElectronApplication;
   let window: Page;
 
+  /** A role made by hand, as a shop makes one: a new install has only the Administrator. */
+  async function addRole(code: string, rights: string[]): Promise<void> {
+    const role = await db.role.create({ data: { id: randomUUID(), code, name: code, level: 10 } });
+    for (const access of rights) await db.access.create({ data: { id: randomUUID(), roleId: role.id, access } });
+  }
+
   async function addUser(username: string, roleCode: string): Promise<void> {
     const role = await db.role.findUniqueOrThrow({ where: { code: roleCode } });
     const passwordHash = await new ScryptPasswordHasher().hash(Password);
@@ -33,6 +39,8 @@ describeWithDatabase('adding and changing products from the real app', () => {
       adminPassword: Password,
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
+    await addRole('CASHIER', ['products.view']);
+    await addRole('MANAGER', ['products.view', 'products.manage']);
     await addUser('cashier', 'CASHIER');
     await addUser('manager', 'MANAGER');
     await new PrismaProductCatalog(db).create(

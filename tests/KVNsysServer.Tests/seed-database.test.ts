@@ -28,7 +28,7 @@ describeWithDatabase('the seed, against a real database', () => {
     await database?.drop();
   });
 
-  it('fills an empty database: one location, this PC, three roles with their rights, one admin', async () => {
+  it('fills an empty database: one location, this PC, the Administrator role with every right, one admin', async () => {
     await seed.run(input);
     expect(await db.location.count()).toBe(1);
     expect(await db.machine.findMany({ select: { code: true, machineName: true, machineUuid: true } })).toEqual([
@@ -39,7 +39,7 @@ describeWithDatabase('the seed, against a real database', () => {
     expect(roles.map((r) => [r.code, r.accesses.map((a) => a.access).sort()])).toEqual(
       DefaultRoles.map((role) => [role.code, [...role.accesses].sort()]),
     );
-    expect(roles.map((r) => r.code)).toEqual(['ADMIN', 'MANAGER', 'CASHIER']);
+    expect(roles.map((r) => r.code)).toEqual(['ADMIN']);
     const admin = await db.user.findUniqueOrThrow({ where: { username: 'admin' }, include: { role: true } });
     expect(admin.role.code).toBe('ADMIN');
     expect(admin.passwordHash).toMatch(/^scrypt\$/);
@@ -57,6 +57,6 @@ describeWithDatabase('the seed, against a real database', () => {
   it('changes nothing when run again', async () => {
     const report = await seed.run({ ...input, adminPassword: undefined });
     expect(report.created).toEqual([]);
-    expect([await db.location.count(), await db.machine.count(), await db.role.count(), await db.user.count()]).toEqual([1, 1, 3, 1]);
+    expect([await db.location.count(), await db.machine.count(), await db.role.count(), await db.user.count()]).toEqual([1, 1, DefaultRoles.length, 1]);
   });
 });

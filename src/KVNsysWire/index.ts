@@ -11,6 +11,20 @@ export {
   productPath,
 } from './products.js';
 export {
+  AccountFields,
+  AccountOnWire,
+  NewAccountFields,
+  PasswordReset,
+  PasswordResetReply,
+  RoleListReply,
+  RolesPath,
+  UserListReply,
+  UserReply,
+  UsersPath,
+  userPasswordPath,
+  userPath,
+} from './users.js';
+export {
   SessionPass,
   SessionPath,
   SessionReply,

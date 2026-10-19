@@ -15,24 +15,8 @@ describe('default roles', () => {
     expect([...(admin?.accesses ?? [])].sort()).toEqual([...AllAccesses].sort());
   });
 
-  it('give a cashier no rights over machines', () => {
-    const cashier = DefaultRoles.find((r) => r.code === 'CASHIER')!;
-    expect(cashier.accesses.filter((access) => access.startsWith('machines.'))).toEqual([]);
-  });
-
-  it('let a cashier look products up, but not change them; a manager may do both', () => {
-    const accesses = (code: string) => DefaultRoles.find((r) => r.code === code)!.accesses;
-    expect(accesses('CASHIER')).toContain('products.view');
-    expect(accesses('CASHIER')).not.toContain('products.manage');
-    expect(accesses('MANAGER')).toEqual(expect.arrayContaining(['products.view', 'products.manage']));
-  });
-
-  it('have unique codes, and rank administrator over manager over cashier', () => {
-    const codes = DefaultRoles.map((r) => r.code);
-    expect(new Set(codes).size).toBe(codes.length);
-    const level = (code: string) => DefaultRoles.find((r) => r.code === code)!.level;
-    expect(level('ADMIN')).toBeGreaterThan(level('MANAGER'));
-    expect(level('MANAGER')).toBeGreaterThan(level('CASHIER'));
+  it('are only the Administrator: every other role is made by hand', () => {
+    expect(DefaultRoles.map((r) => r.code)).toEqual([AdminRoleCode]);
   });
 
   it('only use rights that are described', () => {

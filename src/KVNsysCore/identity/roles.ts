@@ -1,4 +1,4 @@
-import { Accesses, AllAccesses, type AccessName } from './accesses.js';
+import { AllAccesses, type AccessName } from './accesses.js';
 
 export interface RoleDefinition {
   code: string;
@@ -10,21 +10,11 @@ export interface RoleDefinition {
 
 export const AdminRoleCode = 'ADMIN';
 
-/** The roles a new install starts with. A manager can change them later. */
+/**
+ * The roles a new install starts with: only the Administrator, holding every right, so the first
+ * person can sign in and set the shop up. Every other role (a branch manager, a cashier) is made by
+ * hand, with the rights the shop decides on. The user's decision of 2026-10-19: no premade roles.
+ */
 export const DefaultRoles: readonly RoleDefinition[] = [
   { code: AdminRoleCode, name: 'Administrator', level: 100, accesses: AllAccesses },
-  {
-    code: 'MANAGER',
-    name: 'Branch manager',
-    level: 50,
-    accesses: [
-      Accesses.MachinesRegister,
-      Accesses.MachinesView,
-      Accesses.MachinesManage,
-      Accesses.ProductsView,
-      Accesses.ProductsManage,
-    ],
-  },
-  // A cashier looks products up to sell them, but can't change a price.
-  { code: 'CASHIER', name: 'Cashier', level: 10, accesses: [Accesses.ProductsView] },
 ];

@@ -14,7 +14,8 @@ and everything a user sees, is called KVNsys.
 
 **So far:**
 - **The seed:** the one-time setup that makes a new install usable. It creates the first shop,
-  this PC as its first machine, three roles and the first admin.
+  this PC as its first machine, one role (Administrator, with every right) and the first admin.
+  Every other role is made by hand.
 - **KVNsys Server starts and answers on the shop's network.** Other PCs can ask it what it is,
   which version it is, and which protocol it speaks. On a shop's server PC it installs from one
   setup file and starts with Windows, with a nightly backup (see "For the server PC" below).
@@ -59,6 +60,12 @@ and everything a user sees, is called KVNsys.
   shows the result; a refusal says what to fix and keeps what was typed. Editing starts from
   the product as the server has it now. A barcode scanner's Enter in the Barcode box moves on
   to Name instead of saving.
+- **Users.** The Users tile lists every account: name, username, role and status. Someone whose
+  role may manage users gets Add user and Edit, in the same panel: names, username, role, Active
+  or switched off, and a first password typed twice. A password is never shown; Edit has its own
+  "Set new password", which signs that person out wherever they are. Switching an account off
+  signs it out at once too. Usernames ignore capitals ("Ana" is ana). No change may leave nobody
+  able to manage users, so nobody can lock the shop out, themselves included.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

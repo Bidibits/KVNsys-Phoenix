@@ -8,6 +8,8 @@ export const Accesses = {
   MachinesManage: 'machines.manage',
   ProductsView: 'products.view',
   ProductsManage: 'products.manage',
+  UsersView: 'users.view',
+  UsersManage: 'users.manage',
 } as const;
 
 export type AccessName = (typeof Accesses)[keyof typeof Accesses];
@@ -19,6 +21,8 @@ export const AccessDescriptions: Record<AccessName, string> = {
   'machines.manage': 'Rename, move, replace or retire a register',
   'products.view': 'See the products and their prices',
   'products.manage': 'Add products, and change their details and prices',
+  'users.view': 'See who has an account, and their role',
+  'users.manage': "Add accounts, change them, switch them off, and reset passwords",
 };
 
 export const AllAccesses: readonly AccessName[] = Object.values(Accesses);

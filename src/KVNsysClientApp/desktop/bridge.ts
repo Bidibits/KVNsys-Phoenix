@@ -3,9 +3,14 @@ import type {
   ProductForm,
   ProductFormResult,
   ProductListResult,
+  PasswordResult,
   ProductResult,
   SignedInUser,
   SignInResult,
+  UserForm,
+  UserFormResult,
+  UserListResult,
+  UserResult,
 } from '@kvnsys/client';
 
 /**
@@ -42,6 +47,14 @@ export interface KvnsysBridge {
    * the text as typed; what it means (a price, a status) is decided here and at the server.
    */
   saveProduct(id: string | null, form: ProductForm): Promise<ProductResult>;
+  /** Every account, by name, if the signed-in person may see them. */
+  listUsers(): Promise<UserListResult>;
+  /** The account form and the roles it can offer: blank for a new account (null), or the account as the server has it now. */
+  userForm(id: string | null): Promise<UserFormResult>;
+  /** Saves what was typed: a new account with its first password (null), or changes to one, never its password. */
+  saveUser(id: string | null, form: UserForm): Promise<UserResult>;
+  /** Gives an account a new password, typed twice. That person has to sign in again, wherever they are. */
+  resetPassword(id: string, password: string, again: string): Promise<PasswordResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -52,3 +65,7 @@ export const SignOutChannel = 'kvnsys:sign-out';
 export const ListProductsChannel = 'kvnsys:list-products';
 export const ProductFormChannel = 'kvnsys:product-form';
 export const SaveProductChannel = 'kvnsys:save-product';
+export const ListUsersChannel = 'kvnsys:list-users';
+export const UserFormChannel = 'kvnsys:user-form';
+export const SaveUserChannel = 'kvnsys:save-user';
+export const ResetPasswordChannel = 'kvnsys:reset-password';

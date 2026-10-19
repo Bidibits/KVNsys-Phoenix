@@ -53,6 +53,21 @@ export class Sessions {
     this.byHash.delete(hashOf(token));
   }
 
+  /**
+   * Ends every pass one person holds, on every register: when their password is reset, or their
+   * account is switched off. Returns how many ended.
+   */
+  cancelFor(userId: string): number {
+    let ended = 0;
+    for (const [key, session] of this.byHash) {
+      if (session.user.id === userId) {
+        this.byHash.delete(key);
+        ended++;
+      }
+    }
+    return ended;
+  }
+
   /** How many passes are still good. */
   activeCount(): number {
     this.forgetExpired();

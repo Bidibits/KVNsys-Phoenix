@@ -179,8 +179,8 @@ Key:
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
 | Log in (`logInLocalDatabase`, `logInConnectToServer`) | Sign in, against a local database or a server | ✅ Connect to the shop's server over secure HTTPS, sign in, sessions. Registers always go through the server: no local-database mode, by design. |
-| Users (list, form, search) | Accounts and their roles | 🟢 A users list and form, to create the cashiers' accounts · ⏭ search |
-| Roles (list, form, search) | Roles and the rights each holds | ✅ Administrator, Branch manager and Cashier are made at install · ⏭ editing roles and rights |
+| Users (list, form, search) | Accounts and their roles | ✅ A users list and form, to create the cashiers' accounts (2026-10-19) · ⏭ search |
+| Roles (list, form, search) | Roles and the rights each holds | ✅ Only the Administrator is made at install (decided 2026-10-19) · 🟢 making and editing roles and their rights, so a shop can make a cashier role |
 | Terminals (list, form, search) | The registers | 🟢 Each register recorded by itself the first time it connects, as Beta did, plus a list to name them · ⏭ search |
 | Configurations | This PC's shop and register | ✅ It remembers its server · ⏭ a settings page |
 | Locations (list, form, search) | The shops | ✅ The first shop is made at install · ⏭ screens, when a second branch joins |

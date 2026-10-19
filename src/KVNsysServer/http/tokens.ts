@@ -8,3 +8,6 @@ export const SignInOperation = Symbol('SignInOperation');
 
 /** The product catalog and the rights check in front of it, or null when there's no database. */
 export const ProductsOperation = Symbol('ProductsOperation');
+
+/** The accounts, the rights check, the password hasher and the sessions, or null when there's no database. */
+export const UsersOperation = Symbol('UsersOperation');

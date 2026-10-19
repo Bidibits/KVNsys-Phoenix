@@ -9,6 +9,23 @@ export { Accesses, AccessDescriptions, AllAccesses, type AccessName } from './id
 export { AdminRoleCode, DefaultRoles, type RoleDefinition } from './identity/roles.js';
 export { PasswordHasher, passwordProblem } from './identity/passwords.js';
 export { displayName, maySignIn, UserDirectory, type UserForSignIn, type UserStanding } from './identity/users.js';
+export {
+  AccountLimits,
+  AccountStatuses,
+  accountDisplayName,
+  blankUserForm,
+  checkAccountDetails,
+  normalizeUsername,
+  readNewPassword,
+  readUserForm,
+  userFormFor,
+  UserAccounts,
+  type Account,
+  type AccountDetails,
+  type AccountStatus,
+  type RoleChoice,
+  type UserForm,
+} from './identity/accounts.js';
 
 export { serverMachineCode, type PcIdentity } from './locations/machines.js';
 
