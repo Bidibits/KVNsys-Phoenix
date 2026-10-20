@@ -51,7 +51,9 @@ model Location {
   createdAtLocation String?   @map("created_at_location") @db.Uuid
   createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
 
-  machines Machine[]
+  machines      Machine[]
+  inventory     Inventory[]
+  inventoryLogs InventoryLog[]
 
   @@map("locations")
 }
@@ -175,5 +177,66 @@ model Product {
   createdAtLocation String?   @map("created_at_location") @db.Uuid
   createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
 
+  inventory     Inventory[]
+  inventoryLogs InventoryLog[]
+
   @@map("products")
+}
+
+/// How many of a product a location holds now: the running total of its inventory_logs, kept so
+/// reading stock is one row rather than a sum over every sale. Only the stock ledger writes it,
+/// in the same transaction as the movement line, so the two never disagree. No id: the key is
+/// (location, product). Whole pieces only; nothing the shop sells is sold by weight or length.
+/// SCHEMA-PLAN's min_stock, max_stock and reorder_point come with reorder alerts.
+model Inventory {
+  locationId String @map("location_id") @db.Uuid
+  productId  String @map("product_id") @db.Uuid
+  /// Can go below zero. The ledger records what happened; whether a sale is refused when the
+  /// count says none are left is a rule for selling to decide, not for the ledger.
+  stock      Int    @default(0)
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@id([locationId, productId])
+  @@map("inventory")
+}
+
+/// One change to a location's stock of a product: the stock ledger. Append-only: a mistake is put
+/// right by a second line the other way, never by editing or deleting one. movement_type says why
+/// (the migration lists the allowed ones); source_table + source_id say which document caused it,
+/// such as the sale. resulting_on_hand is the stock just after this line, so "what did stock read
+/// at 14:32" is one row, and a running sum that disagrees with it means something wrote outside
+/// the ledger.
+model InventoryLog {
+  id              String  @id @db.Uuid
+  locationId      String  @map("location_id") @db.Uuid
+  productId       String  @map("product_id") @db.Uuid
+  /// In pieces: positive in, negative out, never zero.
+  quantityChange  Int     @map("quantity_change")
+  movementType    String  @map("movement_type")
+  sourceTable     String? @map("source_table")
+  sourceId        String? @map("source_id") @db.Uuid
+  resultingOnHand Int     @map("resulting_on_hand")
+  note            String?
+
+  createdByUser     String?  @map("created_by_user") @db.Uuid
+  createdAtMachine  String?  @map("created_at_machine") @db.Uuid
+  createdAtLocation String?  @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([locationId, productId, createdAtDate])
+  @@map("inventory_logs")
 }

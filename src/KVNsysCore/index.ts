@@ -71,4 +71,15 @@ export {
   type ProductForm,
 } from './catalog/product-form.js';
 
+export {
+  checkStockChange,
+  MovementTypes,
+  StockLedger,
+  StockLimits,
+  type MovementType,
+  type StockChange,
+  type StockLevel,
+  type StockMovement,
+} from './inventory/stock-ledger.js';
+
 export { SetupStore, type SetupTransaction } from './setup/setup-store.js';

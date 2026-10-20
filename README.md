@@ -72,6 +72,13 @@ and everything a user sees, is called KVNsys.
   "change" ticks "see" with it. A change counts at once; switching a role off signs out everyone
   who has it. The Administrator always holds every right, including any a later version adds, and
   stays switched on: only its name can change.
+- **Stock movements, in the database.** Every change to a shop's stock of a product is one line:
+  how many pieces in or out, why (in from a supplier, out to a customer, or a count put right,
+  which needs a reason), which document caused it, who, when, and the stock just after it. Stock
+  on hand is those lines added up, and a running total is kept beside them in the same save, so
+  reading stock is quick and the two never disagree. A line is never changed or deleted, and the
+  database itself refuses to; a mistake is put right by another line. Many sales at once never
+  lose a piece. No screens or server calls yet.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
@@ -84,7 +91,7 @@ building a screen.
   `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
   trust the next server it connects to.
 - The server prints its certificate fingerprint when it starts, so the first connection can be
-  checked against it. The schema (six tables, in one baseline migration) is in
+  checked against it. The schema (eight tables, in one baseline migration) is in
   `src/KVNsysPostgres/prisma/`.
 
 ## How it runs

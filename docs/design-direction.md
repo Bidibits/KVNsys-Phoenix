@@ -214,8 +214,8 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Inventory, Inventory Admin, Inventory Manager | Stock on hand, entering stock, minimum and maximum per storage | ⏭ |
-| Inventory logs | Every stock movement | ⏭ |
+| Inventory, Inventory Admin, Inventory Manager | Stock on hand, entering stock, minimum and maximum per storage | 🟢 Stock on hand, receiving and adjusting, before January (decided 2026-10-20: bare bones is selling and stock) · ⏭ minimum and maximum, storages |
+| Inventory logs | Every stock movement | ✅ The ledger, in the database (2026-10-20) · 🟢 a screen with a product's movements, alongside the Stock screen |
 | Transfers hub: quotes, orders, receiving | Supplier quotes, orders built from them, receiving an order into stock | ⏭ |
 | Transfer maker, manager and requests | Moving stock between places, and asking for a transfer | ⏭ HQ-to-branch transfers (one document carrying the stock and the product details) are the first thing after launch |
 
