@@ -60,6 +60,7 @@ function toReceipt(row: Row): Receipt {
     createdAt: row.createdAtDate.toISOString(),
     createdByUser: row.createdByUser,
     machineId: row.createdAtMachine,
+    shiftId: row.shiftId,
   };
 }
 
@@ -90,12 +91,21 @@ export class PrismaSalesJournal extends SalesJournal {
     super();
   }
 
-  async record(sale: PricedSale, payment: CashPayment, locationId: string, lineage: Lineage): Promise<Receipt> {
+  async record(sale: PricedSale, payment: CashPayment, locationId: string, lineage: Lineage, shiftId: string | null = null): Promise<Receipt> {
     requireSound(sale, payment);
     if (!Uuid.test(locationId)) throw new Refusal('not-found', NoSuchShop);
+    if (shiftId !== null && !Uuid.test(shiftId)) throw new Refusal('not-found', "That shift isn't there.");
     const id = newId();
 
     return this.db.$transaction(async (tx) => {
+      // A sale goes into an open shift only. Sales share the shift's row; closing it waits for them,
+      // and once it's closed, this refuses.
+      if (shiftId !== null) {
+        const [shift] = await tx.$queryRaw<{ status: string; code: string; location_id: string }[]>`
+          SELECT status, code, location_id::text FROM shifts WHERE id = ${shiftId}::uuid FOR SHARE`;
+        if (!shift || shift.location_id !== locationId) throw new Refusal('not-found', "That shift isn't there.");
+        if (shift.status !== 'Open') throw new Refusal('conflict', `Shift ${shift.code} is closed. Start a new shift to sell.`);
+      }
       // One sale at a time takes a shop's next number, so numbers never repeat or skip: a sale that
       // fails gives its number back with everything else. A lock of its own, not the shop's row,
       // so it never waits on anything stock does.
@@ -128,6 +138,7 @@ export class PrismaSalesJournal extends SalesJournal {
         data: {
           id,
           code: `${shop.code}-${String(number).padStart(6, '0')}`,
+          shiftId,
           locationId,
           number,
           subtotal: pesosText(sale.subtotal),

@@ -55,6 +55,7 @@ model Location {
   inventory     Inventory[]
   inventoryLogs InventoryLog[]
   receipts      Receipt[]
+  shifts        Shift[]
 
   @@map("locations")
 }
@@ -252,6 +253,8 @@ model Receipt {
   id                   String  @id @db.Uuid
   /// The shop's code and the receipt's number there: HQ-000042.
   code                 String  @unique
+  /// The shift it was rung up in. The till never records a receipt without one.
+  shiftId              String? @map("shift_id") @db.Uuid
   locationId           String  @map("location_id") @db.Uuid
   /// Counts up from 1 at each shop, with no gaps.
   number               Int
@@ -271,11 +274,13 @@ model Receipt {
   createdAtDate     DateTime @default(now()) @map("created_at_date") @db.Timestamptz(6)
 
   location Location         @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  shift    Shift?           @relation(fields: [shiftId], references: [id], onDelete: Restrict)
   items    ReceiptItem[]
   payments ReceiptPayment[]
 
   @@unique([locationId, number])
   @@index([locationId, createdAtDate])
+  @@index([shiftId])
   @@map("receipts")
 }
 
@@ -324,4 +329,39 @@ model ReceiptPayment {
 
   @@index([receiptId])
   @@map("receipt_payments")
+}
+
+/// One cashier's stretch at the till: SCHEMA-PLAN's shifts. Opened with the cash counted into the
+/// drawer, closed with the cash counted out. It belongs to a shop and a person, not a PC, so it can
+/// be opened at one register and closed at another; the event blocks say where each happened.
+/// expected_cash (the opening cash and the shift's cash sales) is worked out and kept at closing.
+/// Numbered per shop with no gaps. Never deleted, and never changed once closed (the migration).
+model Shift {
+  id           String   @id @db.Uuid
+  /// The shop's code and the shift's number there: HQ-S00001.
+  code         String   @unique
+  locationId   String   @map("location_id") @db.Uuid
+  number       Int
+  openingCash  Decimal  @map("opening_cash") @db.Decimal(14, 2)
+  expectedCash Decimal? @map("expected_cash") @db.Decimal(14, 2)
+  countedCash  Decimal? @map("counted_cash") @db.Decimal(14, 2)
+  status       String   @default("Open")
+  /// The note written when the drawer was counted.
+  description  String?
+
+  openedByUser     String?   @map("opened_by_user") @db.Uuid
+  openedAtMachine  String?   @map("opened_at_machine") @db.Uuid
+  openedAtLocation String?   @map("opened_at_location") @db.Uuid
+  openedAtDate     DateTime  @default(now()) @map("opened_at_date") @db.Timestamptz(6)
+  closedByUser     String?   @map("closed_by_user") @db.Uuid
+  closedAtMachine  String?   @map("closed_at_machine") @db.Uuid
+  closedAtLocation String?   @map("closed_at_location") @db.Uuid
+  closedAtDate     DateTime? @map("closed_at_date") @db.Timestamptz(6)
+
+  location Location  @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  receipts Receipt[]
+
+  @@unique([locationId, number])
+  @@index([locationId, openedByUser, status])
+  @@map("shifts")
 }

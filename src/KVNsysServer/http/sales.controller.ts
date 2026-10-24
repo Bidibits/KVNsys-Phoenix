@@ -3,6 +3,7 @@ import {
   Accesses,
   dayTotals,
   displayPesos,
+  NoShiftYet,
   parsePesos,
   pesosText,
   priceSale,
@@ -18,6 +19,7 @@ import {
   type Receipt,
   type RegisterBook,
   type SalesJournal,
+  type ShiftBook,
   type ShopDirectory,
   type UserAccounts,
 } from '@kvnsys/core';
@@ -48,6 +50,7 @@ export interface SalesOperationParts {
   shops: ShopDirectory;
   accounts: UserAccounts;
   registers: RegisterBook;
+  shifts: ShiftBook;
   authorizer: Authorizer;
   /** The PC this server runs on, which says which shop it sells at. */
   server: PcIdentity;
@@ -108,6 +111,10 @@ export class SalesController {
     const expectedTotal = parsePesos(fields.data.expectedTotal);
     if (tendered === null || expectedTotal === null) throw problem(400, NotUnderstood);
 
+    // Into the cashier's open shift: without one, there's no drawer for the cash to go into.
+    const shift = await parts.shifts.current(person.id, shop.id);
+    if (!shift) throw problem(409, NoShiftYet);
+
     // Priced again from the catalog as it is now, never from what the register says a price is.
     const products = new Map<string, Product>();
     for (const id of new Set(lines.map((line) => line.productId))) {
@@ -127,7 +134,7 @@ export class SalesController {
       }
       // At the register signed in at; the shop is always the server's own.
       const lineage = { userId: person.id, machineId: register?.machineId ?? null, locationId: shop.id };
-      return parts.journal.record(sale, takeCash(sale.total, tendered), shop.id, lineage);
+      return parts.journal.record(sale, takeCash(sale.total, tendered), shop.id, lineage, shift.id);
     });
     return { receipt: receiptOnWire(receipt), shop, cashier: person.displayName, register: register?.name ?? null };
   }

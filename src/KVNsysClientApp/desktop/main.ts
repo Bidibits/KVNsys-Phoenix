@@ -4,7 +4,12 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   changeRegister,
+  closeShift,
   connectToServer,
+  currentShift,
+  openShift,
+  type CurrentShiftResult,
+  type ShiftResult,
   findSaleProduct,
   listRegisters,
   readThisPc,
@@ -61,7 +66,10 @@ import {
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ClearSaleChannel,
+  CloseShiftChannel,
   ConnectChannel,
+  CurrentShiftChannel,
+  OpenShiftChannel,
   ListRegistersChannel,
   SaveRegisterChannel,
   DaySalesChannel,
@@ -414,6 +422,21 @@ ipcMain.handle(SaveRegisterChannel, async (_event, id: unknown, typed: unknown):
   const status = asText((typed as Record<string, unknown>).status);
   if (name === undefined || status === undefined) return NotAForm;
   return withPass((address, pass, options) => changeRegister(address, pass, registerId, { name, status }, options));
+});
+
+ipcMain.handle(CurrentShiftChannel, (): Promise<CurrentShiftResult> => withPass(currentShift));
+
+ipcMain.handle(OpenShiftChannel, async (_event, typed: unknown): Promise<ShiftResult> => {
+  const openingCash = asText(typed);
+  if (openingCash === undefined) return NotAForm;
+  return withPass((address, pass, options) => openShift(address, pass, openingCash, options));
+});
+
+ipcMain.handle(CloseShiftChannel, async (_event, typed: unknown, note: unknown): Promise<ShiftResult> => {
+  const countedCash = asText(typed);
+  const written = asText(note);
+  if (countedCash === undefined || written === undefined) return NotAForm;
+  return withPass((address, pass, options) => closeShift(address, pass, countedCash, written, options));
 });
 
 function openWindow(): void {

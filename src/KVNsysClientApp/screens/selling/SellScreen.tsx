@@ -1,7 +1,9 @@
-import type { PricedLine, SaleResult, TillResult, TillView } from '@kvnsys/client';
-import { Button, Notice, Pesos, RecordTable, TextField, type Column } from '@kvnsys/ui';
+import type { CurrentShiftResult, PricedLine, SaleResult, ShiftView, TillResult, TillView } from '@kvnsys/client';
+import { Button, Notice, Pesos, RecordTable, ShopTime, TextField, type Column } from '@kvnsys/ui';
 import { useEffect, useRef, useState } from 'react';
 import { DiscountPanel } from './DiscountPanel';
+import { EndShiftPanel } from './EndShiftPanel';
+import { ShiftReport, StartShift } from './ShiftViews';
 import { DiscountChoices } from './discounts';
 import { PayPanel } from './PayPanel';
 import { ReceiptView } from './ReceiptView';
@@ -15,13 +17,67 @@ const somethingWentWrong = (error: unknown) => ({
 type Paid = Extract<SaleResult, { ok: true }>;
 
 /**
+ * Selling, behind the cashier's shift: without one open, Start shift comes first (the cash in the
+ * drawer); with one, the till, and End shift, which counts the drawer and shows the shift's report.
+ */
+export function SellScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
+  const [shift, setShift] = useState<CurrentShiftResult | null>(null);
+  const [ended, setEnded] = useState<ShiftView | null>(null);
+
+  useEffect(() => {
+    let showing = true;
+    window.kvnsys
+      .currentShift()
+      .catch((error: unknown): CurrentShiftResult => somethingWentWrong(error))
+      .then((answer) => {
+        if (showing) setShift(answer);
+      });
+    return () => {
+      showing = false;
+    };
+  }, []);
+
+  if (ended) return <ShiftReport shift={ended} onDone={() => (setEnded(null), setShift({ ok: true, shift: null }))} />;
+  if (!shift) {
+    return (
+      <p role="status" className="text-[17px] text-muted-foreground">
+        Loading your shift…
+      </p>
+    );
+  }
+  if (!shift.ok) {
+    return (
+      <div className="max-w-xl">
+        <Notice tone="problem">{shift.message}</Notice>
+        {shift.reason === 'ended' && (
+          <Button type="button" size="compact" className="mt-4" onClick={onSignInAgain}>
+            Sign in again
+          </Button>
+        )}
+      </div>
+    );
+  }
+  if (!shift.shift) return <StartShift onStarted={(started) => setShift({ ok: true, shift: started })} onSignInAgain={onSignInAgain} />;
+  return <SaleArea shift={shift.shift} onShiftEnded={setEnded} onSignInAgain={onSignInAgain} />;
+}
+
+/**
  * Ringing up a sale, keyboard first (design-direction.md, part 2): the code box always has the
  * cursor, and a scan or Enter adds one of the product. The sale itself, its prices and totals, is
  * kept by the till on the desktop side; this shows it and passes along what the cashier did. Once
  * paid, the receipt shows in place of the sale until New sale.
  */
-export function SellScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
+function SaleArea({
+  shift,
+  onShiftEnded,
+  onSignInAgain,
+}: {
+  shift: ShiftView;
+  onShiftEnded: (shift: ShiftView) => void;
+  onSignInAgain: () => void;
+}) {
   const [till, setTill] = useState<TillView | null>(null);
+  const [ending, setEnding] = useState(false);
   const [code, setCode] = useState('');
   const [problem, setProblem] = useState<{ message: string; ended: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -136,6 +192,14 @@ export function SellScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
   return (
     <div className="flex h-full gap-5">
       <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex items-center gap-3 text-[15px] text-muted-foreground">
+          <span>
+            Shift {shift.code} · started <ShopTime at={shift.openedAt} show="time" />
+          </span>
+          <Button type="button" variant="secondary" size="compact" className="ml-auto h-8 px-3" disabled={busy || !empty} onClick={() => setEnding(true)}>
+            End shift
+          </Button>
+        </div>
         <form
           noValidate
           className="flex items-end gap-3"
@@ -215,6 +279,16 @@ export function SellScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
             show({ ok: true, till: next });
             codeBox.current?.focus();
           }}
+          onSignInAgain={onSignInAgain}
+        />
+      )}
+      {ending && (
+        <EndShiftPanel
+          onClose={() => {
+            setEnding(false);
+            codeBox.current?.focus();
+          }}
+          onEnded={onShiftEnded}
           onSignInAgain={onSignInAgain}
         />
       )}

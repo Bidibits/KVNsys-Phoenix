@@ -63,3 +63,32 @@ describe("a day's sales, and one receipt again", () => {
     expect(ReceiptReply.safeParse({ receipt, shop, cashier: null, register: null }).success).toBe(true);
   });
 });
+
+describe('the shift calls', () => {
+  const shift = {
+    id: 's1',
+    code: 'HQ-S00001',
+    status: 'Open',
+    openingCash: '1000.00',
+    cashSales: '41.20',
+    receipts: 1,
+    discounts: '10.30',
+    expectedCash: '1041.20',
+    countedCash: null,
+    openedAt: '2026-10-24T00:00:00.000Z',
+    openedBy: 'Ana Cruz',
+    closedAt: null,
+    closedBy: null,
+    note: null,
+  };
+
+  it('live under /api/shifts, came with protocol 12, and carry money as text', async () => {
+    const { CloseShiftPath, CurrentShiftPath, CurrentShiftReply, OpenShiftFields, ShiftReply, ShiftsPath } = await import('@kvnsys/wire');
+    expect([ShiftsPath, CurrentShiftPath, CloseShiftPath]).toEqual(['/api/shifts', '/api/shifts/current', '/api/shifts/current/close']);
+    expect(ProtocolVersion).toBeGreaterThanOrEqual(12);
+    expect(CurrentShiftReply.safeParse({ shift: null }).success).toBe(true);
+    expect(ShiftReply.safeParse({ shift }).success).toBe(true);
+    expect(ShiftReply.safeParse({ shift: { ...shift, status: 'Paused' } }).success).toBe(false);
+    expect(OpenShiftFields.safeParse({ openingCash: 1000 }).success).toBe(false);
+  });
+});

@@ -159,6 +159,7 @@ CREATE TABLE "inventory_logs" (
 CREATE TABLE "receipts" (
     "id" UUID NOT NULL,
     "code" TEXT NOT NULL,
+    "shift_id" UUID,
     "location_id" UUID NOT NULL,
     "number" INTEGER NOT NULL,
     "subtotal" DECIMAL(14,2) NOT NULL,
@@ -210,6 +211,29 @@ CREATE TABLE "receipt_payments" (
     CONSTRAINT "receipt_payments_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "shifts" (
+    "id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "location_id" UUID NOT NULL,
+    "number" INTEGER NOT NULL,
+    "opening_cash" DECIMAL(14,2) NOT NULL,
+    "expected_cash" DECIMAL(14,2),
+    "counted_cash" DECIMAL(14,2),
+    "status" TEXT NOT NULL DEFAULT 'Open',
+    "description" TEXT,
+    "opened_by_user" UUID,
+    "opened_at_machine" UUID,
+    "opened_at_location" UUID,
+    "opened_at_date" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "closed_by_user" UUID,
+    "closed_at_machine" UUID,
+    "closed_at_location" UUID,
+    "closed_at_date" TIMESTAMPTZ(6),
+
+    CONSTRAINT "shifts_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "locations_code_key" ON "locations"("code");
 
@@ -241,16 +265,28 @@ CREATE INDEX "inventory_logs_location_id_product_id_created_at_date_idx" ON "inv
 CREATE UNIQUE INDEX "receipts_code_key" ON "receipts"("code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "receipts_location_id_number_key" ON "receipts"("location_id", "number");
+CREATE INDEX "receipts_location_id_created_at_date_idx" ON "receipts"("location_id", "created_at_date");
 
 -- CreateIndex
-CREATE INDEX "receipts_location_id_created_at_date_idx" ON "receipts"("location_id", "created_at_date");
+CREATE INDEX "receipts_shift_id_idx" ON "receipts"("shift_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "receipts_location_id_number_key" ON "receipts"("location_id", "number");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "receipt_items_receipt_id_line_number_key" ON "receipt_items"("receipt_id", "line_number");
 
 -- CreateIndex
 CREATE INDEX "receipt_payments_receipt_id_idx" ON "receipt_payments"("receipt_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "shifts_code_key" ON "shifts"("code");
+
+-- CreateIndex
+CREATE INDEX "shifts_location_id_opened_by_user_status_idx" ON "shifts"("location_id", "opened_by_user", "status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "shifts_location_id_number_key" ON "shifts"("location_id", "number");
 
 -- AddForeignKey
 ALTER TABLE "accesses" ADD CONSTRAINT "accesses_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -277,6 +313,9 @@ ALTER TABLE "inventory_logs" ADD CONSTRAINT "inventory_logs_product_id_fkey" FOR
 ALTER TABLE "receipts" ADD CONSTRAINT "receipts_location_id_fkey" FOREIGN KEY ("location_id") REFERENCES "locations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "receipts" ADD CONSTRAINT "receipts_shift_id_fkey" FOREIGN KEY ("shift_id") REFERENCES "shifts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "receipt_items" ADD CONSTRAINT "receipt_items_receipt_id_fkey" FOREIGN KEY ("receipt_id") REFERENCES "receipts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -284,6 +323,9 @@ ALTER TABLE "receipt_items" ADD CONSTRAINT "receipt_items_product_id_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "receipt_payments" ADD CONSTRAINT "receipt_payments_receipt_id_fkey" FOREIGN KEY ("receipt_id") REFERENCES "receipts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "shifts" ADD CONSTRAINT "shifts_location_id_fkey" FOREIGN KEY ("location_id") REFERENCES "locations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- A price is never negative. Prisma's schema has no way to say so, so it's written here.
 ALTER TABLE "products" ADD CONSTRAINT "products_retail_price_not_negative" CHECK ("retail_price" >= 0);
@@ -350,3 +392,28 @@ CREATE TRIGGER "receipt_payments_no_update_or_delete" BEFORE UPDATE OR DELETE ON
   FOR EACH ROW EXECUTE FUNCTION "receipts_are_kept"();
 CREATE TRIGGER "receipt_payments_no_truncate" BEFORE TRUNCATE ON "receipt_payments"
   FOR EACH STATEMENT EXECUTE FUNCTION "receipts_are_kept"();
+
+-- A shift's rules. Open or Closed; closed means counted, with what the drawer should have held.
+ALTER TABLE "shifts" ADD CONSTRAINT "shifts_status_known" CHECK ("status" IN ('Open', 'Closed'));
+ALTER TABLE "shifts" ADD CONSTRAINT "shifts_number_from_one" CHECK ("number" >= 1);
+ALTER TABLE "shifts" ADD CONSTRAINT "shifts_money_not_negative" CHECK (
+  "opening_cash" >= 0 AND ("expected_cash" IS NULL OR "expected_cash" >= 0) AND ("counted_cash" IS NULL OR "counted_cash" >= 0)
+);
+ALTER TABLE "shifts" ADD CONSTRAINT "shifts_closed_is_counted" CHECK (
+  ("status" = 'Open' AND "counted_cash" IS NULL AND "expected_cash" IS NULL AND "closed_at_date" IS NULL)
+  OR ("status" = 'Closed' AND "counted_cash" IS NOT NULL AND "expected_cash" IS NOT NULL AND "closed_at_date" IS NOT NULL)
+);
+
+-- A shift is never removed, and once closed it never changes: its count is the record of the drawer.
+CREATE FUNCTION "shifts_are_kept"() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD."status" = 'Open' THEN
+    RETURN NEW;
+  END IF;
+  RAISE EXCEPTION 'shifts is kept as it was closed: a shift is never removed, and a closed one never changes';
+END;
+$$;
+CREATE TRIGGER "shifts_no_change_once_closed" BEFORE UPDATE OR DELETE ON "shifts"
+  FOR EACH ROW EXECUTE FUNCTION "shifts_are_kept"();
+CREATE TRIGGER "shifts_no_truncate" BEFORE TRUNCATE ON "shifts"
+  FOR EACH STATEMENT EXECUTE FUNCTION "shifts_are_kept"();

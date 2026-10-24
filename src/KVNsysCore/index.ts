@@ -126,5 +126,16 @@ export {
 } from './selling/sales.js';
 
 export { dayTotals, shopDate, shopDay, ShopTimeZone, type DayTotals, type ReceiptSummary } from './selling/days.js';
+export {
+  checkShiftNote,
+  NoShiftYet,
+  ShiftBook,
+  ShiftLimits,
+  ShiftStatuses,
+  variance,
+  varianceInWords,
+  type Shift,
+  type ShiftStatus,
+} from './selling/shifts.js';
 
 export { SetupStore, type SetupTransaction } from './setup/setup-store.js';

@@ -1,7 +1,7 @@
 import { createServer as createSecureServer } from 'node:https';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { findSaleProduct, getReceipt, listDaySales, priceCart, recordSale, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
+import { closeShift, currentShift, findSaleProduct, getReceipt, listDaySales, openShift, priceCart, recordSale, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
 import { createServerCertificate, type ServerCertificate } from '@kvnsys/server';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
@@ -137,5 +137,52 @@ describe("looking back at a day's sales from the register", () => {
     server = await fakeServer(certificate, 200, { receipt: receiptOnWire, shop, cashier: null, register: null });
     expect(await getReceipt(server.address, pass, receiptOnWire.id, pinned())).toMatchObject({ ok: true, cashier: null, receipt: { code: 'HQ-000001', total: 4120 } });
     expect(server.received.map((r) => r.url)).toEqual([`/api/sales/${receiptOnWire.id}`]);
+  });
+});
+
+describe("the cashier's shift, from the register", () => {
+  const closed = {
+    id: 's1',
+    code: 'HQ-S00001',
+    status: 'Closed',
+    openingCash: '1000.00',
+    cashSales: '41.20',
+    receipts: 1,
+    discounts: '10.30',
+    expectedCash: '1041.20',
+    countedCash: '1021.20',
+    openedAt: '2026-10-24T00:00:00.000Z',
+    openedBy: 'Ana Cruz',
+    closedAt: '2026-10-24T09:00:00.000Z',
+    closedBy: 'Ana Cruz',
+    note: 'gave too much change',
+  };
+
+  it('asks for the open shift, or none', async () => {
+    server = await fakeServer(certificate, 200, { shift: null });
+    expect(await currentShift(server.address, pass, pinned())).toEqual({ ok: true, shift: null });
+    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/shifts/current']);
+  });
+
+  it('starts a shift with the cash as typed, sent as exact pesos', async () => {
+    server = await fakeServer(certificate, 201, { shift: { ...closed, status: 'Open', countedCash: null, closedAt: null, closedBy: null, note: null } });
+    expect(await openShift(server.address, pass, '1,000', pinned())).toMatchObject({ ok: true, shift: { openingCash: 100000, variance: null, varianceInWords: null } });
+    expect(server.received[0]).toMatchObject({ method: 'POST', url: '/api/shifts', body: { openingCash: '1000.00' } });
+  });
+
+  it("ends it with the cash counted, and says how far out the drawer is", async () => {
+    server = await fakeServer(certificate, 200, { shift: closed });
+    expect(await closeShift(server.address, pass, '1021.20', 'gave too much change', pinned())).toMatchObject({
+      ok: true,
+      shift: { expectedCash: 104120, countedCash: 102120, variance: -2000, varianceInWords: '₱20.00 short' },
+    });
+    expect(server.received[0]).toMatchObject({ method: 'POST', url: '/api/shifts/current/close', body: { countedCash: '1021.20', note: 'gave too much change' } });
+  });
+
+  it("catches cash typed wrong without asking the server", async () => {
+    server = await fakeServer(certificate, 201, { shift: closed });
+    expect(await openShift(server.address, pass, 'a thousand', pinned())).toMatchObject({ ok: false, reason: 'refused' });
+    expect(await closeShift(server.address, pass, '', '', pinned())).toMatchObject({ ok: false, reason: 'refused', message: /^Type the cash/ });
+    expect(server.received).toEqual([]);
   });
 });

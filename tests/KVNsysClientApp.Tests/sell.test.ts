@@ -98,10 +98,16 @@ describeWithDatabase('selling from the real app: scan, discount, pay, receipt', 
     await codeBox().press('Enter');
   }
 
-  it('opens Sell with the cursor in the code box, ready for the scanner', async () => {
+  it('asks for the cash in the drawer first, then opens the till with the cursor in the code box', async () => {
     await signIn('ana');
     await window.getByRole('button', { name: /^Sell/ }).click();
+    const start = window.getByRole('region', { name: 'Start your shift' });
+    await start.waitFor();
+    expect(await isFocused(start.getByLabel('Cash in the drawer'))).toBe(true);
+    await start.getByLabel('Cash in the drawer').fill('1,000');
+    await start.getByLabel('Cash in the drawer').press('Enter');
     await window.getByText('Scan a product to start a sale.').waitFor();
+    expect(await window.getByText(/^Shift HQ-S00001 · started/).isVisible()).toBe(true);
     expect(await isFocused(codeBox())).toBe(true);
     expect(await total()).toBe('₱0.00');
   });
@@ -193,6 +199,23 @@ describeWithDatabase('selling from the real app: scan, discount, pay, receipt', 
     await window.getByText('Scan a product to start a sale.').waitFor();
     expect(await total()).toBe('₱0.00');
     expect(await isFocused(codeBox())).toBe(true);
+  });
+
+  it('ends the shift by counting the drawer, and shows how far out it is', async () => {
+    await window.getByRole('button', { name: 'End shift' }).click();
+    const form = window.getByRole('dialog', { name: 'End shift' });
+    await form.getByText('Cash sales (1 receipt)').waitFor();
+    await form.getByLabel('Cash counted in the drawer').fill('1021.20');
+    await form.getByLabel('Note (optional)').fill('gave too much change once');
+    await form.getByRole('button', { name: 'End shift' }).click();
+    const report = window.getByRole('article', { name: 'Shift report' });
+    await report.waitFor();
+    expect(await report.getByLabel('Should be in the drawer').textContent()).toBe('₱1,041.20');
+    expect(await report.getByLabel('Counted').textContent()).toBe('₱1,021.20');
+    expect(await window.getByLabel('The drawer is', { exact: true }).textContent()).toBe('₱20.00 short');
+    expect(await db.shift.findFirstOrThrow()).toMatchObject({ status: 'Closed', description: 'gave too much change once' });
+    await window.getByRole('button', { name: 'Done' }).click();
+    await window.getByRole('region', { name: 'Start your shift' }).waitFor();
     await signOut();
   });
 

@@ -35,6 +35,9 @@ const DaySalesChannel = 'kvnsys:day-sales';
 const ReceiptChannel = 'kvnsys:receipt';
 const ListRegistersChannel = 'kvnsys:list-registers';
 const SaveRegisterChannel = 'kvnsys:save-register';
+const CurrentShiftChannel = 'kvnsys:current-shift';
+const OpenShiftChannel = 'kvnsys:open-shift';
+const CloseShiftChannel = 'kvnsys:close-shift';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
@@ -67,6 +70,9 @@ const bridge: KvnsysBridge = {
   receipt: (id) => ipcRenderer.invoke(ReceiptChannel, id),
   listRegisters: () => ipcRenderer.invoke(ListRegistersChannel),
   saveRegister: (id, form) => ipcRenderer.invoke(SaveRegisterChannel, id, form),
+  currentShift: () => ipcRenderer.invoke(CurrentShiftChannel),
+  openShift: (openingCash) => ipcRenderer.invoke(OpenShiftChannel, openingCash),
+  closeShift: (countedCash, note) => ipcRenderer.invoke(CloseShiftChannel, countedCash, note),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

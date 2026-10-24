@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 import type { INestApplication } from '@nestjs/common';
-import { findSaleProduct, getReceipt, listDaySales, recordSale, signIn, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
+import { findSaleProduct, getReceipt, listDaySales, openShift, recordSale, signIn, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
 import { priceSale, shopDate, takeCash } from '@kvnsys/core';
 import { createPrismaClient, PrismaSalesJournal, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, lacksRight, ScryptPasswordHasher, type ServerCertificate } from '@kvnsys/server';
@@ -75,6 +75,9 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
       if (!result.ok) throw new Error(result.message);
       passes[username] = result.session;
     }
+    // Ana's drawer: she can't sell without a shift.
+    const shift = await openShift(address, passes.ana!, '1000', { pin });
+    if (!shift.ok) throw new Error(shift.message);
   }, 120_000);
 
   afterAll(async () => {

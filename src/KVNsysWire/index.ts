@@ -66,3 +66,13 @@ export {
   SaleProductReply,
   SalesPath,
 } from './selling.js';
+export {
+  CloseShiftFields,
+  CloseShiftPath,
+  CurrentShiftPath,
+  CurrentShiftReply,
+  OpenShiftFields,
+  ShiftOnWire,
+  ShiftReply,
+  ShiftsPath,
+} from './shifts.js';

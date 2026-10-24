@@ -124,6 +124,12 @@ and everything a user sees, is called KVNsys.
   save (products, stock, sales, users, roles) records which register it was made at, and a
   receipt names its register. A Registers tile lists them, the server PC first; a manager names
   them, or switches one off, which signs out whoever is at it and stops anyone signing in there.
+- **Shifts.** Before the first sale, a cashier starts a shift with the cash counted into the drawer;
+  every sale then goes into it, and none can be rung without one. End shift (with no sale in
+  progress) shows the cash at the start and the shift's cash sales, and takes the cash counted out
+  and a note. KVNsys works out what the drawer should hold, and the report says how far out it is:
+  "₱20.00 short", "₱5.00 over" or "Exact". Shifts are numbered per shop with no gaps (HQ-S00001),
+  each cashier has one open at a time, and a closed shift never changes.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
@@ -136,7 +142,7 @@ building a screen.
   `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
   trust the next server it connects to.
 - The server prints its certificate fingerprint when it starts, so the first connection can be
-  checked against it. The schema (eleven tables, in one baseline migration) is in
+  checked against it. The schema (twelve tables, in one baseline migration) is in
   `src/KVNsysPostgres/prisma/`.
 
 ## How it runs

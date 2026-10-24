@@ -5,6 +5,7 @@ import {
   PrismaRegisterBook,
   PrismaRoleCatalog,
   PrismaSalesJournal,
+  PrismaShiftBook,
   PrismaShopDirectory,
   PrismaStockLedger,
   PrismaUserAccounts,
@@ -22,6 +23,7 @@ import { SignInController, type SignInOperationParts } from './sign-in.controlle
 import { RegistersController, type RegistersOperationParts } from './registers.controller.js';
 import { RolesController, type RolesOperationParts } from './roles.controller.js';
 import { SalesController, type SalesOperationParts } from './sales.controller.js';
+import { ShiftsController, type ShiftsOperationParts } from './shifts.controller.js';
 import { StockController, type StockOperationParts } from './stock.controller.js';
 import {
   DatabaseClient,
@@ -29,6 +31,7 @@ import {
   RegistersOperation,
   RolesOperation,
   SalesOperation,
+  ShiftsOperation,
   SignInOperation,
   StockOperation,
   UsersOperation,
@@ -54,7 +57,7 @@ export class ServerModule {
   static withDatabase(client: PrismaClient | null, server: PcIdentity): DynamicModule {
     return {
       module: ServerModule,
-      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, RegistersController],
+      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, RegistersController, ShiftsController],
       providers: [
         { provide: DatabaseClient, useValue: { client } satisfies Database },
         DatabaseLifecycle,
@@ -137,6 +140,7 @@ export class ServerModule {
                   shops: new PrismaShopDirectory(db),
                   accounts: new PrismaUserAccounts(db),
                   registers: new PrismaRegisterBook(db),
+                  shifts: new PrismaShiftBook(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,
                 } satisfies SalesOperationParts)
@@ -155,6 +159,21 @@ export class ServerModule {
                   sessions,
                   server,
                 } satisfies RegistersOperationParts)
+              : null,
+          }),
+        },
+        {
+          provide: ShiftsOperation,
+          inject: [DatabaseClient, Sessions],
+          useFactory: ({ client: db }: Database, sessions: Sessions) => ({
+            shifts: db
+              ? ({
+                  shifts: new PrismaShiftBook(db),
+                  shops: new PrismaShopDirectory(db),
+                  accounts: new PrismaUserAccounts(db),
+                  authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
+                  server,
+                } satisfies ShiftsOperationParts)
               : null,
           }),
         },

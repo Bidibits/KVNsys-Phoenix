@@ -193,8 +193,8 @@ Key:
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
 | Transactions (the selling screen) | Scan a barcode, quantity, remove or return an item, discount, payment type, customer's cash, change, finalise, print, void a receipt, store credit from a refund, and several sales kept open at once ("sessions") | ✅ Scan or type a code, quantity, remove an item, the senior/PWD 20% discount, cash, change, finalise, and the receipt on screen (2026-10-24) · 🟢 print the receipt on the real printer · ⏭ search by name at the till, other payment types, store credit, several sales open at once |
-| Shift Start | Start a shift with the starting cash | 🟢 |
-| Shift End and the shift report | Starting cash, cash and other sales, refunds, cash in and out, expected cash, variance, closing notes | 🟢 Counted cash against expected, and the day's sales |
+| Shift Start | Start a shift with the starting cash | ✅ (2026-10-24) |
+| Shift End and the shift report | Starting cash, cash and other sales, refunds, cash in and out, expected cash, variance, closing notes | ✅ Starting cash, cash sales, discounts, expected cash, counted cash, the difference, and a note (2026-10-24) · ⏭ refunds, cash in and out, other payment types |
 | Receipts (list, search) | Find past receipts | ✅ The day's sales list, any day, and any receipt again on screen (2026-10-24) · ⏭ search, reprinting |
 | Shifts (list, search) | Past shifts, and from there their receipts and refunds | ⏭ |
 | Flows | Money put into or taken out of the drawer during a shift | ⏭ unless the cashiers need it on day one (ask them) |

@@ -1,6 +1,8 @@
 import type {
   ConnectResult,
+  CurrentShiftResult,
   DaySalesResult,
+  ShiftResult,
   RegisterListResult,
   RegisterResult,
   SaleResult,
@@ -107,6 +109,12 @@ export interface KvnsysBridge {
   listRegisters(): Promise<RegisterListResult>;
   /** Renames a register, or switches it off or on, as typed and picked. */
   saveRegister(id: string, form: { name: string; status: string }): Promise<RegisterResult>;
+  /** The signed-in person's open shift, with its figures so far, or none. */
+  currentShift(): Promise<CurrentShiftResult>;
+  /** Starts a shift with the cash counted into the drawer, as typed. */
+  openShift(openingCash: string): Promise<ShiftResult>;
+  /** Ends the open shift with the cash counted out, as typed, and a note. */
+  closeShift(countedCash: string, note: string): Promise<ShiftResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -140,3 +148,6 @@ export const DaySalesChannel = 'kvnsys:day-sales';
 export const ReceiptChannel = 'kvnsys:receipt';
 export const ListRegistersChannel = 'kvnsys:list-registers';
 export const SaveRegisterChannel = 'kvnsys:save-register';
+export const CurrentShiftChannel = 'kvnsys:current-shift';
+export const OpenShiftChannel = 'kvnsys:open-shift';
+export const CloseShiftChannel = 'kvnsys:close-shift';

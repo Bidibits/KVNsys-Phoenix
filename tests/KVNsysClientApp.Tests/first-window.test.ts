@@ -72,8 +72,10 @@ describe('the first window, driven like a person would', () => {
     expect(await window.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined');
     expect(await window.evaluate(() => Object.keys((globalThis as unknown as { kvnsys: object }).kvnsys).sort())).toEqual([
       'clearSale',
+      'closeShift',
       'connectToServer',
       'countStock',
+      'currentShift',
       'daySales',
       'findStockItem',
       'listProducts',
@@ -81,6 +83,7 @@ describe('the first window, driven like a person would', () => {
       'listRoles',
       'listStock',
       'listUsers',
+      'openShift',
       'paySale',
       'productForm',
       'productStock',

@@ -7,6 +7,7 @@ import {
   checkSession,
   getReceipt,
   listRegisters,
+  openShift,
   recordSale,
   signIn,
   type ServerPin,
@@ -95,6 +96,7 @@ describeWithDatabase('registers over HTTPS, through the client engine, against a
     expect(await db.product.findUniqueOrThrow({ where: { id: added.product.id } })).toMatchObject({ createdAtMachine: register.id, createdAtLocation: shopId });
 
     const ana = await signInAt('ana', counter);
+    expect(await openShift(address, ana.session, '500', { pin })).toMatchObject({ ok: true });
     const sold = await recordSale(address, ana.session, { cart: [{ product: added.product, quantity: 1 }], discount: null, tendered: '30' }, { pin });
     expect(sold).toMatchObject({ ok: true, register: 'New register (COUNTER-PC)' });
     if (!sold.ok) return;

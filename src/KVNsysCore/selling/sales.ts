@@ -159,6 +159,8 @@ export interface Receipt extends PricedSale {
   createdByUser: string | null;
   /** The register it was rung up at, or null when it was at none. */
   machineId: string | null;
+  /** The shift it was rung up in. */
+  shiftId: string | null;
 }
 
 /**
@@ -169,7 +171,8 @@ export interface Receipt extends PricedSale {
  * A recorded receipt is never changed or deleted.
  */
 export abstract class SalesJournal {
-  abstract record(sale: PricedSale, payment: CashPayment, locationId: string, lineage: Lineage): Promise<Receipt>;
+  /** `shiftId`: the cashier's open shift, which the receipt belongs to. Null only for a receipt recorded outside a till. */
+  abstract record(sale: PricedSale, payment: CashPayment, locationId: string, lineage: Lineage, shiftId?: string | null): Promise<Receipt>;
   abstract get(id: string): Promise<Receipt | null>;
   /** The shop's receipts paid from `from` up to (not including) `to`, oldest first. */
   abstract between(locationId: string, from: Date, to: Date): Promise<ReceiptSummary[]>;

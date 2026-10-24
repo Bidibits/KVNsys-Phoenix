@@ -27,7 +27,7 @@ import {
 import { callServer as call, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
 /** A receipt as the register shows it: what was charged, and how it was paid. */
-export type PaidReceipt = Omit<Receipt, 'locationId' | 'createdByUser' | 'machineId'>;
+export type PaidReceipt = Omit<Receipt, 'locationId' | 'createdByUser' | 'machineId' | 'shiftId'>;
 
 export type SaleProductResult = { ok: true; product: SaleProduct } | Refused;
 export type PriceResult = { ok: true; sale: PricedSale } | Refused;
