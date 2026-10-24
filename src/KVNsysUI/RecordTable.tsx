@@ -24,6 +24,8 @@ export function RecordTable<Row>({
   rows,
   rowKey,
   size = 'compact',
+  filter = '',
+  searchText,
   className,
 }: {
   /** What the table holds, for screen readers: "Products". */
@@ -33,8 +35,14 @@ export function RecordTable<Row>({
   rowKey: (row: Row) => string;
   /** "compact" for back-office lists, where many rows fit; "large" for the selling screen (design-direction.md, part 2). */
   size?: 'compact' | 'large';
+  /** What's typed in the title bar's search box: only rows whose searchText holds every word of it show. */
+  filter?: string;
+  /** The words a row is found by, such as its code and name. Without it, the filter is ignored. */
+  searchText?: (row: Row) => string;
   className?: string;
 }) {
+  const words = filter.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const shown = searchText && words.length > 0 ? rows.filter((row) => words.every((word) => searchText(row).toLowerCase().includes(word))) : rows;
   const alignment = (column: Column<Row>) => (column.align === 'right' ? 'text-right' : 'text-left');
   // Large rows are taller, and a little narrower at the sides, so a selling screen's columns fit.
   const cell = size === 'large' ? 'h-14 px-3' : 'h-11 px-4';
@@ -51,7 +59,14 @@ export function RecordTable<Row>({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => (
+          {shown.length === 0 && rows.length > 0 && (
+            <TableRow className="border-0 hover:bg-transparent">
+              <TableCell colSpan={columns.length} className="h-14 px-4 text-muted-foreground">
+                Nothing here matches “{filter.trim()}”.
+              </TableCell>
+            </TableRow>
+          )}
+          {shown.map((row) => (
             <TableRow key={rowKey(row)} className="border-border/60 even:bg-row-alt hover:bg-accent/60">
               {columns.map((column) => (
                 <TableCell key={column.heading} className={cn(cell, alignment(column))}>

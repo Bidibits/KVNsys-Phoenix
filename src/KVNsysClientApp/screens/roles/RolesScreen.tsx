@@ -1,5 +1,5 @@
 import type { AccessName, ListedRole, Role, RoleListResult, SignedInUser } from '@kvnsys/client';
-import { Button, Notice, RecordTable, StatusLabel, type Column } from '@kvnsys/ui';
+import { Button, Notice, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { RoleFormPanel } from './RoleFormPanel';
 
@@ -17,16 +17,15 @@ const Columns: Column<ListedRole>[] = [
  * each row, which open the role panel; after a save the list is asked for again. Like the other
  * lists, it's asked for after the screen is on show, never while it's being built.
  */
-export function RolesScreen({ user, onSignInAgain }: { user: SignedInUser; onSignInAgain: () => void }) {
+export function RolesScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+  const toast = useToast();
   const mayManage = user.rights.includes(ManageRight);
   const [result, setResult] = useState<RoleListResult | null>(null);
   const [reloads, setReloads] = useState(0);
   const [editing, setEditing] = useState<{ id: string | null } | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
 
   /** Opens the panel: for a new role (null) or one already in the list. */
   function open(id: string | null) {
-    setSaved(null);
     setEditing({ id });
   }
 
@@ -94,15 +93,14 @@ export function RolesScreen({ user, onSignInAgain }: { user: SignedInUser; onSig
           </Button>
         )}
       </div>
-      {saved && <Notice tone="good">{saved}</Notice>}
-      <RecordTable label="Roles" columns={columns} rows={result.roles} rowKey={(role) => role.id} />
+      <RecordTable label="Roles" columns={columns} rows={result.roles} filter={search} searchText={(role) => role.name} rowKey={(role) => role.id} />
       {editing && (
         <RoleFormPanel
           id={editing.id}
           onClose={() => setEditing(null)}
           onSaved={(role: Role) => {
             setEditing(null);
-            setSaved(`Saved ${role.name}.`);
+            toast(`Saved ${role.name}.`);
             setReloads((n) => n + 1);
           }}
           onSignInAgain={onSignInAgain}

@@ -1,5 +1,5 @@
 import type { AccessName, SignedInUser, StockItem, StockListResult } from '@kvnsys/client';
-import { Button, Notice, Pieces, RecordTable, StatusLabel, type Column } from '@kvnsys/ui';
+import { Button, Notice, Pieces, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { CountPanel } from './CountPanel';
 import { ReceivePanel } from './ReceivePanel';
@@ -21,7 +21,8 @@ const Columns: Column<StockItem>[] = [
  * right gets Adjust on each row. After a save the list is asked for again, so it shows what the
  * server has. The list is asked for after the screen is on show, never while it's being built.
  */
-export function StockScreen({ user, onSignInAgain }: { user: SignedInUser; onSignInAgain: () => void }) {
+export function StockScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+  const toast = useToast();
   const mayReceive = user.rights.includes(ReceiveRight);
   const mayAdjust = user.rights.includes(AdjustRight);
   const [result, setResult] = useState<StockListResult | null>(null);
@@ -29,7 +30,6 @@ export function StockScreen({ user, onSignInAgain }: { user: SignedInUser; onSig
   const [receiving, setReceiving] = useState(false);
   const [counting, setCounting] = useState<StockItem | null>(null);
   const [history, setHistory] = useState<StockItem | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
 
   useEffect(() => {
     let showing = true;
@@ -51,7 +51,7 @@ export function StockScreen({ user, onSignInAgain }: { user: SignedInUser; onSig
   function done(message: string) {
     setReceiving(false);
     setCounting(null);
-    setSaved(message);
+    toast(message);
     setReloads((n) => n + 1);
   }
 
@@ -78,7 +78,6 @@ export function StockScreen({ user, onSignInAgain }: { user: SignedInUser; onSig
               className="h-8 px-3"
               aria-label={`Adjust ${item.product.name}`}
               onClick={() => {
-                setSaved(null);
                 setCounting(item);
               }}
             >
@@ -123,7 +122,6 @@ export function StockScreen({ user, onSignInAgain }: { user: SignedInUser; onSig
             size="compact"
             className="ml-auto"
             onClick={() => {
-              setSaved(null);
               setReceiving(true);
             }}
           >
@@ -131,9 +129,8 @@ export function StockScreen({ user, onSignInAgain }: { user: SignedInUser; onSig
           </Button>
         )}
       </div>
-      {saved && <Notice tone="good">{saved}</Notice>}
       {/* Fits its rows; once there are more than the window holds, it shrinks to fit and scrolls. */}
-      {count > 0 && <RecordTable label="Stock" columns={columns} rows={result.items} rowKey={(item) => item.product.id} />}
+      {count > 0 && <RecordTable label="Stock" columns={columns} rows={result.items} filter={search} searchText={(item) => [item.product.code, item.product.barcode ?? '', item.product.name].join(' ')} rowKey={(item) => item.product.id} />}
       {receiving && (
         <ReceivePanel
           onClose={() => setReceiving(false)}

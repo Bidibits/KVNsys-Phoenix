@@ -1,5 +1,5 @@
 import type { RecordStockResult, StockItem, StockItemResult } from '@kvnsys/client';
-import { Button, FormPanel, Notice, Pieces, TextField } from '@kvnsys/ui';
+import { Button, ConfirmDialog, FormPanel, Notice, Pieces, TextField } from '@kvnsys/ui';
 import { useRef, useState, type KeyboardEvent } from 'react';
 
 const somethingWentWrong = (error: unknown) => ({
@@ -38,6 +38,7 @@ export function ReceivePanel({
   const [note, setNote] = useState('');
   const [problem, setProblem] = useState<{ message: string; ended: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
   const codeBox = useRef<HTMLInputElement>(null);
   const piecesBox = useRef<HTMLInputElement>(null);
   const nextKey = useRef(0);
@@ -86,6 +87,12 @@ export function ReceivePanel({
     else setProblem({ message: answer.message, ended: answer.reason === 'ended' });
   }
 
+  /** Esc, the × and Cancel all come here: a delivery with lines in it isn't thrown away without asking. */
+  function close() {
+    if (lines.length > 0) setDiscarding(true);
+    else onClose();
+  }
+
   function codeEnter(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== 'Enter') return;
     event.preventDefault();
@@ -102,11 +109,11 @@ export function ReceivePanel({
   return (
     <FormPanel
       title="Receive stock"
-      onClose={onClose}
+      onClose={close}
       onSubmit={() => void save()}
       actions={
         <>
-          <Button type="button" variant="secondary" size="compact" onClick={onClose}>
+          <Button type="button" variant="secondary" size="compact" onClick={close}>
             Cancel
           </Button>
           <Button type="submit" size="compact" disabled={busy || lines.length === 0}>
@@ -115,6 +122,15 @@ export function ReceivePanel({
         </>
       }
     >
+      {discarding && (
+        <ConfirmDialog
+          title="Throw this delivery away?"
+          message={`${lines.length === 1 ? "Its line hasn't" : `Its ${lines.length} lines haven't`} been saved, and nothing will be.`}
+          confirmLabel="Throw it away"
+          onConfirm={onClose}
+          onCancel={() => setDiscarding(false)}
+        />
+      )}
       {problem && <Notice tone="problem">{problem.message}</Notice>}
       {problem?.ended && (
         <Button type="button" size="compact" className="mt-3" onClick={onSignInAgain}>

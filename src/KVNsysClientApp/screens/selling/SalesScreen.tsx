@@ -38,7 +38,7 @@ function Problem({ problem, onSignInAgain }: { problem: { message: string; reaso
  * A day's sales at the shop: today unless another day is picked, what the day came to, and every
  * receipt, oldest first. View shows a receipt as it was given, in place of the list.
  */
-export function SalesScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
+export function SalesScreen({ search, onSignInAgain }: { search: string; onSignInAgain: () => void }) {
   const [date, setDate] = useState<string | null>(null);
   const [result, setResult] = useState<DaySalesResult | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
@@ -124,7 +124,14 @@ export function SalesScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
           {result.receipts.length === 0 ? (
             <p className="text-[15px] text-muted-foreground">No sales on this day.</p>
           ) : (
-            <RecordTable label="This day's receipts" columns={columns} rows={result.receipts} rowKey={(receipt) => receipt.id} />
+            <RecordTable
+              label="This day's receipts"
+              columns={columns}
+              rows={result.receipts}
+              rowKey={(receipt) => receipt.id}
+              filter={search}
+              searchText={(receipt) => [receipt.code, receipt.cashier ?? ''].join(' ')}
+            />
           )}
         </>
       )}

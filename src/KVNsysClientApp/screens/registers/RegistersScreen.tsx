@@ -1,5 +1,5 @@
 import type { AccessName, ListedRegister, RegisterListResult, SignedInUser } from '@kvnsys/client';
-import { Button, Notice, RecordTable, StatusLabel, type Column } from '@kvnsys/ui';
+import { Button, Notice, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { RegisterFormPanel } from './RegisterFormPanel';
 
@@ -25,12 +25,12 @@ const Columns: Column<ListedRegister>[] = [
  * register (its computer name)"; someone whose role may change registers gets Edit, to name it or
  * switch it off. After a save the list is asked for again.
  */
-export function RegistersScreen({ user, onSignInAgain }: { user: SignedInUser; onSignInAgain: () => void }) {
+export function RegistersScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+  const toast = useToast();
   const mayManage = user.rights.includes(ManageRight);
   const [result, setResult] = useState<RegisterListResult | null>(null);
   const [reloads, setReloads] = useState(0);
   const [editing, setEditing] = useState<ListedRegister | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
 
   useEffect(() => {
     let showing = true;
@@ -64,7 +64,6 @@ export function RegistersScreen({ user, onSignInAgain }: { user: SignedInUser; o
               className="h-8 px-3"
               aria-label={`Edit ${register.name}`}
               onClick={() => {
-                setSaved(null);
                 setEditing(register);
               }}
             >
@@ -98,15 +97,14 @@ export function RegistersScreen({ user, onSignInAgain }: { user: SignedInUser; o
   return (
     <div className="flex h-full flex-col gap-3">
       <p className="text-[15px] text-muted-foreground">A PC is added here by itself the first time someone signs in at it.</p>
-      {saved && <Notice tone="good">{saved}</Notice>}
-      <RecordTable label="Registers" columns={columns} rows={result.registers} rowKey={(register) => register.id} />
+      <RecordTable label="Registers" columns={columns} rows={result.registers} filter={search} searchText={(register) => [register.code, register.name, register.computerName ?? ''].join(' ')} rowKey={(register) => register.id} />
       {editing && (
         <RegisterFormPanel
           register={editing}
           onClose={() => setEditing(null)}
           onSaved={(register) => {
             setEditing(null);
-            setSaved(`Saved ${register.name}.`);
+            toast(`Saved ${register.name}.`);
             setReloads((n) => n + 1);
           }}
           onSignInAgain={onSignInAgain}

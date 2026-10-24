@@ -1,5 +1,5 @@
 import type { AccessName, Product, ProductListResult, SignedInUser } from '@kvnsys/client';
-import { Button, Notice, Pesos, RecordTable, StatusLabel, type Column } from '@kvnsys/ui';
+import { Button, Notice, Pesos, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { ProductFormPanel } from './ProductFormPanel';
 
@@ -19,16 +19,15 @@ const Columns: Column<Product>[] = [
  * The list is asked for after the screen is on show, never while it's being built, so a server
  * that's slow or down can't freeze the window.
  */
-export function ProductsScreen({ user, onSignInAgain }: { user: SignedInUser; onSignInAgain: () => void }) {
+export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+  const toast = useToast();
   const mayManage = user.rights.includes(ManageRight);
   const [result, setResult] = useState<ProductListResult | null>(null);
   const [reloads, setReloads] = useState(0);
   const [editing, setEditing] = useState<{ id: string | null } | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
 
   /** Opens the form: for a new product (null) or one already in the list. */
   function open(id: string | null) {
-    setSaved(null);
     setEditing({ id });
   }
 
@@ -96,16 +95,15 @@ export function ProductsScreen({ user, onSignInAgain }: { user: SignedInUser; on
           </Button>
         )}
       </div>
-      {saved && <Notice tone="good">{saved}</Notice>}
       {/* Fits its rows; once there are more than the window holds, it shrinks to fit and scrolls. */}
-      {count > 0 && <RecordTable label="Products" columns={columns} rows={result.products} rowKey={(product) => product.id} />}
+      {count > 0 && <RecordTable label="Products" columns={columns} rows={result.products} filter={search} searchText={(product) => [product.code, product.barcode ?? '', product.name].join(' ')} rowKey={(product) => product.id} />}
       {editing && (
         <ProductFormPanel
           id={editing.id}
           onClose={() => setEditing(null)}
           onSaved={(product) => {
             setEditing(null);
-            setSaved(`Saved ${product.name}.`);
+            toast(`Saved ${product.name}.`);
             setReloads((n) => n + 1);
           }}
           onSignInAgain={onSignInAgain}

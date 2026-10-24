@@ -130,6 +130,10 @@ and everything a user sees, is called KVNsys.
   and a note. KVNsys works out what the drawer should hold, and the report says how far out it is:
   "₱20.00 short", "₱5.00 over" or "Exact". Shifts are numbered per shop with no gaps (HQ-S00001),
   each cashier has one open at a time, and a closed shift never changes.
+- **Getting around.** The title bar has Back and Forward through the screens opened (Alt+Left and
+  Alt+Right, and the mouse's own back and forward buttons, too), and on every list a search box
+  that keeps only the rows holding every word typed. "Saved …" pops up in a corner and goes on its
+  own. Throwing work away asks first: closing a delivery that has lines in it, and Clear sale.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

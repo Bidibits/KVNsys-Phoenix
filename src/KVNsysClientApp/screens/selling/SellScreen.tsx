@@ -1,5 +1,5 @@
 import type { CurrentShiftResult, PricedLine, SaleResult, ShiftView, TillResult, TillView } from '@kvnsys/client';
-import { Button, Notice, Pesos, RecordTable, ShopTime, TextField, type Column } from '@kvnsys/ui';
+import { Button, ConfirmDialog, Notice, Pesos, RecordTable, ShopTime, TextField, type Column } from '@kvnsys/ui';
 import { useEffect, useRef, useState } from 'react';
 import { DiscountPanel } from './DiscountPanel';
 import { EndShiftPanel } from './EndShiftPanel';
@@ -78,6 +78,7 @@ function SaleArea({
 }) {
   const [till, setTill] = useState<TillView | null>(null);
   const [ending, setEnding] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [code, setCode] = useState('');
   const [problem, setProblem] = useState<{ message: string; ended: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -261,7 +262,7 @@ function SaleArea({
           <Button type="button" className="mt-3" disabled={busy || empty} onClick={() => setPaying(true)}>
             Pay
           </Button>
-          <Button type="button" variant="secondary" disabled={busy || empty} onClick={() => void change(() => window.kvnsys.clearSale())}>
+          <Button type="button" variant="secondary" disabled={busy || empty} onClick={() => setClearing(true)}>
             Clear sale
           </Button>
         </div>
@@ -280,6 +281,21 @@ function SaleArea({
             codeBox.current?.focus();
           }}
           onSignInAgain={onSignInAgain}
+        />
+      )}
+      {clearing && till && (
+        <ConfirmDialog
+          title="Clear this sale?"
+          message={`${till.lines.length === 1 ? 'Its line comes' : `All ${till.lines.length} lines come`} off, and nothing is recorded.`}
+          confirmLabel="Clear sale"
+          onConfirm={() => {
+            setClearing(false);
+            void change(() => window.kvnsys.clearSale());
+          }}
+          onCancel={() => {
+            setClearing(false);
+            codeBox.current?.focus();
+          }}
         />
       )}
       {ending && (

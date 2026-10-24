@@ -201,6 +201,21 @@ describeWithDatabase('selling from the real app: scan, discount, pay, receipt', 
     expect(await isFocused(codeBox())).toBe(true);
   });
 
+  it('asks before clearing a sale, and Keep it keeps it', async () => {
+    await scan('PRD-0042');
+    await window.getByText('Sack of rice 25kg').waitFor();
+    await window.getByRole('button', { name: 'Clear sale' }).click();
+    const dialog = window.getByRole('alertdialog', { name: 'Clear this sale?' });
+    await dialog.getByText('Its line comes off, and nothing is recorded.').waitFor();
+    await dialog.getByRole('button', { name: 'Keep it' }).click();
+    await dialog.waitFor({ state: 'detached' });
+    expect(await total()).toBe('₱1,450.50');
+    await window.getByRole('button', { name: 'Clear sale' }).click();
+    await window.getByRole('alertdialog').getByRole('button', { name: 'Clear sale' }).click();
+    await window.getByText('Scan a product to start a sale.').waitFor();
+    expect(await db.receipt.count()).toBe(1);
+  });
+
   it('ends the shift by counting the drawer, and shows how far out it is', async () => {
     await window.getByRole('button', { name: 'End shift' }).click();
     const form = window.getByRole('dialog', { name: 'End shift' });
