@@ -5,6 +5,9 @@ import { fileURLToPath } from 'node:url';
 import {
   connectToServer,
   findSaleProduct,
+  getReceipt,
+  listDaySales,
+  type DaySalesResult,
   recordSale,
   Till,
   type SaleResult,
@@ -54,6 +57,8 @@ import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ClearSaleChannel,
   ConnectChannel,
+  DaySalesChannel,
+  ReceiptChannel,
   CountStockChannel,
   PaySaleChannel,
   RemoveFromSaleChannel,
@@ -376,6 +381,18 @@ ipcMain.handle(PaySaleChannel, async (_event, typed: unknown): Promise<SaleResul
   if (tendered === undefined) return NotAForm;
   const current = till;
   return current.pay(tendered, (form) => withPass((address, pass, options) => recordSale(address, pass, form, options)));
+});
+
+ipcMain.handle(DaySalesChannel, async (_event, date: unknown): Promise<DaySalesResult> => {
+  const day = date === null ? null : asText(date);
+  if (day === undefined) return NotAForm;
+  return withPass((address, pass, options) => listDaySales(address, pass, day, options));
+});
+
+ipcMain.handle(ReceiptChannel, async (_event, id: unknown): Promise<SaleResult> => {
+  const receiptId = asProductId(id);
+  if (!receiptId) return NotAForm;
+  return withPass((address, pass, options) => getReceipt(address, pass, receiptId, options));
 });
 
 function openWindow(): void {

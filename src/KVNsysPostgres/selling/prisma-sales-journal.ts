@@ -10,6 +10,7 @@ import {
   type PaymentType,
   type PricedSale,
   type Receipt,
+  type ReceiptSummary,
 } from '@kvnsys/core';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 import { recordStockIn } from '../inventory/prisma-stock-ledger.js';
@@ -164,6 +165,27 @@ export class PrismaSalesJournal extends SalesJournal {
       });
       return toReceipt(row);
     });
+  }
+
+  async between(locationId: string, from: Date, to: Date): Promise<ReceiptSummary[]> {
+    if (!Uuid.test(locationId)) return [];
+    const rows = await this.db.receipt.findMany({
+      where: { locationId, createdAtDate: { gte: from, lt: to } },
+      orderBy: { number: 'asc' },
+      include: { items: { select: { quantity: true } } },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      code: row.code,
+      number: row.number,
+      createdAt: row.createdAtDate.toISOString(),
+      createdByUser: row.createdByUser,
+      pieces: row.items.reduce((sum, item) => sum + item.quantity, 0),
+      subtotal: centavos(row.subtotal),
+      discountTotal: centavos(row.discountTotal),
+      total: centavos(row.total),
+      discountKind: row.discountKind,
+    }));
   }
 
   async get(id: string): Promise<Receipt | null> {

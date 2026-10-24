@@ -1,5 +1,5 @@
 import type { MovementType, ProductStockResult, RecordedMovement, StockItem } from '@kvnsys/client';
-import { Button, Notice, Pieces, RecordTable, type Column } from '@kvnsys/ui';
+import { Button, Notice, Pieces, RecordTable, ShopTime, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 
 /** What each kind of movement is called on screen. Naming them by MovementType makes the build fail if one is missing. */
@@ -9,10 +9,15 @@ const What = {
   adjustment: 'Count put right',
 } satisfies Record<MovementType, string>;
 
-const When = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
-
 const Columns: Column<RecordedMovement>[] = [
-  { heading: 'When', cell: (line) => <span className="whitespace-nowrap">{When.format(new Date(line.createdAt))}</span> },
+  {
+    heading: 'When',
+    cell: (line) => (
+      <span className="whitespace-nowrap">
+        <ShopTime at={line.createdAt} />
+      </span>
+    ),
+  },
   { heading: 'What', cell: (line) => What[line.type] },
   { heading: 'Pieces', cell: (line) => <Pieces count={line.quantityChange} signed />, align: 'right' },
   { heading: 'In stock after', cell: (line) => <Pieces count={line.resultingOnHand} />, align: 'right' },

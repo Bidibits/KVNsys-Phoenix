@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 import type { INestApplication } from '@nestjs/common';
-import { findSaleProduct, recordSale, signIn, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
-import { createPrismaClient, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
+import { findSaleProduct, getReceipt, listDaySales, recordSale, signIn, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
+import { priceSale, shopDate, takeCash } from '@kvnsys/core';
+import { createPrismaClient, PrismaSalesJournal, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, lacksRight, ScryptPasswordHasher, type ServerCertificate } from '@kvnsys/server';
 import { SalesPath } from '@kvnsys/wire';
 import { afterAll, beforeAll, expect, it } from 'vitest';
@@ -57,8 +58,10 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
     shopId = (await db.location.findUniqueOrThrow({ where: { code: 'HQ' } })).id;
     await addRole('CASHIER', ['sales.sell']);
     await addRole('STOCKMAN', ['stock.view', 'stock.receive', 'products.view']);
+    await addRole('OWNER', ['sales.view']);
     await addUser('ana', 'Ana', 'CASHIER');
     await addUser('ben', 'Ben', 'STOCKMAN');
+    await addUser('cora', 'Cora', 'OWNER');
     sardines = await product('PRD-0007', '4800249211116', 'Sardines 155g', '25.75');
     rice = await product('PRD-0042', null, 'Sack of rice 25kg', '1450.50');
 
@@ -67,7 +70,7 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
     app = await createServer({ logger: false, databaseUrl: database.url, certificate, server: ServerPc });
     await app.listen(0, '127.0.0.1');
     address = `https://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}`;
-    for (const username of ['ana', 'ben']) {
+    for (const username of ['ana', 'ben', 'cora']) {
       const result = await signIn(address, { username, password: Password }, { pin });
       if (!result.ok) throw new Error(result.message);
       passes[username] = result.session;
@@ -169,5 +172,48 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
   it('numbers the next sale on from the last, with no gap left by the refused ones', async () => {
     const sold = await recordSale(address, passes.ana!, { cart: [{ product: sardines, quantity: 1 }], discount: null, tendered: '25.75' }, { pin });
     expect(sold).toMatchObject({ ok: true, receipt: { code: 'HQ-000002', payment: { change: 0 } } });
+  });
+
+  it("shows today's receipts at this shop, with what they came to, to someone who may see sales", async () => {
+    const { pass, options } = as('cora');
+    const today = await listDaySales(address, pass, null, options);
+    if (!today.ok) throw new Error(today.message);
+    expect(today.date).toBe(shopDate(new Date()));
+    expect(today.receipts.map((r) => [r.code, r.cashier, r.pieces, r.total, r.discountKind])).toEqual([
+      ['HQ-000001', 'Ana Cruz', 4, 122220, 'senior'],
+      ['HQ-000002', 'Ana Cruz', 1, 2575, null],
+    ]);
+    expect(today.totals).toEqual({ receipts: 2, pieces: 5, subtotal: 152775 + 2575, discountTotal: 30555, total: 122220 + 2575 });
+    expect(await listDaySales(address, pass, today.date, options)).toEqual(today);
+    expect(await listDaySales(address, pass, '2026-01-01', options)).toMatchObject({ ok: true, date: '2026-01-01', receipts: [], totals: { receipts: 0, total: 0 } });
+    expect(await listDaySales(address, pass, '2026-02-30', options)).toEqual({ ok: false, reason: 'refused', message: `"2026-02-30" isn't a date. Pick one from the calendar.` });
+  });
+
+  it("opens one of this shop's receipts again, but never another shop's", async () => {
+    const { pass, options } = as('cora');
+    const day = await listDaySales(address, pass, null, options);
+    if (!day.ok) throw new Error(day.message);
+    expect(await getReceipt(address, pass, day.receipts[0]!.id, options)).toMatchObject({
+      ok: true,
+      cashier: 'Ana Cruz',
+      shop: { code: 'HQ' },
+      receipt: { code: 'HQ-000001', total: 122220, discount: { idNumber: 'OSCA-1' } },
+    });
+
+    // A sale at another shop in the same database, as HQ will hold its branches' some day.
+    const branch = await db.location.create({ data: { id: randomUUID(), code: 'GUMACA', name: 'Gumaca branch' } });
+    const sale = priceSale([{ product: sardines, quantity: 1 }], null);
+    const elsewhere = await new PrismaSalesJournal(db).record(sale, takeCash(sale.total, sale.total), branch.id, { userId: randomUUID(), machineId: null, locationId: branch.id });
+    expect(await getReceipt(address, pass, elsewhere.id, options)).toEqual({ ok: false, reason: 'not-found', message: "That receipt isn't one this shop gave." });
+    expect((await listDaySales(address, pass, null, options)) as { receipts: unknown[] }).toMatchObject({ receipts: { length: 2 } });
+    expect(await getReceipt(address, pass, randomUUID(), options)).toMatchObject({ ok: false, reason: 'not-found' });
+  });
+
+  it('keeps the day\'s sales from a cashier who may only sell', async () => {
+    const { pass, options } = as('ana');
+    const refused = { ok: false, reason: 'not-allowed', message: lacksRight('sales.view') };
+    expect(await listDaySales(address, pass, null, options)).toEqual(refused);
+    const sold = await db.receipt.findFirstOrThrow({ where: { code: 'HQ-000001' } });
+    expect(await getReceipt(address, pass, sold.id, options)).toEqual(refused);
   });
 });

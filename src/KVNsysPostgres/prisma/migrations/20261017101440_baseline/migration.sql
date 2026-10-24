@@ -244,6 +244,9 @@ CREATE UNIQUE INDEX "receipts_code_key" ON "receipts"("code");
 CREATE UNIQUE INDEX "receipts_location_id_number_key" ON "receipts"("location_id", "number");
 
 -- CreateIndex
+CREATE INDEX "receipts_location_id_created_at_date_idx" ON "receipts"("location_id", "created_at_date");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "receipt_items_receipt_id_line_number_key" ON "receipt_items"("receipt_id", "line_number");
 
 -- CreateIndex

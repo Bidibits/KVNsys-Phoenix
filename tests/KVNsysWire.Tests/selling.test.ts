@@ -1,4 +1,4 @@
-import { FindSaleProductPath, ProtocolVersion, ReceiptReply, SaleFields, SaleProductOnWire, SalesPath } from '@kvnsys/wire';
+import { DaySalesReply, FindSaleProductPath, ProtocolVersion, receiptPath, ReceiptReply, SaleFields, SaleProductOnWire, SalesPath } from '@kvnsys/wire';
 import { describe, expect, it } from 'vitest';
 
 const sale = {
@@ -41,5 +41,25 @@ describe('the selling calls', () => {
     expect(SaleFields.safeParse({ ...sale, discount: { ...sale.discount, kind: 'student' } }).success).toBe(false);
     expect(ReceiptReply.safeParse({ receipt, shop: { id: 'x', code: 'HQ', name: 'Head Office' }, cashier: 'Ana Cruz' }).success).toBe(true);
     expect(ReceiptReply.safeParse({ receipt: { ...receipt, payment: { ...receipt.payment, type: 'Card' } }, shop: { id: 'x', code: 'HQ', name: 'H' }, cashier: 'A' }).success).toBe(false);
+  });
+});
+
+describe("a day's sales, and one receipt again", () => {
+  const shop = { id: 'x', code: 'HQ', name: 'Head Office' };
+  const line = { id: receipt.id, code: 'HQ-000001', number: 1, createdAt: receipt.createdAt, cashier: 'Ana Cruz', pieces: 2, subtotal: '51.50', discountTotal: '10.30', total: '41.20', discountKind: 'senior' };
+  const totals = { receipts: 1, pieces: 2, subtotal: '51.50', discountTotal: '10.30', total: '41.20' };
+
+  // The rule, not today's number: these arrived with protocol 10.
+  it('live at /api/sales and /api/sales/<id>, and came with protocol 10', () => {
+    expect(receiptPath('a/b')).toBe('/api/sales/a%2Fb');
+    expect(ProtocolVersion).toBeGreaterThanOrEqual(10);
+  });
+
+  it("answer with the shop, the day, its receipts and their totals, money as text; a cashier can be unknown", () => {
+    expect(DaySalesReply.safeParse({ shop, date: '2026-10-24', receipts: [line], totals }).success).toBe(true);
+    expect(DaySalesReply.safeParse({ shop, date: '2026-10-24', receipts: [{ ...line, cashier: null, discountKind: null }], totals }).success).toBe(true);
+    expect(DaySalesReply.safeParse({ shop, date: '24/10/2026', receipts: [], totals }).success).toBe(false);
+    expect(DaySalesReply.safeParse({ shop, date: '2026-10-24', receipts: [{ ...line, total: 41.2 }], totals }).success).toBe(false);
+    expect(ReceiptReply.safeParse({ receipt, shop, cashier: null }).success).toBe(true);
   });
 });

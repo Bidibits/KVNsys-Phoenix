@@ -114,4 +114,6 @@ export {
   type StatutoryDiscount,
 } from './selling/sales.js';
 
+export { dayTotals, shopDate, shopDay, ShopTimeZone, type DayTotals, type ReceiptSummary } from './selling/days.js';
+
 export { SetupStore, type SetupTransaction } from './setup/setup-store.js';

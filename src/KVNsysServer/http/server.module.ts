@@ -117,6 +117,7 @@ export class ServerModule {
                   journal: new PrismaSalesJournal(db),
                   catalog: new PrismaProductCatalog(db),
                   shops: new PrismaShopDirectory(db),
+                  accounts: new PrismaUserAccounts(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,
                 } satisfies SalesOperationParts)

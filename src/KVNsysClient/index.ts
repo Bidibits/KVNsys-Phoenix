@@ -69,9 +69,13 @@ export {
 } from './identity/roles.js';
 export {
   findSaleProduct,
+  getReceipt,
+  listDaySales,
   priceCart,
   recordSale,
+  type DaySalesResult,
   type PaidReceipt,
+  type ReceiptLine,
   type PriceResult,
   type SaleForm,
   type SaleProductResult,

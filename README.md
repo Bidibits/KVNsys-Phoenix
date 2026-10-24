@@ -113,6 +113,11 @@ and everything a user sees, is called KVNsys.
   change) with the change in big type, and Enter starts the next sale. The cart is kept by the
   register's desktop side, priced with KVNsysCore's rules at every change, so a product that can't
   be sold never gets in. Signing out empties it. No printing yet.
+- **The day's sales.** A Sales tile, for a role with the new "See sales" right, opens today's
+  sales at the shop: how many receipts, what they came to before and after discounts, and every
+  receipt (number, time, cashier, pieces, discount, total), oldest first. Another day can be
+  picked. View opens any receipt again, as it was given. A day is midnight to midnight Philippine
+  time, and times show in Philippine time, whatever time zone a PC is set to.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

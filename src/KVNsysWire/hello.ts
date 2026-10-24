@@ -12,8 +12,9 @@ import { z } from 'zod';
  * 8: stock (the shop's stock, finding a product by code or barcode, one product's stock and movements,
  *    recording goods in and counts put right).
  * 9: selling (finding a product to ring up, recording a sale paid in cash).
+ * 10: a day's sales and one receipt by id; a receipt's cashier can be unknown.
  */
-export const ProtocolVersion = 9;
+export const ProtocolVersion = 10;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

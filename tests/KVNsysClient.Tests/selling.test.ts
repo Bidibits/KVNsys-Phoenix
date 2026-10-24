@@ -1,7 +1,7 @@
 import { createServer as createSecureServer } from 'node:https';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { findSaleProduct, priceCart, recordSale, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
+import { findSaleProduct, getReceipt, listDaySales, priceCart, recordSale, type SaleProduct, type ServerPin, type SessionPass } from '@kvnsys/client';
 import { createServerCertificate, type ServerCertificate } from '@kvnsys/server';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
@@ -113,5 +113,29 @@ describe('selling from the register', () => {
       reason: 'refused',
       message,
     });
+  });
+});
+
+describe("looking back at a day's sales from the register", () => {
+  const line = { id: receiptOnWire.id, code: 'HQ-000001', number: 1, createdAt: receiptOnWire.createdAt, cashier: null, pieces: 2, subtotal: '51.50', discountTotal: '10.30', total: '41.20', discountKind: 'senior' };
+  const totals = { receipts: 1, pieces: 2, subtotal: '51.50', discountTotal: '10.30', total: '41.20' };
+
+  it("asks for today when no day is given, or the day given, with money back in centavos", async () => {
+    server = await fakeServer(certificate, 200, { shop, date: '2026-10-24', receipts: [line], totals });
+    expect(await listDaySales(server.address, pass, null, pinned())).toEqual({
+      ok: true,
+      shop,
+      date: '2026-10-24',
+      receipts: [{ ...line, subtotal: 5150, discountTotal: 1030, total: 4120 }],
+      totals: { receipts: 1, pieces: 2, subtotal: 5150, discountTotal: 1030, total: 4120 },
+    });
+    await listDaySales(server.address, pass, '2026-10-23', pinned());
+    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/sales', 'GET /api/sales?date=2026-10-23']);
+  });
+
+  it('opens one receipt by its id, whoever rang it up', async () => {
+    server = await fakeServer(certificate, 200, { receipt: receiptOnWire, shop, cashier: null });
+    expect(await getReceipt(server.address, pass, receiptOnWire.id, pinned())).toMatchObject({ ok: true, cashier: null, receipt: { code: 'HQ-000001', total: 4120 } });
+    expect(server.received.map((r) => r.url)).toEqual([`/api/sales/${receiptOnWire.id}`]);
   });
 });

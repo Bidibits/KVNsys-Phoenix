@@ -52,10 +52,13 @@ export {
   SignOutReply,
 } from './sign-in.js';
 export {
+  DaySalesReply,
   DiscountOnWire,
   FindSaleProductPath,
   ReceiptOnWire,
+  receiptPath,
   ReceiptReply,
+  ReceiptSummaryOnWire,
   SaleFields,
   SaleProductOnWire,
   SaleProductReply,

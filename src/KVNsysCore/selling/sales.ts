@@ -2,6 +2,7 @@ import type { ProductStatus } from '../catalog/products.js';
 import type { Lineage } from '../shared/lineage.js';
 import { displayPesos, MaxCentavos, parsePesos } from '../shared/money.js';
 import { Refusal } from '../shared/refusal.js';
+import type { ReceiptSummary } from './days.js';
 
 /**
  * The statutory discounts: a senior citizen (RA 9994) or a person with a disability (RA 10754).
@@ -168,4 +169,6 @@ export interface Receipt extends PricedSale {
 export abstract class SalesJournal {
   abstract record(sale: PricedSale, payment: CashPayment, locationId: string, lineage: Lineage): Promise<Receipt>;
   abstract get(id: string): Promise<Receipt | null>;
+  /** The shop's receipts paid from `from` up to (not including) `to`, oldest first. */
+  abstract between(locationId: string, from: Date, to: Date): Promise<ReceiptSummary[]>;
 }

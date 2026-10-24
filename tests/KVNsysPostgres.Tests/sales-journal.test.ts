@@ -121,6 +121,25 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     expect(await insert('80.00', 'senior', 'OSCA-1')).toBe(1);
   });
 
+  it("lists a shop's receipts paid within a time, oldest first, from its start up to but not including its end", async () => {
+    const one = await sell(priceSale([{ product: sardines, quantity: 2 }, { product: rice, quantity: 1 }], null));
+    const two = await sell(priceSale([{ product: sardines, quantity: 1 }], { kind: 'pwd', idNumber: 'PWD-1', customerName: 'Juan' }));
+    await sell(priceSale([{ product: rice, quantity: 5 }], null), branch);
+    const hour = 60 * 60 * 1000;
+    const now = Date.now();
+    const listed = await journal.between(hq, new Date(now - hour), new Date(now + hour));
+    expect(listed).toEqual([
+      { id: one.id, code: 'HQ-000001', number: 1, createdAt: one.createdAt, createdByUser: cashier, pieces: 3, subtotal: 150200, discountTotal: 0, total: 150200, discountKind: null },
+      { id: two.id, code: 'HQ-000002', number: 2, createdAt: two.createdAt, createdByUser: cashier, pieces: 1, subtotal: 2575, discountTotal: 515, total: 2060, discountKind: 'pwd' },
+    ]);
+    expect((await journal.between(hq, new Date(one.createdAt), new Date(two.createdAt))).map((r) => r.code)).toEqual(
+      one.createdAt === two.createdAt ? [] : ['HQ-000001'],
+    );
+    expect(await journal.between(hq, new Date(now + hour), new Date(now + 2 * hour))).toEqual([]);
+    expect((await journal.between(branch, new Date(now - hour), new Date(now + hour))).map((r) => r.code)).toEqual(['GUMACA-000001']);
+    expect(await journal.between('nope', new Date(now - hour), new Date(now + hour))).toEqual([]);
+  });
+
   it("hands back nothing for an id that isn't a receipt", async () => {
     expect(await journal.get(randomUUID())).toBeNull();
     expect(await journal.get('HQ-000001')).toBeNull();

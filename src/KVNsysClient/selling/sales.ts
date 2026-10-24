@@ -6,13 +6,17 @@ import {
   takeCash,
   type CartLine,
   type PaymentType,
+  type DayTotals,
+  type DiscountKind,
   type PricedSale,
   type Receipt,
   type SaleProduct,
   type StatutoryDiscount,
 } from '@kvnsys/core';
 import {
+  DaySalesReply,
   FindSaleProductPath,
+  receiptPath,
   ReceiptReply,
   SaleProductReply,
   SalesPath,
@@ -27,7 +31,23 @@ export type PaidReceipt = Omit<Receipt, 'locationId' | 'createdByUser'>;
 
 export type SaleProductResult = { ok: true; product: SaleProduct } | Refused;
 export type PriceResult = { ok: true; sale: PricedSale } | Refused;
-export type SaleResult = { ok: true; receipt: PaidReceipt; shop: ShopOnWire; cashier: string } | Refused;
+/** A receipt with its shop and who rang it up: null when their account isn't on this server. */
+export type SaleResult = { ok: true; receipt: PaidReceipt; shop: ShopOnWire; cashier: string | null } | Refused;
+
+/** One receipt as a day's list shows it. Money is in centavos. */
+export interface ReceiptLine {
+  id: string;
+  code: string;
+  number: number;
+  createdAt: string;
+  cashier: string | null;
+  pieces: number;
+  subtotal: number;
+  discountTotal: number;
+  total: number;
+  discountKind: DiscountKind | null;
+}
+export type DaySalesResult = { ok: true; shop: ShopOnWire; date: string; receipts: ReceiptLine[]; totals: DayTotals } | Refused;
 
 /** What the cashier rang up, as the selling screen holds it: the cart, a discount if one was given, and the cash as typed. */
 export interface SaleForm {
@@ -75,6 +95,33 @@ export async function recordSale(address: string, pass: SessionPass, form: SaleF
     expectedTotal: pesosText(read.value.sale.total),
   };
   const answer = await call(address, pass, options, { path: SalesPath, method: 'POST', body }, ReceiptReply);
+  if (!answer.ok) return answer;
+  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop: answer.reply.shop, cashier: answer.reply.cashier };
+}
+
+/** A day's receipts at the shop, oldest first, with their totals. Today, by the shop's clock, when the date is null. */
+export async function listDaySales(address: string, pass: SessionPass, date: string | null, options: CallOptions): Promise<DaySalesResult> {
+  const path = date === null ? SalesPath : `${SalesPath}?date=${encodeURIComponent(date)}`;
+  const answer = await call(address, pass, options, { path }, DaySalesReply);
+  if (!answer.ok) return answer;
+  const { shop, totals } = answer.reply;
+  return {
+    ok: true,
+    shop,
+    date: answer.reply.date,
+    receipts: answer.reply.receipts.map((receipt) => ({
+      ...receipt,
+      subtotal: money(receipt.subtotal),
+      discountTotal: money(receipt.discountTotal),
+      total: money(receipt.total),
+    })),
+    totals: { ...totals, subtotal: money(totals.subtotal), discountTotal: money(totals.discountTotal), total: money(totals.total) },
+  };
+}
+
+/** One receipt as it was given, to see it again. */
+export async function getReceipt(address: string, pass: SessionPass, id: string, options: CallOptions): Promise<SaleResult> {
+  const answer = await call(address, pass, options, { path: receiptPath(id) }, ReceiptReply);
   if (!answer.ok) return answer;
   return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop: answer.reply.shop, cashier: answer.reply.cashier };
 }

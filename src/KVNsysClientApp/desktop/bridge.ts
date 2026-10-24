@@ -1,5 +1,6 @@
 import type {
   ConnectResult,
+  DaySalesResult,
   SaleResult,
   StatutoryDiscount,
   TillResult,
@@ -96,6 +97,10 @@ export interface KvnsysBridge {
   clearSale(): Promise<TillResult>;
   /** Records the sale, paid with the cash as typed; once it's recorded, the till starts a new sale. */
   paySale(tendered: string): Promise<SaleResult>;
+  /** A day's receipts at the shop and their totals: "2026-10-24", or null for today by the shop's clock. */
+  daySales(date: string | null): Promise<DaySalesResult>;
+  /** One receipt as it was given. */
+  receipt(id: string): Promise<SaleResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -125,3 +130,5 @@ export const RemoveFromSaleChannel = 'kvnsys:remove-from-sale';
 export const SetSaleDiscountChannel = 'kvnsys:set-sale-discount';
 export const ClearSaleChannel = 'kvnsys:clear-sale';
 export const PaySaleChannel = 'kvnsys:pay-sale';
+export const DaySalesChannel = 'kvnsys:day-sales';
+export const ReceiptChannel = 'kvnsys:receipt';
