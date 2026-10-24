@@ -92,6 +92,13 @@ and everything a user sees, is called KVNsys.
   such as the supplier's DR number; a scanner's Enter never saves it half-done. Adjust on a row
   puts a count right: the pieces counted on the shelf and why they're different. Each button only
   shows for someone whose role has the right.
+- **Sales, in the database.** A sale is priced in one place, KVNsysCore, so the till and the server
+  can't disagree: each line is its price times its pieces, and the senior/PWD discount takes 20%
+  off every line, keeping the ID number and the name. A product switched off, or with no price
+  yet, can't be sold. Recording a sale saves its receipt, its lines and its cash payment, and takes
+  its pieces out of stock, all in one go or not at all. Receipts are numbered per shop, HQ-000001
+  and up, with no gaps, even when registers sell at once. Each line keeps the code, name and price
+  as sold. The database refuses to change or delete a receipt. No screens or server calls yet.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
@@ -104,7 +111,7 @@ building a screen.
   `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
   trust the next server it connects to.
 - The server prints its certificate fingerprint when it starts, so the first connection can be
-  checked against it. The schema (eight tables, in one baseline migration) is in
+  checked against it. The schema (eleven tables, in one baseline migration) is in
   `src/KVNsysPostgres/prisma/`.
 
 ## How it runs

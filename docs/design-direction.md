@@ -191,7 +191,7 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Transactions (the selling screen) | Scan a barcode, quantity, remove or return an item, discount, payment type, customer's cash, change, finalise, print, void a receipt, store credit from a refund, and several sales kept open at once ("sessions") | 🟢 Scan or search, quantity, remove an item, the senior/PWD 20% discount, cash, change, finalise, print the receipt on the real printer · ⏭ other payment types, store credit, several sales open at once |
+| Transactions (the selling screen) | Scan a barcode, quantity, remove or return an item, discount, payment type, customer's cash, change, finalise, print, void a receipt, store credit from a refund, and several sales kept open at once ("sessions") | ✅ The rules and the record of sales, in the database (2026-10-24) · 🟢 Scan or search, quantity, remove an item, the senior/PWD 20% discount, cash, change, finalise, print the receipt on the real printer · ⏭ other payment types, store credit, several sales open at once |
 | Shift Start | Start a shift with the starting cash | 🟢 |
 | Shift End and the shift report | Starting cash, cash and other sales, refunds, cash in and out, expected cash, variance, closing notes | 🟢 Counted cash against expected, and the day's sales |
 | Receipts (list, search) | Find past receipts | 🟢 The day's sales list · ⏭ search, reprinting |

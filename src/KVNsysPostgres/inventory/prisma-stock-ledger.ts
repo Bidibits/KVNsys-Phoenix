@@ -43,57 +43,9 @@ export class PrismaStockLedger extends StockLedger {
   }
 
   async record(changes: StockChange[], lineage: Lineage): Promise<StockMovement[]> {
-    const checked = changes.map(checkStockChange);
+    const checked = checkAll(changes);
     if (checked.length === 0) return [];
-    for (const change of checked) {
-      if (!Uuid.test(change.locationId)) throw new Refusal('not-found', NoSuchShop);
-      if (!Uuid.test(change.productId)) throw new Refusal('not-found', NoSuchProduct);
-      if (change.source && !Uuid.test(change.source.id)) throw new Refusal('invalid', "The document's id isn't one KVNsys made.");
-    }
-    // Two changes to the same stock wait for each other on its inventory row. Taking those rows in
-    // one fixed order (shop, then product) means two batches that share products can never each hold
-    // a row the other is waiting for. Changes to the same stock keep the order they were given.
-    const order = checked
-      .map((change, index) => ({ change, index }))
-      .sort((a, b) => a.change.locationId.localeCompare(b.change.locationId) || a.change.productId.localeCompare(b.change.productId) || a.index - b.index);
-
-    return this.db.$transaction(async (tx) => {
-      await requireKnown(tx, checked);
-      const saved: StockMovement[] = new Array<StockMovement>(checked.length);
-      for (const { change, index } of order) {
-        // Adds the change to the running total, or starts it, and hands back the total after it,
-        // all in one statement: the row stays locked until this transaction ends.
-        const totals = await tx.$queryRaw<{ stock: number }[]>`
-          INSERT INTO inventory (location_id, product_id, stock, created_by_user, created_at_machine, created_at_location)
-          VALUES (${change.locationId}::uuid, ${change.productId}::uuid, ${change.quantityChange},
-                  ${lineage.userId}::uuid, ${lineage.machineId}::uuid, ${lineage.locationId}::uuid)
-          ON CONFLICT (location_id, product_id) DO UPDATE
-             SET stock = inventory.stock + EXCLUDED.stock,
-                 updated_by_user = EXCLUDED.created_by_user,
-                 updated_at_machine = EXCLUDED.created_at_machine,
-                 updated_at_location = EXCLUDED.created_at_location,
-                 updated_at_date = now()
-          RETURNING stock`;
-        const row = await tx.inventoryLog.create({
-          data: {
-            id: newId(),
-            locationId: change.locationId,
-            productId: change.productId,
-            quantityChange: change.quantityChange,
-            movementType: change.type,
-            sourceTable: change.source?.table ?? null,
-            sourceId: change.source?.id ?? null,
-            resultingOnHand: totals[0]!.stock,
-            note: change.note,
-            createdByUser: lineage.userId,
-            createdAtMachine: lineage.machineId,
-            createdAtLocation: lineage.locationId,
-          },
-        });
-        saved[index] = toMovement(row);
-      }
-      return saved;
-    });
+    return this.db.$transaction((tx) => recordStock(tx, checked, lineage));
   }
 
   async onHand(locationId: string, productId: string): Promise<number> {
@@ -117,6 +69,71 @@ export class PrismaStockLedger extends StockLedger {
     });
     return rows.map(toMovement);
   }
+}
+
+/** The rules every change meets, and ids that are KVNsys's, before anything is saved. */
+function checkAll(changes: StockChange[]): StockChange[] {
+  const checked = changes.map(checkStockChange);
+  for (const change of checked) {
+    if (!Uuid.test(change.locationId)) throw new Refusal('not-found', NoSuchShop);
+    if (!Uuid.test(change.productId)) throw new Refusal('not-found', NoSuchProduct);
+    if (change.source && !Uuid.test(change.source.id)) throw new Refusal('invalid', "The document's id isn't one KVNsys made.");
+  }
+  return checked;
+}
+
+/**
+ * Saves stock changes inside a transaction someone else opened, such as a sale's, so the document
+ * and the stock it moves are saved together or not at all. Checks them first, as record() does.
+ */
+export async function recordStockIn(tx: Prisma.TransactionClient, changes: StockChange[], lineage: Lineage): Promise<StockMovement[]> {
+  const checked = checkAll(changes);
+  return checked.length === 0 ? [] : recordStock(tx, checked, lineage);
+}
+
+async function recordStock(tx: Prisma.TransactionClient, checked: StockChange[], lineage: Lineage): Promise<StockMovement[]> {
+  // Two changes to the same stock wait for each other on its inventory row. Taking those rows in
+  // one fixed order (shop, then product) means two batches that share products can never each hold
+  // a row the other is waiting for. Changes to the same stock keep the order they were given.
+  const order = checked
+    .map((change, index) => ({ change, index }))
+    .sort((a, b) => a.change.locationId.localeCompare(b.change.locationId) || a.change.productId.localeCompare(b.change.productId) || a.index - b.index);
+
+  await requireKnown(tx, checked);
+  const saved: StockMovement[] = new Array<StockMovement>(checked.length);
+  for (const { change, index } of order) {
+    // Adds the change to the running total, or starts it, and hands back the total after it,
+    // all in one statement: the row stays locked until this transaction ends.
+    const totals = await tx.$queryRaw<{ stock: number }[]>`
+      INSERT INTO inventory (location_id, product_id, stock, created_by_user, created_at_machine, created_at_location)
+      VALUES (${change.locationId}::uuid, ${change.productId}::uuid, ${change.quantityChange},
+              ${lineage.userId}::uuid, ${lineage.machineId}::uuid, ${lineage.locationId}::uuid)
+      ON CONFLICT (location_id, product_id) DO UPDATE
+         SET stock = inventory.stock + EXCLUDED.stock,
+             updated_by_user = EXCLUDED.created_by_user,
+             updated_at_machine = EXCLUDED.created_at_machine,
+             updated_at_location = EXCLUDED.created_at_location,
+             updated_at_date = now()
+      RETURNING stock`;
+    const row = await tx.inventoryLog.create({
+      data: {
+        id: newId(),
+        locationId: change.locationId,
+        productId: change.productId,
+        quantityChange: change.quantityChange,
+        movementType: change.type,
+        sourceTable: change.source?.table ?? null,
+        sourceId: change.source?.id ?? null,
+        resultingOnHand: totals[0]!.stock,
+        note: change.note,
+        createdByUser: lineage.userId,
+        createdAtMachine: lineage.machineId,
+        createdAtLocation: lineage.locationId,
+      },
+    });
+    saved[index] = toMovement(row);
+  }
+  return saved;
 }
 
 /** Every shop and product a batch names exists, or nothing in it is saved. */

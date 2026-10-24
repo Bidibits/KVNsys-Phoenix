@@ -92,4 +92,25 @@ export {
   type HandMovement,
 } from './inventory/stock-forms.js';
 
+export {
+  checkDiscount,
+  DiscountKinds,
+  DiscountNames,
+  PaymentTypes,
+  priceSale,
+  SaleLimits,
+  SalesJournal,
+  StatutoryDiscountPercent,
+  takeCash,
+  type CartLine,
+  type CashPayment,
+  type DiscountKind,
+  type PaymentType,
+  type PricedLine,
+  type PricedSale,
+  type Receipt,
+  type SaleProduct,
+  type StatutoryDiscount,
+} from './selling/sales.js';
+
 export { SetupStore, type SetupTransaction } from './setup/setup-store.js';
