@@ -17,3 +17,6 @@ export const RolesOperation = Symbol('RolesOperation');
 
 /** The stock ledger, the catalog, the server's shop and the rights check, or null when there's no database. */
 export const StockOperation = Symbol('StockOperation');
+
+/** The record of sales, the catalog, the server's shop and the rights check, or null when there's no database. */
+export const SalesOperation = Symbol('SalesOperation');

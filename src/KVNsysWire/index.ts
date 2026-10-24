@@ -51,3 +51,13 @@ export {
   SignOutPath,
   SignOutReply,
 } from './sign-in.js';
+export {
+  DiscountOnWire,
+  FindSaleProductPath,
+  ReceiptOnWire,
+  ReceiptReply,
+  SaleFields,
+  SaleProductOnWire,
+  SaleProductReply,
+  SalesPath,
+} from './selling.js';

@@ -15,6 +15,7 @@ export const Accesses = {
   StockView: 'stock.view',
   StockReceive: 'stock.receive',
   StockAdjust: 'stock.adjust',
+  SalesSell: 'sales.sell',
 } as const;
 
 export type AccessName = (typeof Accesses)[keyof typeof Accesses];
@@ -33,6 +34,7 @@ export const AccessDescriptions: Record<AccessName, string> = {
   'stock.view': "See the shop's stock, and every product's movements in and out",
   'stock.receive': 'Record goods coming in from a supplier',
   'stock.adjust': 'Put a stock count right, with the reason',
+  'sales.sell': 'Ring up sales, give the senior/PWD discount, and take payment',
 };
 
 export const AllAccesses: readonly AccessName[] = Object.values(Accesses);
@@ -89,5 +91,9 @@ export const RightGroups: readonly RightGroup[] = [
       { access: 'stock.receive', label: 'Receive stock', needs: 'stock.view' },
       { access: 'stock.adjust', label: 'Adjust stock', needs: 'stock.view' },
     ],
+  },
+  {
+    area: 'Selling',
+    rights: [{ access: 'sales.sell', label: 'Sell' }],
   },
 ];

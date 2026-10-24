@@ -1,6 +1,6 @@
 import type { ProductStatus } from '../catalog/products.js';
 import type { Lineage } from '../shared/lineage.js';
-import { displayPesos, MaxCentavos } from '../shared/money.js';
+import { displayPesos, MaxCentavos, parsePesos } from '../shared/money.js';
 import { Refusal } from '../shared/refusal.js';
 
 /**
@@ -134,6 +134,15 @@ export function takeCash(total: number, tendered: number): CashPayment {
   if (!Number.isSafeInteger(tendered) || tendered < 0 || tendered > MaxCentavos) refuse("That isn't an amount of cash.");
   if (tendered < total) refuse(`${displayPesos(tendered)} isn't enough: the total is ${displayPesos(total)}.`);
   return { type: 'Cash', tendered, change: tendered - total };
+}
+
+/** The cash given, as typed ("1,500" or "1500.50"), into centavos, or a refusal that says how to type it. */
+export function readCash(typed: string): number {
+  const text = typed.trim();
+  if (!text) refuse('Type the cash the customer gave, in pesos, like 1500.');
+  const centavos = parsePesos(text);
+  if (centavos === null) refuse(`"${text}" isn't an amount of cash. Type it in pesos, like 1500 or 1500.50.`);
+  return centavos;
 }
 
 /** A sale as recorded: its receipt number, what was charged, and how it was paid. */

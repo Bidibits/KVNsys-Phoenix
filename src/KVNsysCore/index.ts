@@ -98,6 +98,7 @@ export {
   DiscountNames,
   PaymentTypes,
   priceSale,
+  readCash,
   SaleLimits,
   SalesJournal,
   StatutoryDiscountPercent,

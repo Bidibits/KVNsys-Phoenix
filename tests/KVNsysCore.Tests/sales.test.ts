@@ -1,4 +1,4 @@
-import { priceSale, takeCash, type CartLine, type SaleProduct } from '@kvnsys/core';
+import { priceSale, readCash, takeCash, type CartLine, type SaleProduct } from '@kvnsys/core';
 import { describe, expect, it } from 'vitest';
 
 const refusalOf = (work: () => unknown) => {
@@ -95,5 +95,20 @@ describe('taking cash', () => {
     expect(refusalOf(() => takeCash(122220, 100000))).toMatchObject({ message: "₱1,000.00 isn't enough: the total is ₱1,222.20." });
     expect(refusalOf(() => takeCash(100, -1))).toMatchObject({ message: "That isn't an amount of cash." });
     expect(refusalOf(() => takeCash(100, 1.5))).toMatchObject({ message: "That isn't an amount of cash." });
+  });
+});
+
+describe('cash as typed', () => {
+  it('is pesos, with or without thousands commas and centavos', () => {
+    expect(readCash(' 1,500 ')).toBe(150000);
+    expect(readCash('1500.5')).toBe(150050);
+    expect(readCash('0')).toBe(0);
+  });
+
+  it('refuses anything else, saying how to type it', () => {
+    expect(refusalOf(() => readCash(''))).toMatchObject({ message: 'Type the cash the customer gave, in pesos, like 1500.' });
+    for (const typed of ['abc', '-5', '1.005', '1,50']) {
+      expect(refusalOf(() => readCash(typed)), typed).toMatchObject({ message: `"${typed}" isn't an amount of cash. Type it in pesos, like 1500 or 1500.50.` });
+    }
   });
 });

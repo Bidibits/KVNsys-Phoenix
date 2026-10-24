@@ -67,13 +67,29 @@ export {
   type RoleListResult,
   type RoleResult,
 } from './identity/roles.js';
+export {
+  findSaleProduct,
+  priceCart,
+  recordSale,
+  type PaidReceipt,
+  type PriceResult,
+  type SaleForm,
+  type SaleProductResult,
+  type SaleResult,
+} from './selling/sales.js';
 export type { CallOptions, CallProblem } from './connection/server-call.js';
 export type { SessionPass, SignedInUser } from '@kvnsys/wire';
 export type {
   AccessName,
   Account,
   AccountStatus,
+  CartLine,
   CountForm,
+  DiscountKind,
+  PricedLine,
+  PricedSale,
+  SaleProduct,
+  StatutoryDiscount,
   DeliveryLineForm,
   HandMovement,
   MovementType,

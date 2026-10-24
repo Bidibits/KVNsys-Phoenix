@@ -98,7 +98,13 @@ and everything a user sees, is called KVNsys.
   yet, can't be sold. Recording a sale saves its receipt, its lines and its cash payment, and takes
   its pieces out of stock, all in one go or not at all. Receipts are numbered per shop, HQ-000001
   and up, with no gaps, even when registers sell at once. Each line keeps the code, name and price
-  as sold. The database refuses to change or delete a receipt. No screens or server calls yet.
+  as sold. The database refuses to change or delete a receipt.
+- **Selling over the network.** A role with the new "Sell" right can find a product by what was
+  scanned or typed, and record a sale paid in cash. The register keeps the cart and prices it with
+  the same rules as the server; the server prices it again from its catalog as it is now, and
+  refuses the sale if a price changed since it was rung up, so nobody is charged what the cashier
+  didn't see. The sale is always at the server's own shop, and the receipt comes back with the
+  shop's name and the cashier's. No selling screen yet.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

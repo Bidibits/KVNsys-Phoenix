@@ -3,6 +3,7 @@ import type { PcIdentity } from '@kvnsys/core';
 import {
   PrismaProductCatalog,
   PrismaRoleCatalog,
+  PrismaSalesJournal,
   PrismaShopDirectory,
   PrismaStockLedger,
   PrismaUserAccounts,
@@ -18,8 +19,9 @@ import { ProductsController } from './products.controller.js';
 import { SessionController } from './session.controller.js';
 import { SignInController } from './sign-in.controller.js';
 import { RolesController, type RolesOperationParts } from './roles.controller.js';
+import { SalesController, type SalesOperationParts } from './sales.controller.js';
 import { StockController, type StockOperationParts } from './stock.controller.js';
-import { DatabaseClient, ProductsOperation, RolesOperation, SignInOperation, StockOperation, UsersOperation } from './tokens.js';
+import { DatabaseClient, ProductsOperation, RolesOperation, SalesOperation, SignInOperation, StockOperation, UsersOperation } from './tokens.js';
 import { UsersController, type UsersOperationParts } from './users.controller.js';
 
 type Database = { client: PrismaClient | null };
@@ -41,7 +43,7 @@ export class ServerModule {
   static withDatabase(client: PrismaClient | null, server: PcIdentity): DynamicModule {
     return {
       module: ServerModule,
-      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController],
+      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController],
       providers: [
         { provide: DatabaseClient, useValue: { client } satisfies Database },
         DatabaseLifecycle,
@@ -103,6 +105,21 @@ export class ServerModule {
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,
                 } satisfies StockOperationParts)
+              : null,
+          }),
+        },
+        {
+          provide: SalesOperation,
+          inject: [DatabaseClient, Sessions],
+          useFactory: ({ client: db }: Database, sessions: Sessions) => ({
+            sales: db
+              ? ({
+                  journal: new PrismaSalesJournal(db),
+                  catalog: new PrismaProductCatalog(db),
+                  shops: new PrismaShopDirectory(db),
+                  authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
+                  server,
+                } satisfies SalesOperationParts)
               : null,
           }),
         },

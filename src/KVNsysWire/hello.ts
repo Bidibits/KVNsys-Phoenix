@@ -11,8 +11,9 @@ import { z } from 'zod';
  * 7: roles (list, get, make, change); the roles an account can be given moved to /api/role-choices.
  * 8: stock (the shop's stock, finding a product by code or barcode, one product's stock and movements,
  *    recording goods in and counts put right).
+ * 9: selling (finding a product to ring up, recording a sale paid in cash).
  */
-export const ProtocolVersion = 8;
+export const ProtocolVersion = 9;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;
