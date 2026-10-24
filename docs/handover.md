@@ -62,6 +62,29 @@ shows the receipt. Back on Sell, End shift and count the drawer. Registers shows
 **Tests:** `pnpm test`, after `pnpm build`. The database tests need `KVNSYS_TEST_POSTGRES_URL` in
 `.env`; without it they show as skipped, not passed.
 
+## Two repos, kept the same
+
+Phoenix is in two places on GitHub, and both hold the same thing:
+
+| Repo | Who can see it | Phoenix is |
+|---|---|---|
+| `Bidibits/KVNsys-Project` | Private | the `Phoenix/` folder, beside Capstone, Alpha, Beta and Release |
+| `Bidibits/KVNsys-Phoenix` | Public | the whole repo |
+
+Every change goes into both, as the same commits with the same messages. Work in either one, then
+carry the new commits to the other by replaying them, never by force-pushing:
+
+- **Private to public:** in the private repo,
+  `git format-patch --binary --relative=Phoenix -o <folder> <last-synced>..HEAD -- Phoenix`; in a
+  clone of the public repo, `git am <folder>/*.patch`, then push.
+- **Public to private:** in a clone of the public repo,
+  `git format-patch --binary -o <folder> <last-synced>..<tip>`; in the private repo,
+  `git am -3 --directory=Phoenix <folder>/*.patch`, then push.
+
+Then check they match: `git rev-parse HEAD:Phoenix` in the private repo has to equal
+`git rev-parse HEAD^{tree}` in the public one. A full clone of the private repo fails on Windows
+(some old Alpha paths are too long); clone it with `--no-checkout` when only its history is needed.
+
 ## Before changing anything
 
 Most of this is in the README and `decisions.md`; these are the ones that are easy to miss.
