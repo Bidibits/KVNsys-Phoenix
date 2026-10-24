@@ -7,6 +7,8 @@ technology.
 To the people using it, it's an ordinary program: install it, double-click the icon, and it opens
 in its own window. Nothing about it looks like a website.
 
+Picking this up on another PC: start with [`docs/handover.md`](docs/handover.md).
+
 "Phoenix" is only this generation's folder name, as `Release` was before it. Every program inside,
 and everything a user sees, is called KVNsys.
 
