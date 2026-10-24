@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { HomeScreen, type Area } from './home/HomeScreen';
 import { ProductsScreen } from './products/ProductsScreen';
 import { RolesScreen } from './roles/RolesScreen';
+import { SellScreen } from './selling/SellScreen';
 import { StockScreen } from './stock/StockScreen';
 import { UsersScreen } from './users/UsersScreen';
 
-const Titles: Record<Area | 'home', string> = { home: 'Home', products: 'Products', stock: 'Stock', users: 'Users', roles: 'Roles' };
+const Titles: Record<Area | 'home', string> = { home: 'Home', sell: 'Sell', products: 'Products', stock: 'Stock', users: 'Users', roles: 'Roles' };
 
 /**
  * The app once someone is signed in: the frame, with Home or an area inside it. Signing out
@@ -37,6 +38,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
     >
       {area === 'home' && <HomeScreen user={user} onOpen={setArea} />}
       {/* The server has already ended this pass, so there's nothing left to sign out of. */}
+      {area === 'sell' && <SellScreen onSignInAgain={onSignedOut} />}
       {area === 'products' && <ProductsScreen user={user} onSignInAgain={onSignedOut} />}
       {area === 'stock' && <StockScreen user={user} onSignInAgain={onSignedOut} />}
       {area === 'users' && <UsersScreen user={user} onSignInAgain={onSignedOut} />}

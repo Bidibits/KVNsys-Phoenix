@@ -23,6 +23,7 @@ export function RecordTable<Row>({
   columns,
   rows,
   rowKey,
+  size = 'compact',
   className,
 }: {
   /** What the table holds, for screen readers: "Products". */
@@ -30,16 +31,20 @@ export function RecordTable<Row>({
   columns: Column<Row>[];
   rows: Row[];
   rowKey: (row: Row) => string;
+  /** "compact" for back-office lists, where many rows fit; "large" for the selling screen (design-direction.md, part 2). */
+  size?: 'compact' | 'large';
   className?: string;
 }) {
   const alignment = (column: Column<Row>) => (column.align === 'right' ? 'text-right' : 'text-left');
+  // Large rows are taller, and a little narrower at the sides, so a selling screen's columns fit.
+  const cell = size === 'large' ? 'h-14 px-3' : 'h-11 px-4';
   return (
     <div className={cn('min-h-0 overflow-auto rounded-lg border border-border bg-field', className)}>
-      <table aria-label={label} className="w-full text-[15px]">
+      <table aria-label={label} className={cn('w-full', size === 'large' ? 'text-lg' : 'text-[15px]')}>
         <TableHeader className="sticky top-0 z-10 bg-secondary shadow-[0_1px_0_var(--border)]">
           <TableRow className="border-0 hover:bg-transparent">
             {columns.map((column) => (
-              <TableHead key={column.heading} className={cn('h-11 px-4 font-semibold', alignment(column))}>
+              <TableHead key={column.heading} className={cn(cell, 'font-semibold', alignment(column))}>
                 {column.hiddenHeading ? <span className="sr-only">{column.heading}</span> : column.heading}
               </TableHead>
             ))}
@@ -49,7 +54,7 @@ export function RecordTable<Row>({
           {rows.map((row) => (
             <TableRow key={rowKey(row)} className="border-border/60 even:bg-row-alt hover:bg-accent/60">
               {columns.map((column) => (
-                <TableCell key={column.heading} className={cn('h-11 px-4', alignment(column))}>
+                <TableCell key={column.heading} className={cn(cell, alignment(column))}>
                   {column.cell(row)}
                 </TableCell>
               ))}

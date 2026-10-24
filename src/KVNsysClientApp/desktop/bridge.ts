@@ -1,5 +1,8 @@
 import type {
   ConnectResult,
+  SaleResult,
+  StatutoryDiscount,
+  TillResult,
   CountForm,
   DeliveryLineForm,
   ProductStockResult,
@@ -81,6 +84,18 @@ export interface KvnsysBridge {
   receiveStock(lines: DeliveryLineForm[], note: string): Promise<RecordStockResult>;
   /** Puts a product's count right, from what was counted and what KVNsys showed when it was typed. */
   countStock(form: CountForm): Promise<RecordStockResult>;
+  /** The sale being rung up on this register, priced. A new sign-in starts with an empty one. */
+  till(): Promise<TillResult>;
+  /** Finds what was scanned or typed and adds one to the sale. */
+  scanForSale(codeOrBarcode: string): Promise<TillResult>;
+  setSaleQuantity(productId: string, quantity: number): Promise<TillResult>;
+  removeFromSale(productId: string): Promise<TillResult>;
+  /** Gives the sale a senior/PWD discount, or takes it off (null). */
+  setSaleDiscount(discount: StatutoryDiscount | null): Promise<TillResult>;
+  /** Empties the sale without recording anything. */
+  clearSale(): Promise<TillResult>;
+  /** Records the sale, paid with the cash as typed; once it's recorded, the till starts a new sale. */
+  paySale(tendered: string): Promise<SaleResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -103,3 +118,10 @@ export const FindStockItemChannel = 'kvnsys:find-stock-item';
 export const ProductStockChannel = 'kvnsys:product-stock';
 export const ReceiveStockChannel = 'kvnsys:receive-stock';
 export const CountStockChannel = 'kvnsys:count-stock';
+export const TillChannel = 'kvnsys:till';
+export const ScanForSaleChannel = 'kvnsys:scan-for-sale';
+export const SetSaleQuantityChannel = 'kvnsys:set-sale-quantity';
+export const RemoveFromSaleChannel = 'kvnsys:remove-from-sale';
+export const SetSaleDiscountChannel = 'kvnsys:set-sale-discount';
+export const ClearSaleChannel = 'kvnsys:clear-sale';
+export const PaySaleChannel = 'kvnsys:pay-sale';

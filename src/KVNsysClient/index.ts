@@ -77,6 +77,7 @@ export {
   type SaleProductResult,
   type SaleResult,
 } from './selling/sales.js';
+export { Till, type TillResult, type TillView } from './selling/till.js';
 export type { CallOptions, CallProblem } from './connection/server-call.js';
 export type { SessionPass, SignedInUser } from '@kvnsys/wire';
 export type {

@@ -4,6 +4,12 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   connectToServer,
+  findSaleProduct,
+  recordSale,
+  Till,
+  type SaleResult,
+  type StatutoryDiscount,
+  type TillResult,
   findStockItem,
   getProductStock,
   listStock,
@@ -46,8 +52,15 @@ import {
 } from '@kvnsys/client';
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
+  ClearSaleChannel,
   ConnectChannel,
   CountStockChannel,
+  PaySaleChannel,
+  RemoveFromSaleChannel,
+  ScanForSaleChannel,
+  SetSaleDiscountChannel,
+  SetSaleQuantityChannel,
+  TillChannel,
   FindStockItemChannel,
   ListStockChannel,
   ProductStockChannel,
@@ -88,6 +101,9 @@ let connectedAddress: string | null = null;
  * forgets it within 12 hours.
  */
 let session: { address: string; pass: SessionPass } | null = null;
+
+/** The sale being rung up on this register. Each sign-in, and each sign-out, starts an empty one. */
+let till = new Till();
 
 ipcMain.handle(SavedAddressChannel, (): string | null => settings.load().serverAddress ?? null);
 
@@ -143,6 +159,7 @@ ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknow
   const result = await signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null });
   if (!result.ok) return result;
   session = { address: connectedAddress, pass: result.session };
+  till = new Till();
   return { ok: true, user: result.user };
 });
 
@@ -151,6 +168,7 @@ ipcMain.handle(SignOutChannel, async (): Promise<void> => {
   const { address, pass } = session;
   // Forgotten here first: whatever the server says, this register is now signed out.
   session = null;
+  till = new Till();
   const trusted = trustFile.read();
   const result = await signOut(address, pass, { pin: trusted.ok ? (trusted.servers[address] ?? null) : null });
   if (!result.ok) console.error(`Couldn't tell the server about the sign-out, so the pass will end on its own: ${result.message}`);
@@ -313,6 +331,51 @@ ipcMain.handle(CountStockChannel, async (_event, typed: unknown): Promise<Record
   const form = asCountForm(typed);
   if (!form) return NotAForm;
   return withPass((address, pass, options) => saveCount(address, pass, form, options));
+});
+
+/** A senior/PWD discount as the screens sent it: a kind and two pieces of text, or null to take it off. */
+function asDiscount(value: unknown): StatutoryDiscount | null | undefined {
+  if (value === null) return null;
+  if (typeof value !== 'object') return undefined;
+  const { kind, idNumber, customerName } = value as Record<string, unknown>;
+  if (asText(kind) === undefined || asText(idNumber) === undefined || asText(customerName) === undefined) return undefined;
+  return { kind: kind as StatutoryDiscount['kind'], idNumber: idNumber as string, customerName: customerName as string };
+}
+
+ipcMain.handle(TillChannel, (): TillResult => ({ ok: true, till: till.view() }));
+
+ipcMain.handle(ScanForSaleChannel, async (_event, typed: unknown): Promise<TillResult> => {
+  const codeOrBarcode = asText(typed);
+  if (codeOrBarcode === undefined) return NotAForm;
+  const current = till;
+  return current.scan(() => withPass((address, pass, options) => findSaleProduct(address, pass, codeOrBarcode, options)));
+});
+
+ipcMain.handle(SetSaleQuantityChannel, (_event, id: unknown, quantity: unknown): TillResult => {
+  const productId = asProductId(id);
+  if (!productId || typeof quantity !== 'number') return NotAForm;
+  return till.setQuantity(productId, quantity);
+});
+
+ipcMain.handle(RemoveFromSaleChannel, (_event, id: unknown): TillResult => {
+  const productId = asProductId(id);
+  if (!productId) return NotAForm;
+  return till.remove(productId);
+});
+
+ipcMain.handle(SetSaleDiscountChannel, (_event, typed: unknown): TillResult => {
+  const discount = asDiscount(typed);
+  if (discount === undefined) return NotAForm;
+  return till.setDiscount(discount);
+});
+
+ipcMain.handle(ClearSaleChannel, (): TillResult => ({ ok: true, till: till.clear() }));
+
+ipcMain.handle(PaySaleChannel, async (_event, typed: unknown): Promise<SaleResult> => {
+  const tendered = asText(typed);
+  if (tendered === undefined) return NotAForm;
+  const current = till;
+  return current.pay(tendered, (form) => withPass((address, pass, options) => recordSale(address, pass, form, options)));
 });
 
 function openWindow(): void {

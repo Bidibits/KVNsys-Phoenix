@@ -104,7 +104,15 @@ and everything a user sees, is called KVNsys.
   the same rules as the server; the server prices it again from its catalog as it is now, and
   refuses the sale if a price changed since it was rung up, so nobody is charged what the cashier
   didn't see. The sale is always at the server's own shop, and the receipt comes back with the
-  shop's name and the cashier's. No selling screen yet.
+  shop's name and the cashier's.
+- **The selling screen.** A Sell tile on Home opens it, with the cursor already in the code box: a
+  scan, or a code and Enter, adds one; scanning it again adds another. Each line has − and + and
+  a × to remove it. The senior/PWD discount takes the ID number and the name on the ID. Pay takes
+  the cash given, says if it's short, and records the sale; the receipt then shows on screen (the
+  shop, its number, when, the cashier, every line, the discount and whose ID, total, cash and
+  change) with the change in big type, and Enter starts the next sale. The cart is kept by the
+  register's desktop side, priced with KVNsysCore's rules at every change, so a product that can't
+  be sold never gets in. Signing out empties it. No printing yet.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

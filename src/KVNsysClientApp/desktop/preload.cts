@@ -24,6 +24,13 @@ const FindStockItemChannel = 'kvnsys:find-stock-item';
 const ProductStockChannel = 'kvnsys:product-stock';
 const ReceiveStockChannel = 'kvnsys:receive-stock';
 const CountStockChannel = 'kvnsys:count-stock';
+const TillChannel = 'kvnsys:till';
+const ScanForSaleChannel = 'kvnsys:scan-for-sale';
+const SetSaleQuantityChannel = 'kvnsys:set-sale-quantity';
+const RemoveFromSaleChannel = 'kvnsys:remove-from-sale';
+const SetSaleDiscountChannel = 'kvnsys:set-sale-discount';
+const ClearSaleChannel = 'kvnsys:clear-sale';
+const PaySaleChannel = 'kvnsys:pay-sale';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
@@ -45,6 +52,13 @@ const bridge: KvnsysBridge = {
   productStock: (productId) => ipcRenderer.invoke(ProductStockChannel, productId),
   receiveStock: (lines, note) => ipcRenderer.invoke(ReceiveStockChannel, lines, note),
   countStock: (form) => ipcRenderer.invoke(CountStockChannel, form),
+  till: () => ipcRenderer.invoke(TillChannel),
+  scanForSale: (codeOrBarcode) => ipcRenderer.invoke(ScanForSaleChannel, codeOrBarcode),
+  setSaleQuantity: (productId, quantity) => ipcRenderer.invoke(SetSaleQuantityChannel, productId, quantity),
+  removeFromSale: (productId) => ipcRenderer.invoke(RemoveFromSaleChannel, productId),
+  setSaleDiscount: (discount) => ipcRenderer.invoke(SetSaleDiscountChannel, discount),
+  clearSale: () => ipcRenderer.invoke(ClearSaleChannel),
+  paySale: (tendered) => ipcRenderer.invoke(PaySaleChannel, tendered),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

@@ -131,6 +131,10 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-24 | **Selling over the network:** `GET /api/sales/find?codeOrBarcode=` (one product to ring up) and `POST /api/sales` (record a sale paid in cash: the lines by product id and quantity, the discount if any, the cash given and the total the register showed) (protocol 9). The reply is the receipt, with the shop's name and the cashier's, for the receipt's top. | The second of selling's three steps |
 | 2026-10-24 | **One right to sell, `sales.sell`,** grouped as Selling on the Roles screen. It covers finding a product at the till, the senior/PWD discount and taking cash, so a cashier needs neither "see products" nor "see stock". | A cashier's whole job is one tick box; the discount needs no supervisor (2026-10-24) |
 | 2026-10-24 | **The server never takes the register's word for a price.** It prices the sale again from its catalog as it is now, and refuses it (409) when that isn't the total the register showed, saying what it comes to now. The register prices and checks the cash first, with the same KVNsysCore rules, so a mistake or short cash is caught without asking. | A customer is never charged what the cashier didn't see, and a register can't set its own prices |
+| 2026-10-24 | **The selling screen:** a Sell tile (`sales.sell`), first on Home. Large, as design-direction.md's part 2 says: a code box that always has the cursor (a scan, or Enter, adds one), the sale as a large table (− and + for how many, × to remove), and the totals beside it, with Senior/PWD discount, Pay and Clear sale. Pay takes the cash given in a side panel; once recorded, the receipt shows on screen with the change in big type, and Enter starts the next sale. | The third of selling's three steps; the receipt on screen until there's a printer (2026-10-20) |
+| 2026-10-24 | **The cart is the till, kept on the register's desktop side** (`Till` in KVNsysClient), not by the screen: each scan, quantity, removal and discount is priced with KVNsysCore's rules before it's kept, so a product that can't be sold never gets in, and a refused change leaves the sale as it was. Scanning a product already in the sale adds one to its line, at its price now. Each sign-in and sign-out starts an empty till. | The README's "keeping the cart while the cashier scans" is the client engine's, and the screens hold no rules |
+| 2026-10-24 | **A code that can't be added stays in the box, selected,** with the reason above the sale: the cashier sees what failed, and the scanner's next code replaces it instead of adding to it. | Found by a screenshot, not a test: see "Learned the hard way" |
+| 2026-10-24 | **What the selling screen doesn't do yet:** print (a printer comes later); search for a product by name at the till; type a quantity before scanning (it's − and +, or scan again); hold several sales at once; keys for Pay and the discount (decided with the cashiers); take card or GCash; void, refund, or reprint a receipt; refresh the prices in a sale the server refused because one changed (remove the line and scan it again). | Each comes with the step that needs it, or the cashier interviews |
 | 2026-10-18 | **What the product calls don't do yet:** say which register, and so which shop, a change came from (`created_at_machine` and `created_at_location` stay empty until registers are recorded); give an installed server the new rights by itself (that waits for the server updating its own database); or have any screen. | Each comes with the step that needs it |
 
 ## Why Electron
@@ -258,5 +262,13 @@ column, its index, and the comments written for the browser design.
   `SET transaction_timeout`, which 16 doesn't know, so a dry run against this PC's own PostgreSQL 16
   failed. Test against a server with each version's own tools. On a shop's server, the tools and
   the server are both 18.6.
+- **A screenshot caught what the tests couldn't, a third time.** With a ₱1,450.50 item in the sale,
+  the selling screen's Remove buttons were cut off behind a sideways scrollbar. Every test passed.
+  A test now measures that the sale's table fits, and was made to fail once by putting the old
+  button back.
+- **A scanner types into whatever is in the box.** After a code was refused, it stayed in the box,
+  so the next scan would have been glued to it ("PRD-00994800249211116") and refused too. The same
+  screenshot showed it. A refused code is now selected, and a test types the next code key by key,
+  as a scanner does, which `fill` never would have shown.
 - **On Windows, never pass a folder path ending in `\` as a program argument.** Before the closing
   quote it reads as an escaped quote, and the program gets a broken path.

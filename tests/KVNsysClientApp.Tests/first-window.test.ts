@@ -71,6 +71,7 @@ describe('the first window, driven like a person would', () => {
   it('cannot be turned into a browser: the page has no access to Node', async () => {
     expect(await window.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined');
     expect(await window.evaluate(() => Object.keys((globalThis as unknown as { kvnsys: object }).kvnsys).sort())).toEqual([
+      'clearSale',
       'connectToServer',
       'countStock',
       'findStockItem',
@@ -78,17 +79,23 @@ describe('the first window, driven like a person would', () => {
       'listRoles',
       'listStock',
       'listUsers',
+      'paySale',
       'productForm',
       'productStock',
       'receiveStock',
+      'removeFromSale',
       'resetPassword',
       'roleForm',
       'saveProduct',
       'saveRole',
       'saveUser',
       'savedServerAddress',
+      'scanForSale',
+      'setSaleDiscount',
+      'setSaleQuantity',
       'signIn',
       'signOut',
+      'till',
       'userForm',
     ]);
   });
