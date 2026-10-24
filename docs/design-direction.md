@@ -64,7 +64,8 @@ Capstone 3Re, counting Log Out). A button you have no right to is switched off.
 
 **In Phoenix:**
 - Home shows one tile per area. At launch: Sell, Shifts, Sales, Products, People and
-  Registers. Stock, Settings and the rest join as they're built.
+  Registers. Stock, Settings and the rest join as they're built. (Sell, Products, Stock, Users and
+  Roles are there now.)
 - A tile you may not use is greyed out, with a note saying why.
 - The server still checks every request. The greyed tile only saves a pointless click.
 
@@ -181,7 +182,7 @@ Key:
 | Log in (`logInLocalDatabase`, `logInConnectToServer`) | Sign in, against a local database or a server | ✅ Connect to the shop's server over secure HTTPS, sign in, sessions. Registers always go through the server: no local-database mode, by design. |
 | Users (list, form, search) | Accounts and their roles | ✅ A users list and form, to create the cashiers' accounts (2026-10-19) · ⏭ search |
 | Roles (list, form, search) | Roles and the rights each holds | ✅ Only the Administrator is made at install (decided 2026-10-19) · ✅ making and editing roles and their rights, so a shop can make a cashier role (2026-10-19) · ⏭ search |
-| Terminals (list, form, search) | The registers | 🟢 Each register recorded by itself the first time it connects, as Beta did, plus a list to name them · ⏭ search |
+| Terminals (list, form, search) | The registers | ✅ Each register recorded by itself the first time someone signs in at it, plus a list to name them or switch them off (2026-10-24) · ⏭ search |
 | Configurations | This PC's shop and register | ✅ It remembers its server · ⏭ a settings page |
 | Locations (list, form, search) | The shops | ✅ The first shop is made at install · ⏭ screens, when a second branch joins |
 | Storages (list, form, search) | Places stock is kept inside a shop | ⏭ |
@@ -191,10 +192,10 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Transactions (the selling screen) | Scan a barcode, quantity, remove or return an item, discount, payment type, customer's cash, change, finalise, print, void a receipt, store credit from a refund, and several sales kept open at once ("sessions") | 🟢 Scan or search, quantity, remove an item, the senior/PWD 20% discount, cash, change, finalise, print the receipt on the real printer · ⏭ other payment types, store credit, several sales open at once |
-| Shift Start | Start a shift with the starting cash | 🟢 |
-| Shift End and the shift report | Starting cash, cash and other sales, refunds, cash in and out, expected cash, variance, closing notes | 🟢 Counted cash against expected, and the day's sales |
-| Receipts (list, search) | Find past receipts | 🟢 The day's sales list · ⏭ search, reprinting |
+| Transactions (the selling screen) | Scan a barcode, quantity, remove or return an item, discount, payment type, customer's cash, change, finalise, print, void a receipt, store credit from a refund, and several sales kept open at once ("sessions") | ✅ Scan or type a code, quantity, remove an item, the senior/PWD 20% discount, cash, change, finalise, and the receipt on screen (2026-10-24) · 🟢 print the receipt on the real printer · ⏭ search by name at the till, other payment types, store credit, several sales open at once |
+| Shift Start | Start a shift with the starting cash | ✅ (2026-10-24) |
+| Shift End and the shift report | Starting cash, cash and other sales, refunds, cash in and out, expected cash, variance, closing notes | ✅ Starting cash, cash sales, discounts, expected cash, counted cash, the difference, and a note (2026-10-24) · ⏭ refunds, cash in and out, other payment types |
+| Receipts (list, search) | Find past receipts | ✅ The day's sales list, any day, and any receipt again on screen (2026-10-24) · ⏭ search, reprinting |
 | Shifts (list, search) | Past shifts, and from there their receipts and refunds | ⏭ |
 | Flows | Money put into or taken out of the drawer during a shift | ⏭ unless the cashiers need it on day one (ask them) |
 | Voids | Cancel a paid receipt from the current shift, with a reason | ⏭ unless the cashiers need it on day one (ask them) |
@@ -214,8 +215,8 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Inventory, Inventory Admin, Inventory Manager | Stock on hand, entering stock, minimum and maximum per storage | 🟢 Stock on hand, receiving and adjusting, before January (decided 2026-10-20: bare bones is selling and stock) · ⏭ minimum and maximum, storages |
-| Inventory logs | Every stock movement | ✅ The ledger, in the database (2026-10-20) · 🟢 a screen with a product's movements, alongside the Stock screen |
+| Inventory, Inventory Admin, Inventory Manager | Stock on hand, entering stock, minimum and maximum per storage | ✅ Stock on hand, receiving and adjusting, with their own rights, over the network and on the Stock screen (2026-10-24) · ⏭ minimum and maximum, storages |
+| Inventory logs | Every stock movement | ✅ The ledger, in the database (2026-10-20), and a product's newest movements, on the Stock screen's History (2026-10-24) · ⏭ older movements than the newest 200, and a search |
 | Transfers hub: quotes, orders, receiving | Supplier quotes, orders built from them, receiving an order into stock | ⏭ |
 | Transfer maker, manager and requests | Moving stock between places, and asking for a transfer | ⏭ HQ-to-branch transfers (one document carrying the stock and the product details) are the first thing after launch |
 
@@ -223,9 +224,9 @@ Key:
 
 | Feature | Phoenix |
 |---|---|
-| One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · 🟢 Back and Forward, search, the register's name |
-| A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18) and the form panel from the right (2026-10-19) · 🟢 a simple search box, and building them from one description · ⏭ Advance Search |
-| Pop-up notices and themed dialogs | 🟢 |
+| One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · ✅ the register's name, Back and Forward, and the search box (2026-10-24) |
+| A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18), the form panel from the right (2026-10-19), and a simple search box over every list (2026-10-24) · 🟢 building them from one description · ⏭ Advance Search |
+| Pop-up notices and themed dialogs | ✅ "Saved …" pops up and goes on its own; a themed dialog asks before throwing work away (2026-10-24) |
 | Light theme (Standard) | ✅ (2026-10-18) · ⏭ dark theme |
 | Per-person table settings (columns, stripes, sort) | ⏭ |
 | Forms in their own window (Ctrl+click) | ⏭ |

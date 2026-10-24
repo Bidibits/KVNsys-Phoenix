@@ -9,8 +9,15 @@ import { z } from 'zod';
  * 4: products (list, find, get, add, change). 5: sign-in also says which rights the role holds.
  * 6: accounts (list, get, add, change, new password) and the roles an account can be given.
  * 7: roles (list, get, make, change); the roles an account can be given moved to /api/role-choices.
+ * 8: stock (the shop's stock, finding a product by code or barcode, one product's stock and movements,
+ *    recording goods in and counts put right).
+ * 9: selling (finding a product to ring up, recording a sale paid in cash).
+ * 10: a day's sales and one receipt by id; a receipt's cashier can be unknown.
+ * 11: registers: sign-in says which PC, the person signed in comes with their register, a receipt
+ *     names its register, and the registers can be listed, renamed and switched off.
+ * 12: shifts: start one with the cash in the drawer, end it with the cash counted; a sale needs one.
  */
-export const ProtocolVersion = 7;
+export const ProtocolVersion = 12;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

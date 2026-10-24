@@ -11,7 +11,7 @@ import {
 } from '@kvnsys/wire';
 import { describe, expect, it } from 'vitest';
 
-const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'] };
+const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'], register: { code: 'HQ-R01', name: 'Counter 1' } };
 const session = { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' };
 
 describe('the sign-in call', () => {
@@ -58,5 +58,14 @@ describe('sessions', () => {
   it('confirm a sign-out', () => {
     expect(SignOutReply.safeParse({ signedOut: true }).success).toBe(true);
     expect(SignOutReply.safeParse({}).success).toBe(false);
+  });
+});
+
+describe('which register a sign-in is at', () => {
+  it('is sent as the PC reads itself, or left out by one that cannot', async () => {
+    const { SignInRequest, RegisterIdentity } = await import('@kvnsys/wire');
+    expect(SignInRequest.safeParse({ username: 'ana', password: 'pw', register: { hardwareId: 'abc', computerName: 'COUNTER-PC' } }).success).toBe(true);
+    expect(SignInRequest.safeParse({ username: 'ana', password: 'pw' }).success).toBe(true);
+    expect(RegisterIdentity.safeParse({ hardwareId: ' ', computerName: 'X' }).success).toBe(false);
   });
 });

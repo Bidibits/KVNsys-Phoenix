@@ -12,6 +12,11 @@ export const Accesses = {
   UsersManage: 'users.manage',
   RolesView: 'roles.view',
   RolesManage: 'roles.manage',
+  StockView: 'stock.view',
+  StockReceive: 'stock.receive',
+  StockAdjust: 'stock.adjust',
+  SalesSell: 'sales.sell',
+  SalesView: 'sales.view',
 } as const;
 
 export type AccessName = (typeof Accesses)[keyof typeof Accesses];
@@ -27,6 +32,11 @@ export const AccessDescriptions: Record<AccessName, string> = {
   'users.manage': "Add accounts, change them, switch them off, and reset passwords",
   'roles.view': 'See the roles and the rights each one holds',
   'roles.manage': 'Make roles, and change their names, rights and status',
+  'stock.view': "See the shop's stock, and every product's movements in and out",
+  'stock.receive': 'Record goods coming in from a supplier',
+  'stock.adjust': 'Put a stock count right, with the reason',
+  'sales.sell': 'Ring up sales, give the senior/PWD discount, and take payment',
+  'sales.view': "See a day's sales and open any receipt",
 };
 
 export const AllAccesses: readonly AccessName[] = Object.values(Accesses);
@@ -74,6 +84,21 @@ export const RightGroups: readonly RightGroup[] = [
     rights: [
       { access: 'roles.view', label: 'See roles' },
       { access: 'roles.manage', label: 'Change roles', needs: 'roles.view' },
+    ],
+  },
+  {
+    area: 'Stock',
+    rights: [
+      { access: 'stock.view', label: 'See stock' },
+      { access: 'stock.receive', label: 'Receive stock', needs: 'stock.view' },
+      { access: 'stock.adjust', label: 'Adjust stock', needs: 'stock.view' },
+    ],
+  },
+  {
+    area: 'Selling',
+    rights: [
+      { access: 'sales.sell', label: 'Sell' },
+      { access: 'sales.view', label: 'See sales' },
     ],
   },
 ];

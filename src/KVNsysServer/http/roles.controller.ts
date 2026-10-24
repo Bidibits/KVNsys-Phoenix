@@ -38,10 +38,10 @@ export class RolesController {
   @Post()
   @HttpCode(201)
   async add(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<RoleReply> {
-    const { roles, person } = await this.allow(authorization, Accesses.RolesManage);
+    const { roles, person, register } = await this.allow(authorization, Accesses.RolesManage);
     const fields = RoleFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
-    return { role: await saving(async () => roles.create(checkRoleDetails(fields.data), lineageOf(person))) };
+    return { role: await saving(async () => roles.create(checkRoleDetails(fields.data), lineageOf(person, register))) };
   }
 
   @Put(':id')
@@ -50,10 +50,10 @@ export class RolesController {
     @Param('id') id: string,
     @Body() body: unknown,
   ): Promise<RoleReply> {
-    const { roles, sessions, person } = await this.allow(authorization, Accesses.RolesManage);
+    const { roles, sessions, person, register } = await this.allow(authorization, Accesses.RolesManage);
     const fields = RoleFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
-    const role = await saving(async () => roles.update(id, checkRoleDetails(fields.data), lineageOf(person)));
+    const role = await saving(async () => roles.update(id, checkRoleDetails(fields.data), lineageOf(person, register)));
     // Switched off: everyone with this role is signed out now, on every register, not at their next request.
     if (role.status !== 'Active') for (const userId of await roles.memberIds(role.id)) sessions.cancelFor(userId);
     return { role };
@@ -65,6 +65,6 @@ export class RolesController {
     if (!parts) throw problem(503, NoDatabase);
     const verdict = await parts.authorizer.check(bearerToken(authorization), access);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
-    return { ...parts, person: verdict.person };
+    return { ...parts, person: verdict.person, register: verdict.register };
   }
 }

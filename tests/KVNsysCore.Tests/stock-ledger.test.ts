@@ -1,4 +1,4 @@
-import { checkStockChange, MovementTypes, type StockChange } from '@kvnsys/core';
+import { checkStockChange, MovementTypes, rightToRecordByHand, withNeededRights, type StockChange } from '@kvnsys/core';
 import { describe, expect, it } from 'vitest';
 
 const refusalOf = (work: () => unknown) => {
@@ -52,5 +52,21 @@ describe('a stock change', () => {
     expect(refusalOf(() => checkStockChange({ ...received, locationId: ' ' }))).toMatchObject({ message: /needs the shop/ });
     expect(refusalOf(() => checkStockChange({ ...received, productId: '' }))).toMatchObject({ message: /needs the product/ });
     expect(refusalOf(() => checkStockChange({ ...received, source: { table: 'sales', id: ' ' } }))).toMatchObject({ message: /both its kind and its id/ });
+  });
+});
+
+describe('recording stock by hand', () => {
+  it('needs its own right to receive goods, and another to put a count right', () => {
+    expect(rightToRecordByHand('from_supplier')).toBe('stock.receive');
+    expect(rightToRecordByHand('adjustment')).toBe('stock.adjust');
+  });
+
+  it('never covers goods out to a customer: only a sale records those', () => {
+    expect(rightToRecordByHand('to_customer')).toBeNull();
+  });
+
+  it('brings the right to see stock along with either', () => {
+    expect(withNeededRights(['stock.receive'])).toEqual(['stock.view', 'stock.receive']);
+    expect(withNeededRights(['stock.adjust'])).toEqual(['stock.view', 'stock.adjust']);
   });
 });

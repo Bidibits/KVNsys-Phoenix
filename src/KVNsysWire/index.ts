@@ -24,8 +24,25 @@ export {
   userPasswordPath,
   userPath,
 } from './users.js';
-export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
 export {
+  FindStockItemPath,
+  MovementFields,
+  MovementOnWire,
+  MovementsShown,
+  ProductStockReply,
+  productStockPath,
+  ShopOnWire,
+  StockListReply,
+  StockMovementsPath,
+  StockMovementsReply,
+  StockMovementsRequest,
+  StockItemReply,
+  StockPath,
+} from './stock.js';
+export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
+export { RegisterFields, RegisterListReply, RegisterOnWire, RegisterReply, registerPath, RegistersPath } from './registers.js';
+export {
+  RegisterIdentity,
   SessionPass,
   SessionPath,
   SessionReply,
@@ -36,3 +53,26 @@ export {
   SignOutPath,
   SignOutReply,
 } from './sign-in.js';
+export {
+  DaySalesReply,
+  DiscountOnWire,
+  FindSaleProductPath,
+  ReceiptOnWire,
+  receiptPath,
+  ReceiptReply,
+  ReceiptSummaryOnWire,
+  SaleFields,
+  SaleProductOnWire,
+  SaleProductReply,
+  SalesPath,
+} from './selling.js';
+export {
+  CloseShiftFields,
+  CloseShiftPath,
+  CurrentShiftPath,
+  CurrentShiftReply,
+  OpenShiftFields,
+  ShiftOnWire,
+  ShiftReply,
+  ShiftsPath,
+} from './shifts.js';

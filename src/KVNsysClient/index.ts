@@ -17,6 +17,7 @@ export {
   type ServerPin,
 } from './connection/secure-request.js';
 export { normalizeServerAddress } from './connection/server-address.js';
+export { readThisPc } from './connection/this-pc.js';
 export { signIn, type SignInProblem, type SignInResult } from './identity/sign-in.js';
 export { checkSession, signOut, type SessionCheck, type SessionProblem, type SignOutResult } from './identity/session.js';
 export {
@@ -32,6 +33,21 @@ export {
 } from './catalog/products.js';
 export { loadProductForm, saveProductForm, type ProductFormResult } from './catalog/product-form.js';
 export {
+  findStockItem,
+  getProductStock,
+  listStock,
+  recordStock,
+  saveCount,
+  saveDelivery,
+  type ProductStockResult,
+  type RecordedMovement,
+  type RecordStockResult,
+  type Shop,
+  type StockItem,
+  type StockItemResult,
+  type StockListResult,
+} from './inventory/stock.js';
+export {
   listUsers,
   loadUserForm,
   resetPassword,
@@ -41,6 +57,7 @@ export {
   type UserListResult,
   type UserResult,
 } from './identity/users.js';
+export { changeRegister, listRegisters, type ListedRegister, type RegisterListResult, type RegisterResult } from './identity/registers.js';
 export {
   listRoles,
   loadRoleForm,
@@ -52,12 +69,39 @@ export {
   type RoleListResult,
   type RoleResult,
 } from './identity/roles.js';
+export {
+  findSaleProduct,
+  getReceipt,
+  listDaySales,
+  priceCart,
+  recordSale,
+  type DaySalesResult,
+  type PaidReceipt,
+  type ReceiptLine,
+  type PriceResult,
+  type SaleForm,
+  type SaleProductResult,
+  type SaleResult,
+} from './selling/sales.js';
+export { Till, type TillResult, type TillView } from './selling/till.js';
+export { closeShift, currentShift, openShift, type CurrentShiftResult, type ShiftResult, type ShiftView } from './selling/shifts.js';
 export type { CallOptions, CallProblem } from './connection/server-call.js';
 export type { SessionPass, SignedInUser } from '@kvnsys/wire';
 export type {
   AccessName,
   Account,
   AccountStatus,
+  CartLine,
+  CountForm,
+  DiscountKind,
+  PricedLine,
+  PricedSale,
+  RegisterStatus,
+  SaleProduct,
+  StatutoryDiscount,
+  DeliveryLineForm,
+  HandMovement,
+  MovementType,
   Product,
   ProductDetails,
   ProductForm,

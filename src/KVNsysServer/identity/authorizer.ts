@@ -1,9 +1,9 @@
 import { AccessDescriptions, maySignIn, UserDirectory, type AccessName } from '@kvnsys/core';
-import { SignInEnded, Sessions } from './sessions.js';
+import { SignInEnded, Sessions, type SessionRegister } from './sessions.js';
 import { SwitchedOff, type SignedInPerson } from './sign-in.js';
 
 export type Authorization =
-  | { ok: true; person: SignedInPerson }
+  | { ok: true; person: SignedInPerson; register: SessionRegister | null }
   /** 401: sign in again. 403: signed in, but the role may not. */
   | { ok: false; status: 401 | 403; message: string };
 
@@ -23,7 +23,8 @@ export class Authorizer {
     private readonly users: UserDirectory,
   ) {}
 
-  async check(token: string | null, access: AccessName): Promise<Authorization> {
+  /** With several rights, the person needs every one; a refusal names the first they lack. */
+  async check(token: string | null, access: AccessName | readonly AccessName[]): Promise<Authorization> {
     const session = token ? this.sessions.find(token) : null;
     if (!token || !session) return { ok: false, status: 401, message: SignInEnded };
 
@@ -33,7 +34,8 @@ export class Authorizer {
       this.sessions.cancel(token);
       return { ok: false, status: 401, message: standing ? SwitchedOff : SignInEnded };
     }
-    if (!standing.role.accesses.includes(access)) return { ok: false, status: 403, message: lacksRight(access) };
-    return { ok: true, person: session.user };
+    const lacking = (typeof access === 'string' ? [access] : access).find((needed) => !standing.role.accesses.includes(needed));
+    if (lacking) return { ok: false, status: 403, message: lacksRight(lacking) };
+    return { ok: true, person: session.user, register: session.register };
   }
 }

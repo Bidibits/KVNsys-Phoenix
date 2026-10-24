@@ -1,5 +1,5 @@
 import type { AccessName, Account, SignedInUser, UserListResult } from '@kvnsys/client';
-import { Button, Notice, RecordTable, StatusLabel, type Column } from '@kvnsys/ui';
+import { Button, Notice, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { UserFormPanel } from './UserFormPanel';
 
@@ -17,16 +17,15 @@ const Columns: Column<Account>[] = [
  * open the account panel; after a save the list is asked for again. Like the products list, it's
  * asked for after the screen is on show, never while it's being built.
  */
-export function UsersScreen({ user, onSignInAgain }: { user: SignedInUser; onSignInAgain: () => void }) {
+export function UsersScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+  const toast = useToast();
   const mayManage = user.rights.includes(ManageRight);
   const [result, setResult] = useState<UserListResult | null>(null);
   const [reloads, setReloads] = useState(0);
   const [editing, setEditing] = useState<{ id: string | null } | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
 
   /** Opens the panel: for a new account (null) or one already in the list. */
   function open(id: string | null) {
-    setSaved(null);
     setEditing({ id });
   }
 
@@ -94,15 +93,14 @@ export function UsersScreen({ user, onSignInAgain }: { user: SignedInUser; onSig
           </Button>
         )}
       </div>
-      {saved && <Notice tone="good">{saved}</Notice>}
-      <RecordTable label="Users" columns={columns} rows={result.users} rowKey={(account) => account.id} />
+      <RecordTable label="Users" columns={columns} rows={result.users} filter={search} searchText={(account) => [account.username, account.displayName, account.roleName].join(' ')} rowKey={(account) => account.id} />
       {editing && (
         <UserFormPanel
           id={editing.id}
           onClose={() => setEditing(null)}
           onSaved={(account) => {
             setEditing(null);
-            setSaved(`Saved ${account.displayName}.`);
+            toast(`Saved ${account.displayName}.`);
             setReloads((n) => n + 1);
           }}
           onSignInAgain={onSignInAgain}

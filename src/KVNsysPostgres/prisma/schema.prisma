@@ -54,6 +54,8 @@ model Location {
   machines      Machine[]
   inventory     Inventory[]
   inventoryLogs InventoryLog[]
+  receipts      Receipt[]
+  shifts        Shift[]
 
   @@map("locations")
 }
@@ -179,6 +181,7 @@ model Product {
 
   inventory     Inventory[]
   inventoryLogs InventoryLog[]
+  receiptItems  ReceiptItem[]
 
   @@map("products")
 }
@@ -239,4 +242,126 @@ model InventoryLog {
 
   @@index([locationId, productId, createdAtDate])
   @@map("inventory_logs")
+}
+
+/// One customer sale, as charged: SCHEMA-PLAN's receipts, without its shift (shifts come later).
+/// The money columns are stored, not worked out again when read: a receipt is evidence of what was
+/// charged, and today's prices must never rewrite it. Numbered per shop with no gaps (number), and
+/// known by the shop's code and that number (code, HQ-000042). Never changed or deleted: the
+/// migration refuses both. created_* is when it was paid, by whom, where.
+model Receipt {
+  id                   String  @id @db.Uuid
+  /// The shop's code and the receipt's number there: HQ-000042.
+  code                 String  @unique
+  /// The shift it was rung up in. The till never records a receipt without one.
+  shiftId              String? @map("shift_id") @db.Uuid
+  locationId           String  @map("location_id") @db.Uuid
+  /// Counts up from 1 at each shop, with no gaps.
+  number               Int
+  subtotal             Decimal @db.Decimal(14, 2)
+  discountTotal        Decimal @map("discount_total") @db.Decimal(14, 2)
+  total                Decimal @db.Decimal(14, 2)
+  /// senior or pwd, with the ID number and the name on it; all three or none.
+  discountKind         String? @map("discount_kind")
+  discountIdNumber     String? @map("discount_id_number")
+  discountCustomerName String? @map("discount_customer_name")
+  status               String  @default("Paid")
+  description          String?
+
+  createdByUser     String?  @map("created_by_user") @db.Uuid
+  createdAtMachine  String?  @map("created_at_machine") @db.Uuid
+  createdAtLocation String?  @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  location Location         @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  shift    Shift?           @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+  items    ReceiptItem[]
+  payments ReceiptPayment[]
+
+  @@unique([locationId, number])
+  @@index([locationId, createdAtDate])
+  @@index([shiftId])
+  @@map("receipts")
+}
+
+/// One line of a receipt. The product's code, name and price are kept as they were at the sale, so
+/// a renamed or repriced product never changes a receipt already given. line_number keeps the
+/// order the cashier rang them up in.
+model ReceiptItem {
+  id            String  @id @db.Uuid
+  receiptId     String  @map("receipt_id") @db.Uuid
+  lineNumber    Int     @map("line_number")
+  productId     String  @map("product_id") @db.Uuid
+  productCode   String  @map("product_code")
+  productName   String  @map("product_name")
+  /// Whole pieces.
+  quantity      Int
+  unitPrice     Decimal @map("unit_price") @db.Decimal(14, 2)
+  discountValue Decimal @map("discount_value") @db.Decimal(14, 2)
+  lineTotal     Decimal @map("line_total") @db.Decimal(14, 2)
+  /// Which of the shop's prices it was charged at. Retail only for now; Promo and Wholesale later.
+  priceBasis    String  @default("Retail") @map("price_basis")
+
+  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([receiptId, lineNumber])
+  @@map("receipt_items")
+}
+
+/// How a receipt was paid. Many per receipt, so splitting a payment needs no change later.
+model ReceiptPayment {
+  id             String  @id @db.Uuid
+  receiptId      String  @map("receipt_id") @db.Uuid
+  /// Cash only for now.
+  paymentType    String  @map("payment_type")
+  amountTendered Decimal @map("amount_tendered") @db.Decimal(14, 2)
+  changeGiven    Decimal @map("change_given") @db.Decimal(14, 2)
+  /// A card slip or GCash reference, later.
+  reference      String?
+
+  createdByUser     String?  @map("created_by_user") @db.Uuid
+  createdAtMachine  String?  @map("created_at_machine") @db.Uuid
+  createdAtLocation String?  @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+
+  @@index([receiptId])
+  @@map("receipt_payments")
+}
+
+/// One cashier's stretch at the till: SCHEMA-PLAN's shifts. Opened with the cash counted into the
+/// drawer, closed with the cash counted out. It belongs to a shop and a person, not a PC, so it can
+/// be opened at one register and closed at another; the event blocks say where each happened.
+/// expected_cash (the opening cash and the shift's cash sales) is worked out and kept at closing.
+/// Numbered per shop with no gaps. Never deleted, and never changed once closed (the migration).
+model Shift {
+  id           String   @id @db.Uuid
+  /// The shop's code and the shift's number there: HQ-S00001.
+  code         String   @unique
+  locationId   String   @map("location_id") @db.Uuid
+  number       Int
+  openingCash  Decimal  @map("opening_cash") @db.Decimal(14, 2)
+  expectedCash Decimal? @map("expected_cash") @db.Decimal(14, 2)
+  countedCash  Decimal? @map("counted_cash") @db.Decimal(14, 2)
+  status       String   @default("Open")
+  /// The note written when the drawer was counted.
+  description  String?
+
+  openedByUser     String?   @map("opened_by_user") @db.Uuid
+  openedAtMachine  String?   @map("opened_at_machine") @db.Uuid
+  openedAtLocation String?   @map("opened_at_location") @db.Uuid
+  openedAtDate     DateTime  @default(now()) @map("opened_at_date") @db.Timestamptz(6)
+  closedByUser     String?   @map("closed_by_user") @db.Uuid
+  closedAtMachine  String?   @map("closed_at_machine") @db.Uuid
+  closedAtLocation String?   @map("closed_at_location") @db.Uuid
+  closedAtDate     DateTime? @map("closed_at_date") @db.Timestamptz(6)
+
+  location Location  @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  receipts Receipt[]
+
+  @@unique([locationId, number])
+  @@index([locationId, openedByUser, status])
+  @@map("shifts")
 }

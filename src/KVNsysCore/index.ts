@@ -53,6 +53,18 @@ export {
 } from './identity/accounts.js';
 
 export { serverMachineCode, type PcIdentity } from './locations/machines.js';
+export { ShopDirectory, type Shop } from './locations/shops.js';
+export {
+  checkRegisterDetails,
+  newRegisterName,
+  RegisterBook,
+  registerCode,
+  RegisterLimits,
+  RegisterStatuses,
+  type Register,
+  type RegisterDetails,
+  type RegisterStatus,
+} from './locations/registers.js';
 
 export {
   checkProduct,
@@ -74,6 +86,7 @@ export {
 export {
   checkStockChange,
   MovementTypes,
+  rightToRecordByHand,
   StockLedger,
   StockLimits,
   type MovementType,
@@ -81,5 +94,48 @@ export {
   type StockLevel,
   type StockMovement,
 } from './inventory/stock-ledger.js';
+export {
+  readCount,
+  readDelivery,
+  readPieces,
+  type CountForm,
+  type DeliveryLineForm,
+  type HandMovement,
+} from './inventory/stock-forms.js';
+
+export {
+  checkDiscount,
+  DiscountKinds,
+  DiscountNames,
+  PaymentTypes,
+  priceSale,
+  readCash,
+  SaleLimits,
+  SalesJournal,
+  StatutoryDiscountPercent,
+  takeCash,
+  type CartLine,
+  type CashPayment,
+  type DiscountKind,
+  type PaymentType,
+  type PricedLine,
+  type PricedSale,
+  type Receipt,
+  type SaleProduct,
+  type StatutoryDiscount,
+} from './selling/sales.js';
+
+export { dayTotals, shopDate, shopDay, ShopTimeZone, type DayTotals, type ReceiptSummary } from './selling/days.js';
+export {
+  checkShiftNote,
+  NoShiftYet,
+  ShiftBook,
+  ShiftLimits,
+  ShiftStatuses,
+  variance,
+  varianceInWords,
+  type Shift,
+  type ShiftStatus,
+} from './selling/shifts.js';
 
 export { SetupStore, type SetupTransaction } from './setup/setup-store.js';

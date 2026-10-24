@@ -3,9 +3,21 @@ import { z } from 'zod';
 /** Where a client asks "is this the right password for this person?" */
 export const SignInPath = '/api/sign-in';
 
+/** The PC a register signs in at, as it reads itself: its hardware id survives renaming it. */
+export const RegisterIdentity = z.object({
+  hardwareId: z.string().trim().min(1).max(200),
+  computerName: z.string().max(200),
+});
+export type RegisterIdentity = z.infer<typeof RegisterIdentity>;
+
 export const SignInRequest = z.object({
   username: z.string().trim().min(1),
   password: z.string().min(1).max(200),
+  /**
+   * The register's PC, so the server knows which register the sign-in is at (and records a new
+   * one). Left out by a PC that couldn't read its own id: that sign-in is at no register.
+   */
+  register: RegisterIdentity.optional(),
 });
 export type SignInRequest = z.infer<typeof SignInRequest>;
 
@@ -19,6 +31,8 @@ export const SignedInUser = z.object({
    * courtesy: the server checks the real rights on every request.
    */
   rights: z.array(z.string()),
+  /** The register this sign-in is at, as the shop calls it, or null when it's at none. */
+  register: z.object({ code: z.string(), name: z.string() }).nullable(),
 });
 export type SignedInUser = z.infer<typeof SignedInUser>;
 

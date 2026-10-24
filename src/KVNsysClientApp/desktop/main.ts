@@ -3,7 +3,37 @@
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  changeRegister,
+  closeShift,
   connectToServer,
+  currentShift,
+  openShift,
+  type CurrentShiftResult,
+  type ShiftResult,
+  findSaleProduct,
+  listRegisters,
+  readThisPc,
+  type RegisterListResult,
+  type RegisterResult,
+  getReceipt,
+  listDaySales,
+  type DaySalesResult,
+  recordSale,
+  Till,
+  type SaleResult,
+  type StatutoryDiscount,
+  type TillResult,
+  findStockItem,
+  getProductStock,
+  listStock,
+  saveCount,
+  saveDelivery,
+  type CountForm,
+  type DeliveryLineForm,
+  type ProductStockResult,
+  type RecordStockResult,
+  type StockItemResult,
+  type StockListResult,
   listProducts,
   listRoles,
   listUsers,
@@ -35,7 +65,26 @@ import {
 } from '@kvnsys/client';
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
+  ClearSaleChannel,
+  CloseShiftChannel,
   ConnectChannel,
+  CurrentShiftChannel,
+  OpenShiftChannel,
+  ListRegistersChannel,
+  SaveRegisterChannel,
+  DaySalesChannel,
+  ReceiptChannel,
+  CountStockChannel,
+  PaySaleChannel,
+  RemoveFromSaleChannel,
+  ScanForSaleChannel,
+  SetSaleDiscountChannel,
+  SetSaleQuantityChannel,
+  TillChannel,
+  FindStockItemChannel,
+  ListStockChannel,
+  ProductStockChannel,
+  ReceiveStockChannel,
   ListProductsChannel,
   ListRolesChannel,
   ListUsersChannel,
@@ -63,6 +112,9 @@ if (process.env.KVNSYS_APP_DATA) app.setPath('userData', process.env.KVNSYS_APP_
 const settings = new SettingsFile(join(app.getPath('userData'), 'settings.json'));
 const trustFile = new TrustFile(join(app.getPath('userData'), 'trusted-servers.json'));
 
+/** This PC, as it tells the server at every sign-in, so the server knows which register it's at. */
+const thisPc = readThisPc();
+
 /** The server this register last connected to in this run. Sign-in only ever goes there. */
 let connectedAddress: string | null = null;
 
@@ -72,6 +124,9 @@ let connectedAddress: string | null = null;
  * forgets it within 12 hours.
  */
 let session: { address: string; pass: SessionPass } | null = null;
+
+/** The sale being rung up on this register. Each sign-in, and each sign-out, starts an empty one. */
+let till = new Till();
 
 ipcMain.handle(SavedAddressChannel, (): string | null => settings.load().serverAddress ?? null);
 
@@ -124,9 +179,10 @@ ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknow
   const trusted = trustFile.read();
   if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
   // The password is used for this one request and kept nowhere: not logged, not stored.
-  const result = await signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null });
+  const result = await signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null, register: thisPc });
   if (!result.ok) return result;
   session = { address: connectedAddress, pass: result.session };
+  till = new Till();
   return { ok: true, user: result.user };
 });
 
@@ -135,6 +191,7 @@ ipcMain.handle(SignOutChannel, async (): Promise<void> => {
   const { address, pass } = session;
   // Forgotten here first: whatever the server says, this register is now signed out.
   session = null;
+  till = new Till();
   const trusted = trustFile.read();
   const result = await signOut(address, pass, { pin: trusted.ok ? (trusted.servers[address] ?? null) : null });
   if (!result.ok) console.error(`Couldn't tell the server about the sign-out, so the pass will end on its own: ${result.message}`);
@@ -193,6 +250,29 @@ function asRoleForm(value: unknown): RoleForm | undefined {
 
 const asText = (value: unknown): string | undefined => (typeof value === 'string' && value.length <= 2000 ? value : undefined);
 
+/** A delivery's lines as the screens sent them: a product id, its name and the pieces as typed, for at most 500 lines. */
+function asDeliveryLines(value: unknown): DeliveryLineForm[] | undefined {
+  if (!Array.isArray(value) || value.length > 500) return undefined;
+  const lines: DeliveryLineForm[] = [];
+  for (const line of value as unknown[]) {
+    if (typeof line !== 'object' || line === null) return undefined;
+    const { productId, name, pieces } = line as Record<string, unknown>;
+    const id = asProductId(productId);
+    if (!id || asText(name) === undefined || asText(pieces) === undefined) return undefined;
+    lines.push({ productId: id, name: name as string, pieces: pieces as string });
+  }
+  return lines;
+}
+
+/** A count as the screens sent it: the product, the stock they showed, and two pieces of text. */
+function asCountForm(value: unknown): CountForm | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const { productId, onHand, counted, reason } = value as Record<string, unknown>;
+  const id = asProductId(productId);
+  if (!id || !Number.isSafeInteger(onHand) || asText(counted) === undefined || asText(reason) === undefined) return undefined;
+  return { productId: id, onHand: onHand as number, counted: counted as string, reason: reason as string };
+}
+
 const NotAForm: Refused = { ok: false, reason: 'refused', message: "The form didn't arrive whole. Close it and try again." };
 
 ipcMain.handle(ListProductsChannel, (): Promise<ProductListResult> => withPass(listProducts));
@@ -247,6 +327,116 @@ ipcMain.handle(SaveRoleChannel, async (_event, id: unknown, typed: unknown): Pro
   const form = asRoleForm(typed);
   if (roleId === undefined || !form) return NotAForm;
   return withPass((address, pass, options) => saveRoleForm(address, pass, roleId, form, options));
+});
+
+ipcMain.handle(ListStockChannel, (): Promise<StockListResult> => withPass(listStock));
+
+ipcMain.handle(FindStockItemChannel, async (_event, typed: unknown): Promise<StockItemResult> => {
+  const codeOrBarcode = asText(typed);
+  if (codeOrBarcode === undefined) return NotAForm;
+  return withPass((address, pass, options) => findStockItem(address, pass, codeOrBarcode, options));
+});
+
+ipcMain.handle(ProductStockChannel, async (_event, id: unknown): Promise<ProductStockResult> => {
+  const productId = asProductId(id);
+  if (!productId) return NotAForm;
+  return withPass((address, pass, options) => getProductStock(address, pass, productId, options));
+});
+
+ipcMain.handle(ReceiveStockChannel, async (_event, typed: unknown, note: unknown): Promise<RecordStockResult> => {
+  const lines = asDeliveryLines(typed);
+  const shared = asText(note);
+  if (!lines || shared === undefined) return NotAForm;
+  return withPass((address, pass, options) => saveDelivery(address, pass, lines, shared, options));
+});
+
+ipcMain.handle(CountStockChannel, async (_event, typed: unknown): Promise<RecordStockResult> => {
+  const form = asCountForm(typed);
+  if (!form) return NotAForm;
+  return withPass((address, pass, options) => saveCount(address, pass, form, options));
+});
+
+/** A senior/PWD discount as the screens sent it: a kind and two pieces of text, or null to take it off. */
+function asDiscount(value: unknown): StatutoryDiscount | null | undefined {
+  if (value === null) return null;
+  if (typeof value !== 'object') return undefined;
+  const { kind, idNumber, customerName } = value as Record<string, unknown>;
+  if (asText(kind) === undefined || asText(idNumber) === undefined || asText(customerName) === undefined) return undefined;
+  return { kind: kind as StatutoryDiscount['kind'], idNumber: idNumber as string, customerName: customerName as string };
+}
+
+ipcMain.handle(TillChannel, (): TillResult => ({ ok: true, till: till.view() }));
+
+ipcMain.handle(ScanForSaleChannel, async (_event, typed: unknown): Promise<TillResult> => {
+  const codeOrBarcode = asText(typed);
+  if (codeOrBarcode === undefined) return NotAForm;
+  const current = till;
+  return current.scan(() => withPass((address, pass, options) => findSaleProduct(address, pass, codeOrBarcode, options)));
+});
+
+ipcMain.handle(SetSaleQuantityChannel, (_event, id: unknown, quantity: unknown): TillResult => {
+  const productId = asProductId(id);
+  if (!productId || typeof quantity !== 'number') return NotAForm;
+  return till.setQuantity(productId, quantity);
+});
+
+ipcMain.handle(RemoveFromSaleChannel, (_event, id: unknown): TillResult => {
+  const productId = asProductId(id);
+  if (!productId) return NotAForm;
+  return till.remove(productId);
+});
+
+ipcMain.handle(SetSaleDiscountChannel, (_event, typed: unknown): TillResult => {
+  const discount = asDiscount(typed);
+  if (discount === undefined) return NotAForm;
+  return till.setDiscount(discount);
+});
+
+ipcMain.handle(ClearSaleChannel, (): TillResult => ({ ok: true, till: till.clear() }));
+
+ipcMain.handle(PaySaleChannel, async (_event, typed: unknown): Promise<SaleResult> => {
+  const tendered = asText(typed);
+  if (tendered === undefined) return NotAForm;
+  const current = till;
+  return current.pay(tendered, (form) => withPass((address, pass, options) => recordSale(address, pass, form, options)));
+});
+
+ipcMain.handle(DaySalesChannel, async (_event, date: unknown): Promise<DaySalesResult> => {
+  const day = date === null ? null : asText(date);
+  if (day === undefined) return NotAForm;
+  return withPass((address, pass, options) => listDaySales(address, pass, day, options));
+});
+
+ipcMain.handle(ReceiptChannel, async (_event, id: unknown): Promise<SaleResult> => {
+  const receiptId = asProductId(id);
+  if (!receiptId) return NotAForm;
+  return withPass((address, pass, options) => getReceipt(address, pass, receiptId, options));
+});
+
+ipcMain.handle(ListRegistersChannel, (): Promise<RegisterListResult> => withPass(listRegisters));
+
+ipcMain.handle(SaveRegisterChannel, async (_event, id: unknown, typed: unknown): Promise<RegisterResult> => {
+  const registerId = asProductId(id);
+  if (!registerId || typeof typed !== 'object' || typed === null) return NotAForm;
+  const name = asText((typed as Record<string, unknown>).name);
+  const status = asText((typed as Record<string, unknown>).status);
+  if (name === undefined || status === undefined) return NotAForm;
+  return withPass((address, pass, options) => changeRegister(address, pass, registerId, { name, status }, options));
+});
+
+ipcMain.handle(CurrentShiftChannel, (): Promise<CurrentShiftResult> => withPass(currentShift));
+
+ipcMain.handle(OpenShiftChannel, async (_event, typed: unknown): Promise<ShiftResult> => {
+  const openingCash = asText(typed);
+  if (openingCash === undefined) return NotAForm;
+  return withPass((address, pass, options) => openShift(address, pass, openingCash, options));
+});
+
+ipcMain.handle(CloseShiftChannel, async (_event, typed: unknown, note: unknown): Promise<ShiftResult> => {
+  const countedCash = asText(typed);
+  const written = asText(note);
+  if (countedCash === undefined || written === undefined) return NotAForm;
+  return withPass((address, pass, options) => closeShift(address, pass, countedCash, written, options));
 });
 
 function openWindow(): void {

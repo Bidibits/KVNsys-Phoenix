@@ -1,3 +1,4 @@
+import type { AccessName } from '../identity/accesses.js';
 import type { Lineage } from '../shared/lineage.js';
 import { Refusal } from '../shared/refusal.js';
 
@@ -11,6 +12,18 @@ export const MovementTypes = ['from_supplier', 'to_customer', 'adjustment'] as c
 export type MovementType = (typeof MovementTypes)[number];
 
 export const StockLimits = { quantity: 1_000_000, note: 500, sourceTable: 60 } as const;
+
+/**
+ * The movements a person records by hand, on the Stock screen, and the right each one needs. Goods
+ * out to a customer are never typed in: only a sale records them, so the count and the day's sales
+ * can't disagree.
+ */
+const HandRights: Partial<Record<MovementType, AccessName>> = { from_supplier: 'stock.receive', adjustment: 'stock.adjust' };
+
+/** The right a person needs to record this kind of movement by hand, or null when it can't be recorded by hand. */
+export function rightToRecordByHand(type: MovementType): AccessName | null {
+  return HandRights[type] ?? null;
+}
 
 /** A change to stock, as asked for. Quantities are whole pieces. */
 export interface StockChange {
@@ -94,6 +107,6 @@ export abstract class StockLedger {
   abstract onHand(locationId: string, productId: string): Promise<number>;
   /** Every product that has ever moved at the location, with its stock now. */
   abstract levels(locationId: string): Promise<StockLevel[]>;
-  /** The product's movements at the location, newest first. */
-  abstract movements(locationId: string, productId: string): Promise<StockMovement[]>;
+  /** The product's movements at the location, newest first: all of them, or the newest `limit`. */
+  abstract movements(locationId: string, productId: string, limit?: number): Promise<StockMovement[]>;
 }

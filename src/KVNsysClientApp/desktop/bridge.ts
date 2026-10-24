@@ -1,5 +1,19 @@
 import type {
   ConnectResult,
+  CurrentShiftResult,
+  DaySalesResult,
+  ShiftResult,
+  RegisterListResult,
+  RegisterResult,
+  SaleResult,
+  StatutoryDiscount,
+  TillResult,
+  CountForm,
+  DeliveryLineForm,
+  ProductStockResult,
+  RecordStockResult,
+  StockItemResult,
+  StockListResult,
   ProductForm,
   ProductFormResult,
   ProductListResult,
@@ -65,6 +79,42 @@ export interface KvnsysBridge {
   roleForm(id: string | null): Promise<RoleFormResult>;
   /** Saves what was typed and ticked, as a new role (null) or over the one with that id. */
   saveRole(id: string | null, form: RoleForm): Promise<RoleResult>;
+  /** Every product, by name, with how many this shop has, if the signed-in person may see stock. */
+  listStock(): Promise<StockListResult>;
+  /** One product, by what was typed or scanned (its code or its barcode), with its stock here. */
+  findStockItem(codeOrBarcode: string): Promise<StockItemResult>;
+  /** One product's stock as the server has it now, and its newest movements. */
+  productStock(productId: string): Promise<ProductStockResult>;
+  /** Saves a delivery: each line's pieces as typed, and one note for all of it. All saved, or none. */
+  receiveStock(lines: DeliveryLineForm[], note: string): Promise<RecordStockResult>;
+  /** Puts a product's count right, from what was counted and what KVNsys showed when it was typed. */
+  countStock(form: CountForm): Promise<RecordStockResult>;
+  /** The sale being rung up on this register, priced. A new sign-in starts with an empty one. */
+  till(): Promise<TillResult>;
+  /** Finds what was scanned or typed and adds one to the sale. */
+  scanForSale(codeOrBarcode: string): Promise<TillResult>;
+  setSaleQuantity(productId: string, quantity: number): Promise<TillResult>;
+  removeFromSale(productId: string): Promise<TillResult>;
+  /** Gives the sale a senior/PWD discount, or takes it off (null). */
+  setSaleDiscount(discount: StatutoryDiscount | null): Promise<TillResult>;
+  /** Empties the sale without recording anything. */
+  clearSale(): Promise<TillResult>;
+  /** Records the sale, paid with the cash as typed; once it's recorded, the till starts a new sale. */
+  paySale(tendered: string): Promise<SaleResult>;
+  /** A day's receipts at the shop and their totals: "2026-10-24", or null for today by the shop's clock. */
+  daySales(date: string | null): Promise<DaySalesResult>;
+  /** One receipt as it was given. */
+  receipt(id: string): Promise<SaleResult>;
+  /** The shop's registers, the server PC first, if the signed-in person may see them. */
+  listRegisters(): Promise<RegisterListResult>;
+  /** Renames a register, or switches it off or on, as typed and picked. */
+  saveRegister(id: string, form: { name: string; status: string }): Promise<RegisterResult>;
+  /** The signed-in person's open shift, with its figures so far, or none. */
+  currentShift(): Promise<CurrentShiftResult>;
+  /** Starts a shift with the cash counted into the drawer, as typed. */
+  openShift(openingCash: string): Promise<ShiftResult>;
+  /** Ends the open shift with the cash counted out, as typed, and a note. */
+  closeShift(countedCash: string, note: string): Promise<ShiftResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -82,3 +132,22 @@ export const ResetPasswordChannel = 'kvnsys:reset-password';
 export const ListRolesChannel = 'kvnsys:list-roles';
 export const RoleFormChannel = 'kvnsys:role-form';
 export const SaveRoleChannel = 'kvnsys:save-role';
+export const ListStockChannel = 'kvnsys:list-stock';
+export const FindStockItemChannel = 'kvnsys:find-stock-item';
+export const ProductStockChannel = 'kvnsys:product-stock';
+export const ReceiveStockChannel = 'kvnsys:receive-stock';
+export const CountStockChannel = 'kvnsys:count-stock';
+export const TillChannel = 'kvnsys:till';
+export const ScanForSaleChannel = 'kvnsys:scan-for-sale';
+export const SetSaleQuantityChannel = 'kvnsys:set-sale-quantity';
+export const RemoveFromSaleChannel = 'kvnsys:remove-from-sale';
+export const SetSaleDiscountChannel = 'kvnsys:set-sale-discount';
+export const ClearSaleChannel = 'kvnsys:clear-sale';
+export const PaySaleChannel = 'kvnsys:pay-sale';
+export const DaySalesChannel = 'kvnsys:day-sales';
+export const ReceiptChannel = 'kvnsys:receipt';
+export const ListRegistersChannel = 'kvnsys:list-registers';
+export const SaveRegisterChannel = 'kvnsys:save-register';
+export const CurrentShiftChannel = 'kvnsys:current-shift';
+export const OpenShiftChannel = 'kvnsys:open-shift';
+export const CloseShiftChannel = 'kvnsys:close-shift';

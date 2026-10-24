@@ -2,15 +2,36 @@ import type { AccessName, SignedInUser } from '@kvnsys/client';
 import { Tile } from '@kvnsys/ui';
 
 /** The areas Home can open. Each joins as it's built (design-direction.md, rule 4). */
-export type Area = 'products' | 'users' | 'roles';
+export type Area = 'sell' | 'sales' | 'products' | 'stock' | 'users' | 'roles' | 'registers';
 
 const Areas: { area: Area; title: string; description: string; right: AccessName; cannot: string }[] = [
+  {
+    area: 'sell',
+    title: 'Sell',
+    description: 'Ring up a sale: scan, discount, take cash, give change.',
+    right: 'sales.sell',
+    cannot: "Your role can't sell. Ask a manager.",
+  },
+  {
+    area: 'sales',
+    title: 'Sales',
+    description: "A day's receipts and what they came to, and any receipt again.",
+    right: 'sales.view',
+    cannot: "Your role can't see sales. Ask a manager.",
+  },
   {
     area: 'products',
     title: 'Products',
     description: 'Every product, with its code, barcode and price.',
     right: 'products.view',
     cannot: "Your role can't see products. Ask a manager.",
+  },
+  {
+    area: 'stock',
+    title: 'Stock',
+    description: 'How many of each product the shop has, deliveries in, and counts put right.',
+    right: 'stock.view',
+    cannot: "Your role can't see stock. Ask a manager.",
   },
   {
     area: 'users',
@@ -25,6 +46,13 @@ const Areas: { area: Area; title: string; description: string; right: AccessName
     description: 'What each kind of account may do.',
     right: 'roles.view',
     cannot: "Your role can't see roles. Ask a manager.",
+  },
+  {
+    area: 'registers',
+    title: 'Registers',
+    description: 'The PCs people sign in at, and what each is called.',
+    right: 'machines.view',
+    cannot: "Your role can't see registers. Ask a manager.",
   },
 ];
 

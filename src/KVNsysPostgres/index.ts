@@ -4,6 +4,10 @@ export { applyDatabaseUpdates, createDatabaseIfMissing, isEmptyDatabase } from '
 export { createPrismaClient, type PrismaClient } from './connection.js';
 export { PrismaProductCatalog } from './catalog/prisma-product-catalog.js';
 export { PrismaStockLedger } from './inventory/prisma-stock-ledger.js';
+export { PrismaShopDirectory } from './locations/prisma-shop-directory.js';
+export { PrismaRegisterBook } from './locations/prisma-register-book.js';
+export { PrismaSalesJournal } from './selling/prisma-sales-journal.js';
+export { PrismaShiftBook } from './selling/prisma-shift-book.js';
 export { PrismaRoleCatalog } from './identity/prisma-role-catalog.js';
 export { PrismaUserAccounts } from './identity/prisma-user-accounts.js';
 export { PrismaUserDirectory } from './identity/prisma-user-directory.js';

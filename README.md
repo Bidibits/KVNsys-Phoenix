@@ -7,6 +7,8 @@ technology.
 To the people using it, it's an ordinary program: install it, double-click the icon, and it opens
 in its own window. Nothing about it looks like a website.
 
+Picking this up on another PC: start with [`docs/handover.md`](docs/handover.md).
+
 "Phoenix" is only this generation's folder name, as `Release` was before it. Every program inside,
 and everything a user sees, is called KVNsys.
 
@@ -78,7 +80,62 @@ and everything a user sees, is called KVNsys.
   on hand is those lines added up, and a running total is kept beside them in the same save, so
   reading stock is quick and the two never disagree. A line is never changed or deleted, and the
   database itself refuses to; a mistake is put right by another line. Many sales at once never
-  lose a piece. No screens or server calls yet.
+  lose a piece.
+- **Stock over the network.** A signed-in register can see the shop's stock (every product, with
+  how many are here), one product's stock with its newest movements and who made each, and can
+  record goods in from a supplier or put a count right with the reason, one line or a whole
+  delivery at once, all saved or none. Each needs its own right: see stock, receive stock, adjust
+  stock. Goods out to a customer can't be typed in; only a sale will record them. The stock is
+  always the server's own shop's, since each branch has its own server.
+- **The Stock screen.** A Stock tile on Home opens every product with how many the shop has (below
+  zero shows in red). History on a row shows that product's movements, newest first: when, what,
+  how many, the stock after, who, and the note. Receive stock takes in a whole delivery: scan or
+  type each code or barcode, then its pieces, add the line, and save it all at once with one note,
+  such as the supplier's DR number; a scanner's Enter never saves it half-done. Adjust on a row
+  puts a count right: the pieces counted on the shelf and why they're different. Each button only
+  shows for someone whose role has the right.
+- **Sales, in the database.** A sale is priced in one place, KVNsysCore, so the till and the server
+  can't disagree: each line is its price times its pieces, and the senior/PWD discount takes 20%
+  off every line, keeping the ID number and the name. A product switched off, or with no price
+  yet, can't be sold. Recording a sale saves its receipt, its lines and its cash payment, and takes
+  its pieces out of stock, all in one go or not at all. Receipts are numbered per shop, HQ-000001
+  and up, with no gaps, even when registers sell at once. Each line keeps the code, name and price
+  as sold. The database refuses to change or delete a receipt.
+- **Selling over the network.** A role with the new "Sell" right can find a product by what was
+  scanned or typed, and record a sale paid in cash. The register keeps the cart and prices it with
+  the same rules as the server; the server prices it again from its catalog as it is now, and
+  refuses the sale if a price changed since it was rung up, so nobody is charged what the cashier
+  didn't see. The sale is always at the server's own shop, and the receipt comes back with the
+  shop's name and the cashier's.
+- **The selling screen.** A Sell tile on Home opens it, with the cursor already in the code box: a
+  scan, or a code and Enter, adds one; scanning it again adds another. Each line has − and + and
+  a × to remove it. The senior/PWD discount takes the ID number and the name on the ID. Pay takes
+  the cash given, says if it's short, and records the sale; the receipt then shows on screen (the
+  shop, its number, when, the cashier, every line, the discount and whose ID, total, cash and
+  change) with the change in big type, and Enter starts the next sale. The cart is kept by the
+  register's desktop side, priced with KVNsysCore's rules at every change, so a product that can't
+  be sold never gets in. Signing out empties it. No printing yet.
+- **The day's sales.** A Sales tile, for a role with the new "See sales" right, opens today's
+  sales at the shop: how many receipts, what they came to before and after discounts, and every
+  receipt (number, time, cashier, pieces, discount, total), oldest first. Another day can be
+  picked. View opens any receipt again, as it was given. A day is midnight to midnight Philippine
+  time, and times show in Philippine time, whatever time zone a PC is set to.
+- **Registers.** A PC records itself as a register of the shop the first time someone signs in at
+  it (by its Windows machine id, so renaming the PC doesn't matter), as "New register (its
+  computer name)". The title bar then shows the register's name beside who's signed in, every
+  save (products, stock, sales, users, roles) records which register it was made at, and a
+  receipt names its register. A Registers tile lists them, the server PC first; a manager names
+  them, or switches one off, which signs out whoever is at it and stops anyone signing in there.
+- **Shifts.** Before the first sale, a cashier starts a shift with the cash counted into the drawer;
+  every sale then goes into it, and none can be rung without one. End shift (with no sale in
+  progress) shows the cash at the start and the shift's cash sales, and takes the cash counted out
+  and a note. KVNsys works out what the drawer should hold, and the report says how far out it is:
+  "₱20.00 short", "₱5.00 over" or "Exact". Shifts are numbered per shop with no gaps (HQ-S00001),
+  each cashier has one open at a time, and a closed shift never changes.
+- **Getting around.** The title bar has Back and Forward through the screens opened (Alt+Left and
+  Alt+Right, and the mouse's own back and forward buttons, too), and on every list a search box
+  that keeps only the rows holding every word typed. "Saved …" pops up in a corner and goes on its
+  own. Throwing work away asks first: closing a delivery that has lines in it, and Clear sale.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
@@ -91,7 +148,7 @@ building a screen.
   `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
   trust the next server it connects to.
 - The server prints its certificate fingerprint when it starts, so the first connection can be
-  checked against it. The schema (eight tables, in one baseline migration) is in
+  checked against it. The schema (twelve tables, in one baseline migration) is in
   `src/KVNsysPostgres/prisma/`.
 
 ## How it runs

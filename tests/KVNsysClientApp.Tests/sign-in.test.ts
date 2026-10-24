@@ -1,4 +1,5 @@
 import type { AddressInfo } from 'node:net';
+import { hostname } from 'node:os';
 import { createPrismaClient, PrismaSetupStore } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHasher, Sessions } from '@kvnsys/server';
 import type { ElectronApplication, Page } from 'playwright-core';
@@ -83,7 +84,8 @@ describeWithDatabase('signing in from the real app, against a real server and da
   it('signs in with the right password, opens Home, and says who in the title bar', async () => {
     await signIn('admin', AdminPassword);
     await window.getByRole('navigation', { name: 'Areas' }).waitFor();
-    expect(await window.getByLabel('Signed in').innerText()).toBe('System Administrator\nadmin');
+    // At this PC, recorded as the shop's first register the first time anyone signs in at it.
+    expect(await window.getByLabel('Signed in').innerText()).toBe(`System Administrator\nadmin · ${`New register (${hostname()})`.slice(0, 60)}`);
     // The server handed this register a pass, and is keeping exactly one.
     expect(server.get(Sessions).activeCount()).toBe(1);
   });
@@ -105,7 +107,13 @@ describeWithDatabase('signing in from the real app, against a real server and da
     );
     expect(reply).toEqual({
       ok: true,
-      user: { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: expect.arrayContaining(['products.view']) },
+      user: {
+        username: 'admin',
+        displayName: 'System Administrator',
+        roleCode: 'ADMIN',
+        rights: expect.arrayContaining(['products.view']),
+        register: { code: 'HQ-R01', name: expect.stringMatching(/^New register \(/) },
+      },
     });
     expect(server.get(Sessions).activeCount()).toBe(1);
     await window.evaluate(() => (globalThis as unknown as { kvnsys: Bridge }).kvnsys.signOut());
