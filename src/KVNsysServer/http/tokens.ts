@@ -14,3 +14,6 @@ export const UsersOperation = Symbol('UsersOperation');
 
 /** The roles, the rights check and the sessions, or null when there's no database. */
 export const RolesOperation = Symbol('RolesOperation');
+
+/** The stock ledger, the catalog, the server's shop and the rights check, or null when there's no database. */
+export const StockOperation = Symbol('StockOperation');

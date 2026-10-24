@@ -23,7 +23,8 @@ export class Authorizer {
     private readonly users: UserDirectory,
   ) {}
 
-  async check(token: string | null, access: AccessName): Promise<Authorization> {
+  /** With several rights, the person needs every one; a refusal names the first they lack. */
+  async check(token: string | null, access: AccessName | readonly AccessName[]): Promise<Authorization> {
     const session = token ? this.sessions.find(token) : null;
     if (!token || !session) return { ok: false, status: 401, message: SignInEnded };
 
@@ -33,7 +34,8 @@ export class Authorizer {
       this.sessions.cancel(token);
       return { ok: false, status: 401, message: standing ? SwitchedOff : SignInEnded };
     }
-    if (!standing.role.accesses.includes(access)) return { ok: false, status: 403, message: lacksRight(access) };
+    const lacking = (typeof access === 'string' ? [access] : access).find((needed) => !standing.role.accesses.includes(needed));
+    if (lacking) return { ok: false, status: 403, message: lacksRight(lacking) };
     return { ok: true, person: session.user };
   }
 }

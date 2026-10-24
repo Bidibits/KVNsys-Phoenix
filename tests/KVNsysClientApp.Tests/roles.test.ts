@@ -1,4 +1,5 @@
 import type { AddressInfo } from 'node:net';
+import { AllAccesses } from '@kvnsys/core';
 import { createPrismaClient, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHasher } from '@kvnsys/server';
 import type { ElectronApplication, Page } from 'playwright-core';
@@ -78,7 +79,8 @@ describeWithDatabase('making roles from the real app', () => {
     const form = panel('Edit role');
     await form.getByText('The Administrator always has every right').waitFor();
     const boxes = form.getByRole('checkbox');
-    expect(await boxes.count()).toBe(9);
+    // Every right there is, not today's number: each version that adds a right adds a box.
+    expect(await boxes.count()).toBe(AllAccesses.length);
     for (const each of await boxes.all()) {
       expect(await each.isChecked()).toBe(true);
       expect(await each.isDisabled()).toBe(true);

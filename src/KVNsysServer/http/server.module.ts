@@ -1,5 +1,14 @@
 import { type DynamicModule, Inject, Injectable, Module, type OnModuleDestroy } from '@nestjs/common';
-import { PrismaProductCatalog, PrismaRoleCatalog, PrismaUserAccounts, PrismaUserDirectory, type PrismaClient } from '@kvnsys/postgres';
+import type { PcIdentity } from '@kvnsys/core';
+import {
+  PrismaProductCatalog,
+  PrismaRoleCatalog,
+  PrismaShopDirectory,
+  PrismaStockLedger,
+  PrismaUserAccounts,
+  PrismaUserDirectory,
+  type PrismaClient,
+} from '@kvnsys/postgres';
 import { Authorizer } from '../identity/authorizer.js';
 import { ScryptPasswordHasher } from '../identity/scrypt-password-hasher.js';
 import { Sessions } from '../identity/sessions.js';
@@ -9,7 +18,8 @@ import { ProductsController } from './products.controller.js';
 import { SessionController } from './session.controller.js';
 import { SignInController } from './sign-in.controller.js';
 import { RolesController, type RolesOperationParts } from './roles.controller.js';
-import { DatabaseClient, ProductsOperation, RolesOperation, SignInOperation, UsersOperation } from './tokens.js';
+import { StockController, type StockOperationParts } from './stock.controller.js';
+import { DatabaseClient, ProductsOperation, RolesOperation, SignInOperation, StockOperation, UsersOperation } from './tokens.js';
 import { UsersController, type UsersOperationParts } from './users.controller.js';
 
 type Database = { client: PrismaClient | null };
@@ -27,10 +37,11 @@ class DatabaseLifecycle implements OnModuleDestroy {
 /** Everything the server answers. Each new area adds its controllers here. */
 @Module({})
 export class ServerModule {
-  static withDatabase(client: PrismaClient | null): DynamicModule {
+  /** `server` is the PC this server runs on, which says which shop's stock it keeps. */
+  static withDatabase(client: PrismaClient | null, server: PcIdentity): DynamicModule {
     return {
       module: ServerModule,
-      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController],
+      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController],
       providers: [
         { provide: DatabaseClient, useValue: { client } satisfies Database },
         DatabaseLifecycle,
@@ -76,6 +87,22 @@ export class ServerModule {
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   sessions,
                 } satisfies RolesOperationParts)
+              : null,
+          }),
+        },
+        {
+          provide: StockOperation,
+          inject: [DatabaseClient, Sessions],
+          useFactory: ({ client: db }: Database, sessions: Sessions) => ({
+            stock: db
+              ? ({
+                  ledger: new PrismaStockLedger(db),
+                  catalog: new PrismaProductCatalog(db),
+                  shops: new PrismaShopDirectory(db),
+                  accounts: new PrismaUserAccounts(db),
+                  authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
+                  server,
+                } satisfies StockOperationParts)
               : null,
           }),
         },

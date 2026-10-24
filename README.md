@@ -78,7 +78,13 @@ and everything a user sees, is called KVNsys.
   on hand is those lines added up, and a running total is kept beside them in the same save, so
   reading stock is quick and the two never disagree. A line is never changed or deleted, and the
   database itself refuses to; a mistake is put right by another line. Many sales at once never
-  lose a piece. No screens or server calls yet.
+  lose a piece.
+- **Stock over the network.** A signed-in register can see the shop's stock (every product, with
+  how many are here), one product's stock with its newest movements and who made each, and can
+  record goods in from a supplier or put a count right with the reason, one line or a whole
+  delivery at once, all saved or none. Each needs its own right: see stock, receive stock, adjust
+  stock. Goods out to a customer can't be typed in; only a sale will record them. The stock is
+  always the server's own shop's, since each branch has its own server. No screens yet.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

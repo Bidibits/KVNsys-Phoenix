@@ -18,7 +18,7 @@ import { ProductsOperation } from './tokens.js';
 const NotInCatalog = "That product isn't in the catalog.";
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function toWire(product: Product): ProductOnWire {
+export function toWire(product: Product): ProductOnWire {
   return { ...product, retailPrice: pesosText(product.retailPrice) };
 }
 

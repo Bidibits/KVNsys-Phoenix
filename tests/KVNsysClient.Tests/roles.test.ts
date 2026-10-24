@@ -68,7 +68,7 @@ describe('the role calls', () => {
     const blank = await loadRoleForm(server.address, pass, null, pinned());
     expect(blank).toMatchObject({ ok: true, fixed: false, form: { name: '', status: 'Active', rights: [] } });
     if (!blank.ok) return;
-    expect(blank.groups.map((g) => g.area)).toEqual(['Registers', 'Products', 'Users', 'Roles']);
+    expect(blank.groups.map((g) => g.area)).toEqual(['Registers', 'Products', 'Users', 'Roles', 'Stock']);
     expect(blank.groups[1]!.rights).toEqual([
       { access: 'products.view', description: 'See the products and their prices', needs: undefined },
       { access: 'products.manage', description: 'Add products, and change their details and prices', needs: 'products.view' },

@@ -107,10 +107,14 @@ export class PrismaStockLedger extends StockLedger {
     return this.db.inventory.findMany({ where: { locationId }, select: { productId: true, stock: true }, orderBy: { product: { name: 'asc' } } });
   }
 
-  async movements(locationId: string, productId: string): Promise<StockMovement[]> {
+  async movements(locationId: string, productId: string, limit?: number): Promise<StockMovement[]> {
     if (!Uuid.test(locationId) || !Uuid.test(productId)) return [];
     // Lines saved together share the database's clock, so the id (which counts up) settles the order.
-    const rows = await this.db.inventoryLog.findMany({ where: { locationId, productId }, orderBy: [{ createdAtDate: 'desc' }, { id: 'desc' }] });
+    const rows = await this.db.inventoryLog.findMany({
+      where: { locationId, productId },
+      orderBy: [{ createdAtDate: 'desc' }, { id: 'desc' }],
+      ...(limit === undefined ? {} : { take: limit }),
+    });
     return rows.map(toMovement);
   }
 }

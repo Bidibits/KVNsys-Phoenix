@@ -53,6 +53,7 @@ export {
 } from './identity/accounts.js';
 
 export { serverMachineCode, type PcIdentity } from './locations/machines.js';
+export { ShopDirectory, type Shop } from './locations/shops.js';
 
 export {
   checkProduct,
@@ -74,6 +75,7 @@ export {
 export {
   checkStockChange,
   MovementTypes,
+  rightToRecordByHand,
   StockLedger,
   StockLimits,
   type MovementType,

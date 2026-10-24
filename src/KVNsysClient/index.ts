@@ -32,6 +32,18 @@ export {
 } from './catalog/products.js';
 export { loadProductForm, saveProductForm, type ProductFormResult } from './catalog/product-form.js';
 export {
+  getProductStock,
+  listStock,
+  recordStock,
+  type HandMovement,
+  type ProductStockResult,
+  type RecordedMovement,
+  type RecordStockResult,
+  type Shop,
+  type StockItem,
+  type StockListResult,
+} from './inventory/stock.js';
+export {
   listUsers,
   loadUserForm,
   resetPassword,

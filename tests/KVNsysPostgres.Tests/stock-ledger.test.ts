@@ -140,6 +140,13 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
     expect(await ledger.onHand(branch, sardines)).toBe(0);
   });
 
+  it("hands back only a product's newest movements when asked for a few", async () => {
+    const lines = [];
+    for (const pieces of [5, 6, 7]) lines.push(...(await ledger.record([change(rice, 'from_supplier', pieces)], lineage())));
+    expect((await ledger.movements(hq, rice, 2)).map((m) => m.quantityChange)).toEqual([7, 6]);
+    expect(await ledger.movements(hq, rice)).toHaveLength(3);
+  });
+
   it('refuses ids that are not KVNsys records', async () => {
     await expect(ledger.record([change('PRD-0042', 'from_supplier', 1)], lineage())).rejects.toMatchObject({ kind: 'not-found' });
     await expect(ledger.record([change(rice, 'to_customer', -1, { source: { table: 'sales', id: 'OR-1' } })], lineage())).rejects.toMatchObject({

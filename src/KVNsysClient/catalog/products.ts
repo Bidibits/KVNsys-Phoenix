@@ -22,7 +22,7 @@ export type ProductCallOptions = CallOptions;
 /** Every product, by name. */
 export async function listProducts(address: string, pass: SessionPass, options: ProductCallOptions): Promise<ProductListResult> {
   const answer = await call(address, pass, options, { path: ProductsPath }, ProductListReply);
-  return answer.ok ? { ok: true, products: answer.reply.products.map(fromWire) } : answer;
+  return answer.ok ? { ok: true, products: answer.reply.products.map(productFromWire) } : answer;
 }
 
 /** One product by its code or its barcode. Capitals don't matter. */
@@ -66,7 +66,7 @@ export async function changeProduct(
 }
 
 /** Prices travel as exact pesos text; here they become whole centavos again. */
-function fromWire(product: ProductOnWire): Product {
+export function productFromWire(product: ProductOnWire): Product {
   return { ...product, retailPrice: parsePesos(product.retailPrice)!, status: product.status as ProductStatus };
 }
 
@@ -79,5 +79,5 @@ function toWire(details: ProductDetails): { ok: true; fields: ProductFields } | 
 }
 
 function oneProduct(answer: Answer<ProductReply>): ProductResult {
-  return answer.ok ? { ok: true, product: fromWire(answer.reply.product) } : answer;
+  return answer.ok ? { ok: true, product: productFromWire(answer.reply.product) } : answer;
 }

@@ -24,6 +24,19 @@ export {
   userPasswordPath,
   userPath,
 } from './users.js';
+export {
+  MovementFields,
+  MovementOnWire,
+  MovementsShown,
+  ProductStockReply,
+  productStockPath,
+  ShopOnWire,
+  StockListReply,
+  StockMovementsPath,
+  StockMovementsReply,
+  StockMovementsRequest,
+  StockPath,
+} from './stock.js';
 export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
 export {
   SessionPass,

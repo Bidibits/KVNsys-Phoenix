@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@kvnsys/client-app": "workspace:*",
+    "@kvnsys/core": "workspace:*",
     "@kvnsys/postgres": "workspace:*",
     "@kvnsys/server": "workspace:*"
   },

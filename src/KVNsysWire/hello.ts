@@ -9,8 +9,9 @@ import { z } from 'zod';
  * 4: products (list, find, get, add, change). 5: sign-in also says which rights the role holds.
  * 6: accounts (list, get, add, change, new password) and the roles an account can be given.
  * 7: roles (list, get, make, change); the roles an account can be given moved to /api/role-choices.
+ * 8: stock (the shop's stock, one product's stock and movements, recording goods in and counts put right).
  */
-export const ProtocolVersion = 7;
+export const ProtocolVersion = 8;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;
