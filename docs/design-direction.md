@@ -182,7 +182,7 @@ Key:
 | Log in (`logInLocalDatabase`, `logInConnectToServer`) | Sign in, against a local database or a server | ✅ Connect to the shop's server over secure HTTPS, sign in, sessions. Registers always go through the server: no local-database mode, by design. |
 | Users (list, form, search) | Accounts and their roles | ✅ A users list and form, to create the cashiers' accounts (2026-10-19) · ⏭ search |
 | Roles (list, form, search) | Roles and the rights each holds | ✅ Only the Administrator is made at install (decided 2026-10-19) · ✅ making and editing roles and their rights, so a shop can make a cashier role (2026-10-19) · ⏭ search |
-| Terminals (list, form, search) | The registers | 🟢 Each register recorded by itself the first time it connects, as Beta did, plus a list to name them · ⏭ search |
+| Terminals (list, form, search) | The registers | ✅ Each register recorded by itself the first time someone signs in at it, plus a list to name them or switch them off (2026-10-24) · ⏭ search |
 | Configurations | This PC's shop and register | ✅ It remembers its server · ⏭ a settings page |
 | Locations (list, form, search) | The shops | ✅ The first shop is made at install · ⏭ screens, when a second branch joins |
 | Storages (list, form, search) | Places stock is kept inside a shop | ⏭ |
@@ -224,7 +224,7 @@ Key:
 
 | Feature | Phoenix |
 |---|---|
-| One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · 🟢 Back and Forward, search, the register's name |
+| One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · ✅ the register's name (2026-10-24) · 🟢 Back and Forward, search |
 | A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18) and the form panel from the right (2026-10-19) · 🟢 a simple search box, and building them from one description · ⏭ Advance Search |
 | Pop-up notices and themed dialogs | 🟢 |
 | Light theme (Standard) | ✅ (2026-10-18) · ⏭ dark theme |

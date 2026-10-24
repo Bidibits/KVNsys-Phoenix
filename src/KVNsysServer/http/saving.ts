@@ -1,4 +1,5 @@
 import { Refusal, type Lineage, type RefusalKind } from '@kvnsys/core';
+import type { SessionRegister } from '../identity/sessions.js';
 import type { SignedInPerson } from '../identity/sign-in.js';
 import { problem } from './problems.js';
 
@@ -14,7 +15,7 @@ export async function saving<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Who saved it. Which register, and so which shop, the request came from comes with recording registers. */
-export function lineageOf(person: SignedInPerson): Lineage {
-  return { userId: person.id, machineId: null, locationId: null };
+/** Who saved it, at which register, and so at which shop. A sign-in at no register says neither. */
+export function lineageOf(person: SignedInPerson, register: SessionRegister | null): Lineage {
+  return { userId: person.id, machineId: register?.machineId ?? null, locationId: register?.locationId ?? null };
 }

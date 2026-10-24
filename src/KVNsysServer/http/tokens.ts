@@ -20,3 +20,6 @@ export const StockOperation = Symbol('StockOperation');
 
 /** The record of sales, the catalog, the server's shop and the rights check, or null when there's no database. */
 export const SalesOperation = Symbol('SalesOperation');
+
+/** The registers, the server's shop, the rights check and the sessions, or null when there's no database. */
+export const RegistersOperation = Symbol('RegistersOperation');

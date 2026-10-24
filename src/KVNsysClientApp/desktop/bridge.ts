@@ -1,6 +1,8 @@
 import type {
   ConnectResult,
   DaySalesResult,
+  RegisterListResult,
+  RegisterResult,
   SaleResult,
   StatutoryDiscount,
   TillResult,
@@ -101,6 +103,10 @@ export interface KvnsysBridge {
   daySales(date: string | null): Promise<DaySalesResult>;
   /** One receipt as it was given. */
   receipt(id: string): Promise<SaleResult>;
+  /** The shop's registers, the server PC first, if the signed-in person may see them. */
+  listRegisters(): Promise<RegisterListResult>;
+  /** Renames a register, or switches it off or on, as typed and picked. */
+  saveRegister(id: string, form: { name: string; status: string }): Promise<RegisterResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -132,3 +138,5 @@ export const ClearSaleChannel = 'kvnsys:clear-sale';
 export const PaySaleChannel = 'kvnsys:pay-sale';
 export const DaySalesChannel = 'kvnsys:day-sales';
 export const ReceiptChannel = 'kvnsys:receipt';
+export const ListRegistersChannel = 'kvnsys:list-registers';
+export const SaveRegisterChannel = 'kvnsys:save-register';

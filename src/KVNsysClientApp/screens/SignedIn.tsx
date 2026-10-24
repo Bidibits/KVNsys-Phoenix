@@ -3,13 +3,14 @@ import { AppFrame } from '@kvnsys/ui';
 import { useState } from 'react';
 import { HomeScreen, type Area } from './home/HomeScreen';
 import { ProductsScreen } from './products/ProductsScreen';
+import { RegistersScreen } from './registers/RegistersScreen';
 import { RolesScreen } from './roles/RolesScreen';
 import { SalesScreen } from './selling/SalesScreen';
 import { SellScreen } from './selling/SellScreen';
 import { StockScreen } from './stock/StockScreen';
 import { UsersScreen } from './users/UsersScreen';
 
-const Titles: Record<Area | 'home', string> = { home: 'Home', sell: 'Sell', sales: 'Sales', products: 'Products', stock: 'Stock', users: 'Users', roles: 'Roles' };
+const Titles: Record<Area | 'home', string> = { home: 'Home', sell: 'Sell', sales: 'Sales', products: 'Products', stock: 'Stock', users: 'Users', roles: 'Roles', registers: 'Registers' };
 
 /**
  * The app once someone is signed in: the frame, with Home or an area inside it. Signing out
@@ -32,7 +33,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
   return (
     <AppFrame
       title={Titles[area]}
-      signedIn={{ name: user.displayName, username: user.username }}
+      signedIn={{ name: user.displayName, username: user.username, register: user.register?.name ?? null }}
       onHome={() => setArea('home')}
       onSignOut={() => void signOut()}
       signingOut={signingOut}
@@ -45,6 +46,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
       {area === 'stock' && <StockScreen user={user} onSignInAgain={onSignedOut} />}
       {area === 'users' && <UsersScreen user={user} onSignInAgain={onSignedOut} />}
       {area === 'roles' && <RolesScreen user={user} onSignInAgain={onSignedOut} />}
+      {area === 'registers' && <RegistersScreen user={user} onSignInAgain={onSignedOut} />}
     </AppFrame>
   );
 }

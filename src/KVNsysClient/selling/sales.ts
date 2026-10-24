@@ -27,12 +27,12 @@ import {
 import { callServer as call, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
 /** A receipt as the register shows it: what was charged, and how it was paid. */
-export type PaidReceipt = Omit<Receipt, 'locationId' | 'createdByUser'>;
+export type PaidReceipt = Omit<Receipt, 'locationId' | 'createdByUser' | 'machineId'>;
 
 export type SaleProductResult = { ok: true; product: SaleProduct } | Refused;
 export type PriceResult = { ok: true; sale: PricedSale } | Refused;
 /** A receipt with its shop and who rang it up: null when their account isn't on this server. */
-export type SaleResult = { ok: true; receipt: PaidReceipt; shop: ShopOnWire; cashier: string | null } | Refused;
+export type SaleResult = { ok: true; receipt: PaidReceipt; shop: ShopOnWire; cashier: string | null; register: string | null } | Refused;
 
 /** One receipt as a day's list shows it. Money is in centavos. */
 export interface ReceiptLine {
@@ -96,7 +96,8 @@ export async function recordSale(address: string, pass: SessionPass, form: SaleF
   };
   const answer = await call(address, pass, options, { path: SalesPath, method: 'POST', body }, ReceiptReply);
   if (!answer.ok) return answer;
-  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop: answer.reply.shop, cashier: answer.reply.cashier };
+  const { shop, cashier, register } = answer.reply;
+  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop, cashier, register };
 }
 
 /** A day's receipts at the shop, oldest first, with their totals. Today, by the shop's clock, when the date is null. */
@@ -123,7 +124,8 @@ export async function listDaySales(address: string, pass: SessionPass, date: str
 export async function getReceipt(address: string, pass: SessionPass, id: string, options: CallOptions): Promise<SaleResult> {
   const answer = await call(address, pass, options, { path: receiptPath(id) }, ReceiptReply);
   if (!answer.ok) return answer;
-  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop: answer.reply.shop, cashier: answer.reply.cashier };
+  const { shop, cashier, register } = answer.reply;
+  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop, cashier, register };
 }
 
 function receiptFromWire(receipt: ReceiptOnWire): PaidReceipt {

@@ -59,6 +59,7 @@ function toReceipt(row: Row): Receipt {
     payment: { type: payment.paymentType as PaymentType, tendered: centavos(payment.amountTendered), change: centavos(payment.changeGiven) },
     createdAt: row.createdAtDate.toISOString(),
     createdByUser: row.createdByUser,
+    machineId: row.createdAtMachine,
   };
 }
 

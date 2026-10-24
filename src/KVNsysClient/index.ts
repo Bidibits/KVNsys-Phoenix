@@ -17,6 +17,7 @@ export {
   type ServerPin,
 } from './connection/secure-request.js';
 export { normalizeServerAddress } from './connection/server-address.js';
+export { readThisPc } from './connection/this-pc.js';
 export { signIn, type SignInProblem, type SignInResult } from './identity/sign-in.js';
 export { checkSession, signOut, type SessionCheck, type SessionProblem, type SignOutResult } from './identity/session.js';
 export {
@@ -56,6 +57,7 @@ export {
   type UserListResult,
   type UserResult,
 } from './identity/users.js';
+export { changeRegister, listRegisters, type ListedRegister, type RegisterListResult, type RegisterResult } from './identity/registers.js';
 export {
   listRoles,
   loadRoleForm,
@@ -93,6 +95,7 @@ export type {
   DiscountKind,
   PricedLine,
   PricedSale,
+  RegisterStatus,
   SaleProduct,
   StatutoryDiscount,
   DeliveryLineForm,

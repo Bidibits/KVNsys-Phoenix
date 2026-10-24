@@ -39,8 +39,8 @@ describe('the selling calls', () => {
     expect(SaleFields.safeParse({ ...sale, lines: [] }).success).toBe(false);
     expect(SaleFields.safeParse({ ...sale, discount: null }).success).toBe(true);
     expect(SaleFields.safeParse({ ...sale, discount: { ...sale.discount, kind: 'student' } }).success).toBe(false);
-    expect(ReceiptReply.safeParse({ receipt, shop: { id: 'x', code: 'HQ', name: 'Head Office' }, cashier: 'Ana Cruz' }).success).toBe(true);
-    expect(ReceiptReply.safeParse({ receipt: { ...receipt, payment: { ...receipt.payment, type: 'Card' } }, shop: { id: 'x', code: 'HQ', name: 'H' }, cashier: 'A' }).success).toBe(false);
+    expect(ReceiptReply.safeParse({ receipt, shop: { id: 'x', code: 'HQ', name: 'Head Office' }, cashier: 'Ana Cruz', register: 'Counter 1' }).success).toBe(true);
+    expect(ReceiptReply.safeParse({ receipt: { ...receipt, payment: { ...receipt.payment, type: 'Card' } }, shop: { id: 'x', code: 'HQ', name: 'H' }, cashier: 'A', register: null }).success).toBe(false);
   });
 });
 
@@ -60,6 +60,6 @@ describe("a day's sales, and one receipt again", () => {
     expect(DaySalesReply.safeParse({ shop, date: '2026-10-24', receipts: [{ ...line, cashier: null, discountKind: null }], totals }).success).toBe(true);
     expect(DaySalesReply.safeParse({ shop, date: '24/10/2026', receipts: [], totals }).success).toBe(false);
     expect(DaySalesReply.safeParse({ shop, date: '2026-10-24', receipts: [{ ...line, total: 41.2 }], totals }).success).toBe(false);
-    expect(ReceiptReply.safeParse({ receipt, shop, cashier: null }).success).toBe(true);
+    expect(ReceiptReply.safeParse({ receipt, shop, cashier: null, register: null }).success).toBe(true);
   });
 });

@@ -81,7 +81,7 @@ describe('selling from the register', () => {
   });
 
   it('records a sale: the lines by id, the discount, the cash, and the total the cashier saw, all as text', async () => {
-    server = await fakeServer(certificate, 201, { receipt: receiptOnWire, shop, cashier: 'Ana Cruz' });
+    server = await fakeServer(certificate, 201, { receipt: receiptOnWire, shop, cashier: 'Ana Cruz', register: 'Counter 1' });
     const result = await recordSale(server.address, pass, { cart: [{ product: sardines, quantity: 2 }], discount: senior, tendered: '50' }, pinned());
     expect(result).toMatchObject({ ok: true, shop, cashier: 'Ana Cruz', receipt: { code: 'HQ-000001', total: 4120, payment: { tendered: 5000, change: 880 } } });
     expect(server.received).toEqual([
@@ -94,7 +94,7 @@ describe('selling from the register', () => {
   });
 
   it('catches short cash, or cash typed wrong, without asking the server', async () => {
-    server = await fakeServer(certificate, 201, { receipt: receiptOnWire, shop, cashier: 'Ana Cruz' });
+    server = await fakeServer(certificate, 201, { receipt: receiptOnWire, shop, cashier: 'Ana Cruz', register: 'Counter 1' });
     const cart = [{ product: sardines, quantity: 2 }];
     expect(await recordSale(server.address, pass, { cart, discount: null, tendered: '50' }, pinned())).toEqual({
       ok: false,
@@ -134,7 +134,7 @@ describe("looking back at a day's sales from the register", () => {
   });
 
   it('opens one receipt by its id, whoever rang it up', async () => {
-    server = await fakeServer(certificate, 200, { receipt: receiptOnWire, shop, cashier: null });
+    server = await fakeServer(certificate, 200, { receipt: receiptOnWire, shop, cashier: null, register: null });
     expect(await getReceipt(server.address, pass, receiptOnWire.id, pinned())).toMatchObject({ ok: true, cashier: null, receipt: { code: 'HQ-000001', total: 4120 } });
     expect(server.received.map((r) => r.url)).toEqual([`/api/sales/${receiptOnWire.id}`]);
   });

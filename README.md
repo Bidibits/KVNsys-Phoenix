@@ -118,6 +118,12 @@ and everything a user sees, is called KVNsys.
   receipt (number, time, cashier, pieces, discount, total), oldest first. Another day can be
   picked. View opens any receipt again, as it was given. A day is midnight to midnight Philippine
   time, and times show in Philippine time, whatever time zone a PC is set to.
+- **Registers.** A PC records itself as a register of the shop the first time someone signs in at
+  it (by its Windows machine id, so renaming the PC doesn't matter), as "New register (its
+  computer name)". The title bar then shows the register's name beside who's signed in, every
+  save (products, stock, sales, users, roles) records which register it was made at, and a
+  receipt names its register. A Registers tile lists them, the server PC first; a manager names
+  them, or switches one off, which signs out whoever is at it and stops anyone signing in there.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

@@ -2,6 +2,7 @@ import { type DynamicModule, Inject, Injectable, Module, type OnModuleDestroy } 
 import type { PcIdentity } from '@kvnsys/core';
 import {
   PrismaProductCatalog,
+  PrismaRegisterBook,
   PrismaRoleCatalog,
   PrismaSalesJournal,
   PrismaShopDirectory,
@@ -17,11 +18,21 @@ import { SignIn } from '../identity/sign-in.js';
 import { HelloController } from './hello.controller.js';
 import { ProductsController } from './products.controller.js';
 import { SessionController } from './session.controller.js';
-import { SignInController } from './sign-in.controller.js';
+import { SignInController, type SignInOperationParts } from './sign-in.controller.js';
+import { RegistersController, type RegistersOperationParts } from './registers.controller.js';
 import { RolesController, type RolesOperationParts } from './roles.controller.js';
 import { SalesController, type SalesOperationParts } from './sales.controller.js';
 import { StockController, type StockOperationParts } from './stock.controller.js';
-import { DatabaseClient, ProductsOperation, RolesOperation, SalesOperation, SignInOperation, StockOperation, UsersOperation } from './tokens.js';
+import {
+  DatabaseClient,
+  ProductsOperation,
+  RegistersOperation,
+  RolesOperation,
+  SalesOperation,
+  SignInOperation,
+  StockOperation,
+  UsersOperation,
+} from './tokens.js';
 import { UsersController, type UsersOperationParts } from './users.controller.js';
 
 type Database = { client: PrismaClient | null };
@@ -43,7 +54,7 @@ export class ServerModule {
   static withDatabase(client: PrismaClient | null, server: PcIdentity): DynamicModule {
     return {
       module: ServerModule,
-      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController],
+      controllers: [HelloController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, RegistersController],
       providers: [
         { provide: DatabaseClient, useValue: { client } satisfies Database },
         DatabaseLifecycle,
@@ -53,7 +64,14 @@ export class ServerModule {
           provide: SignInOperation,
           inject: [DatabaseClient],
           useFactory: ({ client: db }: Database) => ({
-            signIn: db ? new SignIn(new PrismaUserDirectory(db), new ScryptPasswordHasher()) : null,
+            signIn: db
+              ? ({
+                  signIn: new SignIn(new PrismaUserDirectory(db), new ScryptPasswordHasher()),
+                  registers: new PrismaRegisterBook(db),
+                  shops: new PrismaShopDirectory(db),
+                  server,
+                } satisfies SignInOperationParts)
+              : null,
           }),
         },
         {
@@ -118,9 +136,25 @@ export class ServerModule {
                   catalog: new PrismaProductCatalog(db),
                   shops: new PrismaShopDirectory(db),
                   accounts: new PrismaUserAccounts(db),
+                  registers: new PrismaRegisterBook(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,
                 } satisfies SalesOperationParts)
+              : null,
+          }),
+        },
+        {
+          provide: RegistersOperation,
+          inject: [DatabaseClient, Sessions],
+          useFactory: ({ client: db }: Database, sessions: Sessions) => ({
+            registers: db
+              ? ({
+                  registers: new PrismaRegisterBook(db),
+                  shops: new PrismaShopDirectory(db),
+                  authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
+                  sessions,
+                  server,
+                } satisfies RegistersOperationParts)
               : null,
           }),
         },

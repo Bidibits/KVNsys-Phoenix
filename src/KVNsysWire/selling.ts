@@ -87,10 +87,16 @@ export const ReceiptOnWire = z.object({
 export type ReceiptOnWire = z.infer<typeof ReceiptOnWire>;
 
 /**
- * A receipt, with what it prints at the top: the shop, and who rang it up. The cashier is null when
- * their account isn't on this server.
+ * A receipt, with what it prints at the top: the shop, who rang it up and where. The cashier is
+ * null when their account isn't on this server.
  */
-export const ReceiptReply = z.object({ receipt: ReceiptOnWire, shop: ShopOnWire, cashier: z.string().nullable() });
+export const ReceiptReply = z.object({
+  receipt: ReceiptOnWire,
+  shop: ShopOnWire,
+  cashier: z.string().nullable(),
+  /** The register it was rung up at, as the shop calls it now, or null when it was at none. */
+  register: z.string().nullable(),
+});
 export type ReceiptReply = z.infer<typeof ReceiptReply>;
 
 /** One receipt as a day's list shows it. */

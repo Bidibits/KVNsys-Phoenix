@@ -40,7 +40,9 @@ export {
   StockPath,
 } from './stock.js';
 export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
+export { RegisterFields, RegisterListReply, RegisterOnWire, RegisterReply, registerPath, RegistersPath } from './registers.js';
 export {
+  RegisterIdentity,
   SessionPass,
   SessionPath,
   SessionReply,

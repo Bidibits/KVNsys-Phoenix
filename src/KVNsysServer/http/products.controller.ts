@@ -80,9 +80,9 @@ export class ProductsController {
   @Post()
   @HttpCode(201)
   async add(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<ProductReply> {
-    const { catalog, person } = await this.allow(authorization, Accesses.ProductsManage);
+    const { catalog, person, register } = await this.allow(authorization, Accesses.ProductsManage);
     const details = readDetails(body);
-    return { product: toWire(await saving(() => catalog.create(details, lineageOf(person)))) };
+    return { product: toWire(await saving(() => catalog.create(details, lineageOf(person, register)))) };
   }
 
   @Put(':id')
@@ -91,10 +91,10 @@ export class ProductsController {
     @Param('id') id: string,
     @Body() body: unknown,
   ): Promise<ProductReply> {
-    const { catalog, person } = await this.allow(authorization, Accesses.ProductsManage);
+    const { catalog, person, register } = await this.allow(authorization, Accesses.ProductsManage);
     if (!Uuid.test(id)) throw problem(404, NotInCatalog);
     const details = readDetails(body);
-    return { product: toWire(await saving(() => catalog.update(id, details, lineageOf(person)))) };
+    return { product: toWire(await saving(() => catalog.update(id, details, lineageOf(person, register)))) };
   }
 
   /** The pass and the right, checked before anything else is even read. */
@@ -103,6 +103,6 @@ export class ProductsController {
     if (!products) throw problem(503, NoDatabase);
     const verdict = await products.authorizer.check(bearerToken(authorization), access);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
-    return { catalog: products.catalog, person: verdict.person };
+    return { catalog: products.catalog, person: verdict.person, register: verdict.register };
   }
 }

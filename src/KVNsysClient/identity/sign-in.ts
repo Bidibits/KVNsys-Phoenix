@@ -1,4 +1,4 @@
-import { SignInPath, SignInReply, type SessionPass, type SignedInUser } from '@kvnsys/wire';
+import { SignInPath, SignInReply, type RegisterIdentity, type SessionPass, type SignedInUser } from '@kvnsys/wire';
 import { describeTransportFailure, type TransportProblem } from '../connection/failures.js';
 import { requestJson, type ServerPin } from '../connection/secure-request.js';
 
@@ -21,7 +21,8 @@ const DefaultTimeoutMs = 5000;
 export async function signIn(
   address: string,
   credentials: { username: string; password: string },
-  options: { pin: ServerPin | null; timeoutMs?: number },
+  /** `register`: this PC, so the sign-in is at a register (readThisPc). Left out, it's at none. */
+  options: { pin: ServerPin | null; timeoutMs?: number; register?: RegisterIdentity | null },
 ): Promise<SignInResult> {
   if (!options.pin) {
     return {
@@ -37,7 +38,8 @@ export async function signIn(
   const timeoutMs = options.timeoutMs ?? DefaultTimeoutMs;
   let response;
   try {
-    response = await requestJson({ address, path: SignInPath, method: 'POST', body: credentials, pin: options.pin, timeoutMs });
+    const body = options.register ? { ...credentials, register: options.register } : credentials;
+    response = await requestJson({ address, path: SignInPath, method: 'POST', body, pin: options.pin, timeoutMs });
   } catch (error) {
     return { ok: false, ...describeTransportFailure(error, address, timeoutMs) };
   }

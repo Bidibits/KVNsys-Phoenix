@@ -54,6 +54,17 @@ export {
 
 export { serverMachineCode, type PcIdentity } from './locations/machines.js';
 export { ShopDirectory, type Shop } from './locations/shops.js';
+export {
+  checkRegisterDetails,
+  newRegisterName,
+  RegisterBook,
+  registerCode,
+  RegisterLimits,
+  RegisterStatuses,
+  type Register,
+  type RegisterDetails,
+  type RegisterStatus,
+} from './locations/registers.js';
 
 export {
   checkProduct,

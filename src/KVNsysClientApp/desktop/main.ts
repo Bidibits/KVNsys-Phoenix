@@ -3,8 +3,13 @@
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  changeRegister,
   connectToServer,
   findSaleProduct,
+  listRegisters,
+  readThisPc,
+  type RegisterListResult,
+  type RegisterResult,
   getReceipt,
   listDaySales,
   type DaySalesResult,
@@ -57,6 +62,8 @@ import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ClearSaleChannel,
   ConnectChannel,
+  ListRegistersChannel,
+  SaveRegisterChannel,
   DaySalesChannel,
   ReceiptChannel,
   CountStockChannel,
@@ -96,6 +103,9 @@ const AppName = 'KVNsys POS & Inventory';
 if (process.env.KVNSYS_APP_DATA) app.setPath('userData', process.env.KVNSYS_APP_DATA);
 const settings = new SettingsFile(join(app.getPath('userData'), 'settings.json'));
 const trustFile = new TrustFile(join(app.getPath('userData'), 'trusted-servers.json'));
+
+/** This PC, as it tells the server at every sign-in, so the server knows which register it's at. */
+const thisPc = readThisPc();
 
 /** The server this register last connected to in this run. Sign-in only ever goes there. */
 let connectedAddress: string | null = null;
@@ -161,7 +171,7 @@ ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknow
   const trusted = trustFile.read();
   if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
   // The password is used for this one request and kept nowhere: not logged, not stored.
-  const result = await signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null });
+  const result = await signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null, register: thisPc });
   if (!result.ok) return result;
   session = { address: connectedAddress, pass: result.session };
   till = new Till();
@@ -393,6 +403,17 @@ ipcMain.handle(ReceiptChannel, async (_event, id: unknown): Promise<SaleResult> 
   const receiptId = asProductId(id);
   if (!receiptId) return NotAForm;
   return withPass((address, pass, options) => getReceipt(address, pass, receiptId, options));
+});
+
+ipcMain.handle(ListRegistersChannel, (): Promise<RegisterListResult> => withPass(listRegisters));
+
+ipcMain.handle(SaveRegisterChannel, async (_event, id: unknown, typed: unknown): Promise<RegisterResult> => {
+  const registerId = asProductId(id);
+  if (!registerId || typeof typed !== 'object' || typed === null) return NotAForm;
+  const name = asText((typed as Record<string, unknown>).name);
+  const status = asText((typed as Record<string, unknown>).status);
+  if (name === undefined || status === undefined) return NotAForm;
+  return withPass((address, pass, options) => changeRegister(address, pass, registerId, { name, status }, options));
 });
 
 function openWindow(): void {

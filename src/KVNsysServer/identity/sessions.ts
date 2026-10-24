@@ -7,8 +7,18 @@ export const SessionHours = 12;
 /** What a register is told when its pass is unknown, cancelled or expired. */
 export const SignInEnded = 'Your sign-in has ended. Sign in again.';
 
+/** The register a sign-in is at: the PC, its shop, and what the shop calls it. */
+export interface SessionRegister {
+  machineId: string;
+  locationId: string;
+  code: string;
+  name: string;
+}
+
 export interface Session {
   user: SignedInPerson;
+  /** Null when the sign-in is at no register: a PC that couldn't read its own id. */
+  register: SessionRegister | null;
   startedAt: Date;
   expiresAt: Date;
 }
@@ -27,12 +37,12 @@ export class Sessions {
   constructor(private readonly now: () => Date = () => new Date()) {}
 
   /** Starts a session for someone who has just signed in, and returns its pass. */
-  start(user: SignedInPerson): { token: string; expiresAt: Date } {
+  start(user: SignedInPerson, register: SessionRegister | null = null): { token: string; expiresAt: Date } {
     this.forgetExpired();
     const token = randomBytes(32).toString('base64url');
     const startedAt = this.now();
     const expiresAt = new Date(startedAt.getTime() + SessionHours * 60 * 60 * 1000);
-    this.byHash.set(hashOf(token), { user, startedAt, expiresAt });
+    this.byHash.set(hashOf(token), { user, register, startedAt, expiresAt });
     return { token, expiresAt };
   }
 
@@ -61,6 +71,18 @@ export class Sessions {
     let ended = 0;
     for (const [key, session] of this.byHash) {
       if (session.user.id === userId) {
+        this.byHash.delete(key);
+        ended++;
+      }
+    }
+    return ended;
+  }
+
+  /** Ends every pass signed in at one register: when it's switched off. Returns how many ended. */
+  cancelForRegister(machineId: string): number {
+    let ended = 0;
+    for (const [key, session] of this.byHash) {
+      if (session.register?.machineId === machineId) {
         this.byHash.delete(key);
         ended++;
       }
