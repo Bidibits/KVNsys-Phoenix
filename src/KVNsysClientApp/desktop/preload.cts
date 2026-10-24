@@ -19,6 +19,11 @@ const ResetPasswordChannel = 'kvnsys:reset-password';
 const ListRolesChannel = 'kvnsys:list-roles';
 const RoleFormChannel = 'kvnsys:role-form';
 const SaveRoleChannel = 'kvnsys:save-role';
+const ListStockChannel = 'kvnsys:list-stock';
+const FindStockItemChannel = 'kvnsys:find-stock-item';
+const ProductStockChannel = 'kvnsys:product-stock';
+const ReceiveStockChannel = 'kvnsys:receive-stock';
+const CountStockChannel = 'kvnsys:count-stock';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
@@ -35,6 +40,11 @@ const bridge: KvnsysBridge = {
   listRoles: () => ipcRenderer.invoke(ListRolesChannel),
   roleForm: (id) => ipcRenderer.invoke(RoleFormChannel, id),
   saveRole: (id, form) => ipcRenderer.invoke(SaveRoleChannel, id, form),
+  listStock: () => ipcRenderer.invoke(ListStockChannel),
+  findStockItem: (codeOrBarcode) => ipcRenderer.invoke(FindStockItemChannel, codeOrBarcode),
+  productStock: (productId) => ipcRenderer.invoke(ProductStockChannel, productId),
+  receiveStock: (lines, note) => ipcRenderer.invoke(ReceiveStockChannel, lines, note),
+  countStock: (form) => ipcRenderer.invoke(CountStockChannel, form),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

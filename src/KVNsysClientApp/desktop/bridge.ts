@@ -1,5 +1,11 @@
 import type {
   ConnectResult,
+  CountForm,
+  DeliveryLineForm,
+  ProductStockResult,
+  RecordStockResult,
+  StockItemResult,
+  StockListResult,
   ProductForm,
   ProductFormResult,
   ProductListResult,
@@ -65,6 +71,16 @@ export interface KvnsysBridge {
   roleForm(id: string | null): Promise<RoleFormResult>;
   /** Saves what was typed and ticked, as a new role (null) or over the one with that id. */
   saveRole(id: string | null, form: RoleForm): Promise<RoleResult>;
+  /** Every product, by name, with how many this shop has, if the signed-in person may see stock. */
+  listStock(): Promise<StockListResult>;
+  /** One product, by what was typed or scanned (its code or its barcode), with its stock here. */
+  findStockItem(codeOrBarcode: string): Promise<StockItemResult>;
+  /** One product's stock as the server has it now, and its newest movements. */
+  productStock(productId: string): Promise<ProductStockResult>;
+  /** Saves a delivery: each line's pieces as typed, and one note for all of it. All saved, or none. */
+  receiveStock(lines: DeliveryLineForm[], note: string): Promise<RecordStockResult>;
+  /** Puts a product's count right, from what was counted and what KVNsys showed when it was typed. */
+  countStock(form: CountForm): Promise<RecordStockResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -82,3 +98,8 @@ export const ResetPasswordChannel = 'kvnsys:reset-password';
 export const ListRolesChannel = 'kvnsys:list-roles';
 export const RoleFormChannel = 'kvnsys:role-form';
 export const SaveRoleChannel = 'kvnsys:save-role';
+export const ListStockChannel = 'kvnsys:list-stock';
+export const FindStockItemChannel = 'kvnsys:find-stock-item';
+export const ProductStockChannel = 'kvnsys:product-stock';
+export const ReceiveStockChannel = 'kvnsys:receive-stock';
+export const CountStockChannel = 'kvnsys:count-stock';

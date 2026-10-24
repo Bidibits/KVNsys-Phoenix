@@ -84,7 +84,14 @@ and everything a user sees, is called KVNsys.
   record goods in from a supplier or put a count right with the reason, one line or a whole
   delivery at once, all saved or none. Each needs its own right: see stock, receive stock, adjust
   stock. Goods out to a customer can't be typed in; only a sale will record them. The stock is
-  always the server's own shop's, since each branch has its own server. No screens yet.
+  always the server's own shop's, since each branch has its own server.
+- **The Stock screen.** A Stock tile on Home opens every product with how many the shop has (below
+  zero shows in red). History on a row shows that product's movements, newest first: when, what,
+  how many, the stock after, who, and the note. Receive stock takes in a whole delivery: scan or
+  type each code or barcode, then its pieces, add the line, and save it all at once with one note,
+  such as the supplier's DR number; a scanner's Enter never saves it half-done. Adjust on a row
+  puts a count right: the pieces counted on the shelf and why they're different. Each button only
+  shows for someone whose role has the right.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

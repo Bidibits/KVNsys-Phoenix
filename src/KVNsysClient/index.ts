@@ -32,15 +32,18 @@ export {
 } from './catalog/products.js';
 export { loadProductForm, saveProductForm, type ProductFormResult } from './catalog/product-form.js';
 export {
+  findStockItem,
   getProductStock,
   listStock,
   recordStock,
-  type HandMovement,
+  saveCount,
+  saveDelivery,
   type ProductStockResult,
   type RecordedMovement,
   type RecordStockResult,
   type Shop,
   type StockItem,
+  type StockItemResult,
   type StockListResult,
 } from './inventory/stock.js';
 export {
@@ -70,6 +73,10 @@ export type {
   AccessName,
   Account,
   AccountStatus,
+  CountForm,
+  DeliveryLineForm,
+  HandMovement,
+  MovementType,
   Product,
   ProductDetails,
   ProductForm,

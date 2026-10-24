@@ -1,7 +1,17 @@
 import { createServer as createSecureServer } from 'node:https';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { getProductStock, listStock, recordStock, type HandMovement, type ServerPin, type SessionPass } from '@kvnsys/client';
+import {
+  findStockItem,
+  getProductStock,
+  listStock,
+  recordStock,
+  saveCount,
+  saveDelivery,
+  type HandMovement,
+  type ServerPin,
+  type SessionPass,
+} from '@kvnsys/client';
 import { createServerCertificate, type ServerCertificate } from '@kvnsys/server';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
@@ -88,6 +98,39 @@ describe('the stock calls', () => {
     server = await fakeServer(certificate, 201, { movements: saved });
     expect(await recordStock(server.address, pass, lines, pinned())).toEqual({ ok: true, movements: saved });
     expect(server.received).toEqual([{ method: 'POST', url: '/api/stock/movements', authorization: `Bearer ${pass.token}`, body: { movements: lines } }]);
+  });
+
+  it('find a product by what was typed or scanned, made safe for an address', async () => {
+    server = await fakeServer(certificate, 200, { shop, product: riceOnWire, stock: -3 });
+    expect(await findStockItem(server.address, pass, 'A&B 1/2', pinned())).toEqual({ ok: true, shop, item: { product: rice, stock: -3 } });
+    expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/stock/find?codeOrBarcode=A%26B%201%2F2']);
+  });
+
+  it('save a delivery as typed, read into whole pieces with its note', async () => {
+    server = await fakeServer(certificate, 201, { movements: [line] });
+    const lines = [{ productId: id, name: rice.name, pieces: '1,200' }];
+    expect(await saveDelivery(server.address, pass, lines, ' DR 10234 ', pinned())).toEqual({ ok: true, movements: [line] });
+    expect(server.received[0]!.body).toEqual({ movements: [{ productId: id, type: 'from_supplier', quantityChange: 1200, note: 'DR 10234' }] });
+  });
+
+  it('save a count as the difference between what was counted and what KVNsys showed', async () => {
+    server = await fakeServer(certificate, 201, { movements: [line] });
+    await saveCount(server.address, pass, { productId: id, onHand: 24, counted: '22', reason: '2 torn' }, pinned());
+    expect(server.received[0]!.body).toEqual({ movements: [{ productId: id, type: 'adjustment', quantityChange: -2, note: '2 torn' }] });
+  });
+
+  it('catch a mistake in a delivery or a count without asking the server', async () => {
+    server = await fakeServer(certificate, 201, { movements: [line] });
+    expect(await saveDelivery(server.address, pass, [{ productId: id, name: rice.name, pieces: 'ten' }], '', pinned())).toEqual({
+      ok: false,
+      reason: 'refused',
+      message: `Sack of rice 25kg: "ten" isn't a number of pieces. Type a whole number, like 24.`,
+    });
+    expect(await saveCount(server.address, pass, { productId: id, onHand: 24, counted: '24', reason: 'x' }, pinned())).toMatchObject({
+      ok: false,
+      reason: 'refused',
+    });
+    expect(server.received).toEqual([]);
   });
 
   it("pass on the server's reason for each kind of no", async () => {

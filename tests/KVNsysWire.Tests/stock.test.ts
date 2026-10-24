@@ -1,4 +1,5 @@
 import {
+  FindStockItemPath,
   MovementOnWire,
   MovementsShown,
   ProductStockReply,
@@ -7,6 +8,7 @@ import {
   StockListReply,
   StockMovementsPath,
   StockMovementsRequest,
+  StockItemReply,
   StockPath,
 } from '@kvnsys/wire';
 import { describe, expect, it } from 'vitest';
@@ -39,6 +41,7 @@ describe('the stock calls', () => {
   it('live under /api/stock, and came with protocol 8', () => {
     expect(StockPath).toBe('/api/stock');
     expect(StockMovementsPath).toBe('/api/stock/movements');
+    expect(FindStockItemPath).toBe('/api/stock/find');
     expect(productStockPath('a/b')).toBe('/api/stock/a%2Fb');
     expect(ProtocolVersion).toBeGreaterThanOrEqual(8);
   });
@@ -49,6 +52,7 @@ describe('the stock calls', () => {
     expect(ProductStockReply.safeParse({ shop, product, stock: 24, movements: [line], more: false }).success).toBe(true);
     expect(ProductStockReply.safeParse({ shop, product, stock: 24, movements: [line] }).success).toBe(false);
     expect(MovementsShown).toBeGreaterThan(0);
+    expect(StockItemReply.safeParse({ shop, product, stock: -3 }).success).toBe(true);
   });
 
   it("carry who saved a line, with no name when their account isn't on this server, or nobody", () => {

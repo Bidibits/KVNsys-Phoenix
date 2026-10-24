@@ -4,6 +4,17 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   connectToServer,
+  findStockItem,
+  getProductStock,
+  listStock,
+  saveCount,
+  saveDelivery,
+  type CountForm,
+  type DeliveryLineForm,
+  type ProductStockResult,
+  type RecordStockResult,
+  type StockItemResult,
+  type StockListResult,
   listProducts,
   listRoles,
   listUsers,
@@ -36,6 +47,11 @@ import {
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import {
   ConnectChannel,
+  CountStockChannel,
+  FindStockItemChannel,
+  ListStockChannel,
+  ProductStockChannel,
+  ReceiveStockChannel,
   ListProductsChannel,
   ListRolesChannel,
   ListUsersChannel,
@@ -193,6 +209,29 @@ function asRoleForm(value: unknown): RoleForm | undefined {
 
 const asText = (value: unknown): string | undefined => (typeof value === 'string' && value.length <= 2000 ? value : undefined);
 
+/** A delivery's lines as the screens sent them: a product id, its name and the pieces as typed, for at most 500 lines. */
+function asDeliveryLines(value: unknown): DeliveryLineForm[] | undefined {
+  if (!Array.isArray(value) || value.length > 500) return undefined;
+  const lines: DeliveryLineForm[] = [];
+  for (const line of value as unknown[]) {
+    if (typeof line !== 'object' || line === null) return undefined;
+    const { productId, name, pieces } = line as Record<string, unknown>;
+    const id = asProductId(productId);
+    if (!id || asText(name) === undefined || asText(pieces) === undefined) return undefined;
+    lines.push({ productId: id, name: name as string, pieces: pieces as string });
+  }
+  return lines;
+}
+
+/** A count as the screens sent it: the product, the stock they showed, and two pieces of text. */
+function asCountForm(value: unknown): CountForm | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const { productId, onHand, counted, reason } = value as Record<string, unknown>;
+  const id = asProductId(productId);
+  if (!id || !Number.isSafeInteger(onHand) || asText(counted) === undefined || asText(reason) === undefined) return undefined;
+  return { productId: id, onHand: onHand as number, counted: counted as string, reason: reason as string };
+}
+
 const NotAForm: Refused = { ok: false, reason: 'refused', message: "The form didn't arrive whole. Close it and try again." };
 
 ipcMain.handle(ListProductsChannel, (): Promise<ProductListResult> => withPass(listProducts));
@@ -247,6 +286,33 @@ ipcMain.handle(SaveRoleChannel, async (_event, id: unknown, typed: unknown): Pro
   const form = asRoleForm(typed);
   if (roleId === undefined || !form) return NotAForm;
   return withPass((address, pass, options) => saveRoleForm(address, pass, roleId, form, options));
+});
+
+ipcMain.handle(ListStockChannel, (): Promise<StockListResult> => withPass(listStock));
+
+ipcMain.handle(FindStockItemChannel, async (_event, typed: unknown): Promise<StockItemResult> => {
+  const codeOrBarcode = asText(typed);
+  if (codeOrBarcode === undefined) return NotAForm;
+  return withPass((address, pass, options) => findStockItem(address, pass, codeOrBarcode, options));
+});
+
+ipcMain.handle(ProductStockChannel, async (_event, id: unknown): Promise<ProductStockResult> => {
+  const productId = asProductId(id);
+  if (!productId) return NotAForm;
+  return withPass((address, pass, options) => getProductStock(address, pass, productId, options));
+});
+
+ipcMain.handle(ReceiveStockChannel, async (_event, typed: unknown, note: unknown): Promise<RecordStockResult> => {
+  const lines = asDeliveryLines(typed);
+  const shared = asText(note);
+  if (!lines || shared === undefined) return NotAForm;
+  return withPass((address, pass, options) => saveDelivery(address, pass, lines, shared, options));
+});
+
+ipcMain.handle(CountStockChannel, async (_event, typed: unknown): Promise<RecordStockResult> => {
+  const form = asCountForm(typed);
+  if (!form) return NotAForm;
+  return withPass((address, pass, options) => saveCount(address, pass, form, options));
 });
 
 function openWindow(): void {

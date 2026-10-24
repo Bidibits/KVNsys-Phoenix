@@ -8,6 +8,8 @@ import { ProductOnWire } from './products.js';
  * always the server's own shop's: each branch has its own server, which knows which shop it is.
  *
  *   GET  /api/stock                   every product, by name, with its stock here
+ *   GET  /api/stock/find?codeOrBarcode=PRD-0042
+ *                                     one product, by what was typed or scanned, with its stock here
  *   GET  /api/stock/<productId>       one product's stock, and its newest movements
  *   POST /api/stock/movements         record goods in, or put counts right: all saved, or none (201)
  *
@@ -17,6 +19,7 @@ import { ProductOnWire } from './products.js';
  */
 export const StockPath = '/api/stock';
 export const StockMovementsPath = '/api/stock/movements';
+export const FindStockItemPath = '/api/stock/find';
 export const productStockPath = (productId: string) => `${StockPath}/${encodeURIComponent(productId)}`;
 
 /** How many of a product's movements come back at most, newest first. */
@@ -51,6 +54,13 @@ export const StockListReply = z.object({
   items: z.array(z.object({ product: ProductOnWire, stock: z.number().int() })),
 });
 export type StockListReply = z.infer<typeof StockListReply>;
+
+/**
+ * One product and its stock here. Finding needs only the right to see stock, so whoever receives
+ * goods doesn't also need the right to see the catalog.
+ */
+export const StockItemReply = z.object({ shop: ShopOnWire, product: ProductOnWire, stock: z.number().int() });
+export type StockItemReply = z.infer<typeof StockItemReply>;
 
 export const ProductStockReply = z.object({
   shop: ShopOnWire,

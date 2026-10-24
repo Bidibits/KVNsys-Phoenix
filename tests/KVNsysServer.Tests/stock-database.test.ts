@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net';
 import type { INestApplication } from '@nestjs/common';
 import {
   addProduct,
+  findStockItem,
   getProductStock,
   listStock,
   recordStock,
@@ -61,8 +62,8 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     return result.session;
   }
 
-  async function newProduct(code: string, name: string): Promise<Product> {
-    const added = await addProduct(address, passes.admin!, { code, barcode: null, name, retailPrice: 10000, status: 'Active', description: null }, { pin });
+  async function newProduct(code: string, name: string, barcode: string | null = null): Promise<Product> {
+    const added = await addProduct(address, passes.admin!, { code, barcode, name, retailPrice: 10000, status: 'Active', description: null }, { pin });
     if (!added.ok) throw new Error(added.message);
     return added.product;
   }
@@ -101,7 +102,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     address = `https://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}`;
     for (const username of ['admin', 'ana', 'ben', 'cora', 'dan']) passes[username] = await passFor(username);
     rice = await newProduct('PRD-0042', 'Sack of rice 25kg');
-    sardines = await newProduct('PRD-0007', 'Sardines 155g');
+    sardines = await newProduct('PRD-0007', 'Sardines 155g', '4800249211116');
     soap = await newProduct('PRD-0100', 'Bath soap');
   }, 120_000);
 
@@ -160,6 +161,16 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     expect(one).toMatchObject({ stock: MovementsShown + 1, more: true });
     expect(one.movements).toHaveLength(MovementsShown);
     expect(one.movements[0]!.resultingOnHand).toBe(MovementsShown + 1);
+  });
+
+  it('finds a product by its code or its barcode, capitals ignored, with its stock here, for anyone who may see stock', async () => {
+    const { pass, options } = as('cora');
+    expect(await findStockItem(address, pass, ' prd-0007 ', options)).toEqual({ ok: true, shop: expect.objectContaining({ code: 'HQ' }), item: { product: sardines, stock: 22 } });
+    expect(await findStockItem(address, pass, '4800249211116', options)).toMatchObject({ ok: true, item: { product: { id: sardines.id } } });
+    expect(await findStockItem(address, pass, 'PRD-9999', options)).toEqual({ ok: false, reason: 'not-found', message: 'No product has the code or barcode PRD-9999.' });
+    expect(await findStockItem(address, pass, '  ', options)).toEqual({ ok: false, reason: 'refused', message: 'Type or scan a code or a barcode.' });
+    const dan = as('dan');
+    expect(await findStockItem(address, dan.pass, 'PRD-0007', dan.options)).toEqual({ ok: false, reason: 'not-allowed', message: lacksRight('stock.view') });
   });
 
   it("names nobody for a line saved by someone whose account isn't on this server", async () => {

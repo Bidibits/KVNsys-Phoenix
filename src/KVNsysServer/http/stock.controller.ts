@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import {
   Accesses,
   checkStockChange,
@@ -19,6 +19,7 @@ import {
   StockMovementsRequest,
   type MovementOnWire,
   type ProductStockReply,
+  type StockItemReply,
   type StockListReply,
   type StockMovementsReply,
 } from '@kvnsys/wire';
@@ -58,6 +59,17 @@ export class StockController {
     const [products, levels] = await Promise.all([parts.catalog.list(), parts.ledger.levels(shop.id)]);
     const stock = new Map(levels.map((level) => [level.productId, level.stock]));
     return { shop, items: products.map((product) => ({ product: toWire(product), stock: stock.get(product.id) ?? 0 })) };
+  }
+
+  /** By what was typed or scanned: a code or a barcode, capitals ignored. Declared before ":productId". */
+  @Get('find')
+  async find(@Headers('authorization') authorization: string | undefined, @Query('codeOrBarcode') typed: unknown): Promise<StockItemReply> {
+    const { parts, shop } = await this.allow(authorization, [Accesses.StockView]);
+    if (typeof typed !== 'string' || !typed.trim()) throw problem(400, 'Type or scan a code or a barcode.');
+    // A value is never one product's code and another's barcode, so this finds one product at most.
+    const product = (await parts.catalog.findByCode(typed)) ?? (await parts.catalog.findByBarcode(typed));
+    if (!product) throw problem(404, `No product has the code or barcode ${typed.trim()}.`);
+    return { shop, product: toWire(product), stock: await parts.ledger.onHand(shop.id, product.id) };
   }
 
   /** "movements" is only ever a POST, so it's never taken for a product id here. */

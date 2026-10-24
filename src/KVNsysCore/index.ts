@@ -83,5 +83,13 @@ export {
   type StockLevel,
   type StockMovement,
 } from './inventory/stock-ledger.js';
+export {
+  readCount,
+  readDelivery,
+  readPieces,
+  type CountForm,
+  type DeliveryLineForm,
+  type HandMovement,
+} from './inventory/stock-forms.js';
 
 export { SetupStore, type SetupTransaction } from './setup/setup-store.js';

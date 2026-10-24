@@ -25,6 +25,7 @@ export {
   userPath,
 } from './users.js';
 export {
+  FindStockItemPath,
   MovementFields,
   MovementOnWire,
   MovementsShown,
@@ -35,6 +36,7 @@ export {
   StockMovementsPath,
   StockMovementsReply,
   StockMovementsRequest,
+  StockItemReply,
   StockPath,
 } from './stock.js';
 export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
