@@ -57,9 +57,10 @@ function toReceipt(row: Row): Receipt {
         ? { kind: row.discountKind as DiscountKind, idNumber: row.discountIdNumber ?? '', customerName: row.discountCustomerName ?? '' }
         : null,
     payment: { type: payment.paymentType as PaymentType, tendered: centavos(payment.amountTendered), change: centavos(payment.changeGiven) },
-    createdAt: row.createdAtDate.toISOString(),
-    createdByUser: row.createdByUser,
-    machineId: row.createdAtMachine,
+    // A receipt is recorded only once it's paid, so its settled event is when, by whom and where it was made.
+    createdAt: row.settledAtDate.toISOString(),
+    createdByUser: row.settledByUser,
+    machineId: row.settledAtMachine,
     shiftId: row.shiftId,
   };
 }
@@ -134,6 +135,12 @@ export class PrismaSalesJournal extends SalesJournal {
         createdAtMachine: lineage.machineId,
         createdAtLocation: lineage.locationId,
       };
+      // SCHEMA-PLAN's receipts have three events; paying is the one that makes a receipt here.
+      const settled = {
+        settledByUser: lineage.userId,
+        settledAtMachine: lineage.machineId,
+        settledAtLocation: lineage.locationId,
+      };
       const row = await tx.receipt.create({
         data: {
           id,
@@ -147,7 +154,7 @@ export class PrismaSalesJournal extends SalesJournal {
           discountKind: sale.discount?.kind ?? null,
           discountIdNumber: sale.discount?.idNumber ?? null,
           discountCustomerName: sale.discount?.customerName ?? null,
-          ...created,
+          ...settled,
           items: {
             create: sale.lines.map((line, index) => ({
               id: newId(),
@@ -182,7 +189,7 @@ export class PrismaSalesJournal extends SalesJournal {
   async between(locationId: string, from: Date, to: Date): Promise<ReceiptSummary[]> {
     if (!Uuid.test(locationId)) return [];
     const rows = await this.db.receipt.findMany({
-      where: { locationId, createdAtDate: { gte: from, lt: to } },
+      where: { locationId, settledAtDate: { gte: from, lt: to } },
       orderBy: { number: 'asc' },
       include: { items: { select: { quantity: true } } },
     });
@@ -190,8 +197,8 @@ export class PrismaSalesJournal extends SalesJournal {
       id: row.id,
       code: row.code,
       number: row.number,
-      createdAt: row.createdAtDate.toISOString(),
-      createdByUser: row.createdByUser,
+      createdAt: row.settledAtDate.toISOString(),
+      createdByUser: row.settledByUser,
       pieces: row.items.reduce((sum, item) => sum + item.quantity, 0),
       subtotal: centavos(row.subtotal),
       discountTotal: centavos(row.discountTotal),

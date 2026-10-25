@@ -112,7 +112,7 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
     });
     expect([await stockOf(sardines), await stockOf(rice)]).toEqual([-3, -1]);
     const ana = await db.user.findUniqueOrThrow({ where: { username: 'ana' } });
-    expect(await db.receipt.findUniqueOrThrow({ where: { id: sold.receipt.id } })).toMatchObject({ locationId: shopId, createdByUser: ana.id, createdAtLocation: shopId });
+    expect(await db.receipt.findUniqueOrThrow({ where: { id: sold.receipt.id } })).toMatchObject({ locationId: shopId, settledByUser: ana.id, settledAtLocation: shopId });
   });
 
   it("refuses a sale whose price changed after it was rung up, and records nothing", async () => {

@@ -125,7 +125,8 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
       db.$executeRaw`INSERT INTO inventory_logs (id, location_id, product_id, quantity_change, movement_type, source_table, source_id, resulting_on_hand)
                      VALUES (${randomUUID()}::uuid, ${hq}::uuid, ${rice}::uuid, ${quantity}, ${type}, ${sourceTable}, ${sourceId}::uuid, 0)`;
     await expect(insert(0, 'adjustment', null, null)).rejects.toThrow(/inventory_logs_quantity_change_not_zero/);
-    await expect(insert(1, 'disposal', null, null)).rejects.toThrow(/inventory_logs_movement_type_known/);
+    // The database takes SCHEMA-PLAN's seven kinds; anything else is refused.
+    await expect(insert(1, 'theft', null, null)).rejects.toThrow(/inventory_logs_movement_type_known/);
     await expect(insert(1, 'from_supplier', 'sales', null)).rejects.toThrow(/inventory_logs_source_whole/);
   });
 

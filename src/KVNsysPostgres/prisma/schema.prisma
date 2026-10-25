@@ -1,4 +1,5 @@
-// Phoenix's schema. Source: Release/SCHEMA-PLAN.md, brought across a few tables at a time.
+// Phoenix's schema: every table in Release/SCHEMA-PLAN.md (all of it since 2026-10-25). Where
+// Phoenix differs from the plan on purpose, docs/schema.md says how, and why.
 //
 // Every table keeps SCHEMA-PLAN's standard column order:
 //   id · code · name · [this table's own columns] · status · description
@@ -30,8 +31,8 @@ model Location {
   id               String  @id @db.Uuid
   code             String  @unique
   name             String
-  /// PSGC codes. Nullable, and not yet foreign keys: the five PSGC tables come later,
-  /// once their format is checked against the PSA list (SCHEMA-PLAN "Still open" #1).
+  /// PSGC codes, each pointing at its place table. Any can be left empty; the place tables are
+  /// empty until PSA's list is checked and loaded (SCHEMA-PLAN "Still open" #1).
   countryCode      String? @map("country_code")
   regionCode       String? @map("region_code")
   provinceCode     String? @map("province_code")
@@ -51,11 +52,20 @@ model Location {
   createdAtLocation String?   @map("created_at_location") @db.Uuid
   createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
 
-  machines      Machine[]
-  inventory     Inventory[]
-  inventoryLogs InventoryLog[]
-  receipts      Receipt[]
-  shifts        Shift[]
+  country      Country?      @relation(fields: [countryCode], references: [code], onDelete: Restrict)
+  region       Region?       @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  province     Province?     @relation(fields: [provinceCode], references: [code], onDelete: Restrict)
+  municipality Municipality? @relation(fields: [municipalityCode], references: [code], onDelete: Restrict)
+  barangay     Barangay?     @relation(fields: [barangayCode], references: [code], onDelete: Restrict)
+
+  machines                Machine[]
+  inventory               Inventory[]
+  inventoryLogs           InventoryLog[]
+  receipts                Receipt[]
+  shifts                  Shift[]
+  stockDocumentsFrom      StockDocument[]  @relation("StockDocumentSourceLocation")
+  stockDocumentsTo        StockDocument[]  @relation("StockDocumentDestinationLocation")
+  transferImportsReceived TransferImport[]
 
   @@map("locations")
 }
@@ -119,16 +129,17 @@ model User {
   createdAtLocation String?   @map("created_at_location") @db.Uuid
   createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
 
-  role Role @relation(fields: [roleId], references: [id])
+  role     Role         @relation(fields: [roleId], references: [id])
+  settings UserSetting?
 
   @@map("users")
 }
 
 /// A register, or the server PC itself. Every row in the system records which machine wrote it.
 model Machine {
-  id              String  @id @db.Uuid
-  code            String  @unique
-  name            String
+  id          String  @id @db.Uuid
+  code        String  @unique
+  name        String
   /// The PC's hardware id (Windows MachineGuid), read by the KVNsys program running on it.
   /// It survives renaming the PC; reinstalling Windows changes it. Null only if it couldn't
   /// be read.
@@ -154,21 +165,39 @@ model Machine {
 }
 
 /// Something the shop sells. HQ encodes it; later, branches receive it with the delivery.
-/// Only the launch list's columns so far. SCHEMA-PLAN's others (classification, unit, cost and
-/// the other prices, warranty, image) come with the steps that need them.
+/// Every column SCHEMA-PLAN names. The product form and the till use code, barcode, name, retail
+/// price and status so far; the rest are kept but not yet shown or applied (docs/schema.md).
 model Product {
-  id          String  @id @db.Uuid
+  id                String   @id @db.Uuid
   /// What staff type: PRD-0042.
-  code        String  @unique
+  code              String   @unique
   /// What the scanner reads. Loose goods have none; when present it's unique.
-  barcode     String? @unique
+  barcode           String?  @unique
   /// What a person calls it: Sack of rice 25kg.
-  name        String
+  name              String
+  /// One picture, turned into one format when it's put in, so no image type is kept.
+  image             Bytes?
+  categoryId        String?  @map("category_id") @db.Uuid
+  brandId           String?  @map("brand_id") @db.Uuid
+  supplierId        String?  @map("supplier_id") @db.Uuid
+  manufacturerId    String?  @map("manufacturer_id") @db.Uuid
+  /// pc, box, pack: free text for now (SCHEMA-PLAN's gap 3 suggests a small table of units later).
+  unitOfMeasure     String?  @map("unit_of_measure")
+  /// A service, say, doesn't: selling it would take nothing out of stock.
+  tracksStock       Boolean  @default(true) @map("tracks_stock")
+  /// What the shop pays: whatever someone last typed, not worked out from deliveries.
+  costPrice         Decimal  @default(0) @map("cost_price") @db.Decimal(14, 2)
   /// The shelf price in pesos, exact to the centavo: numeric, never floating point. The migration
-  /// also refuses a negative one. KVNsysCore works in whole centavos.
-  retailPrice Decimal @map("retail_price") @db.Decimal(14, 2)
-  status      String  @default("Active")
-  description String?
+  /// refuses a negative price. KVNsysCore works in whole centavos.
+  retailPrice       Decimal  @map("retail_price") @db.Decimal(14, 2)
+  promoPrice        Decimal? @map("promo_price") @db.Decimal(14, 2)
+  wholesalePrice    Decimal? @map("wholesale_price") @db.Decimal(14, 2)
+  /// How many pieces make a sale wholesale.
+  wholesaleQuantity Int?     @map("wholesale_quantity")
+  hasWarranty       Boolean  @default(false) @map("has_warranty")
+  warrantyMonths    Int      @default(0) @map("warranty_months")
+  status            String   @default("Active")
+  description       String?
 
   updatedByUser     String?   @map("updated_by_user") @db.Uuid
   updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
@@ -179,9 +208,16 @@ model Product {
   createdAtLocation String?   @map("created_at_location") @db.Uuid
   createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
 
-  inventory     Inventory[]
-  inventoryLogs InventoryLog[]
-  receiptItems  ReceiptItem[]
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brand        Brand?        @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  manufacturer Manufacturer? @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
+
+  inventory          Inventory[]
+  inventoryLogs      InventoryLog[]
+  receiptItems       ReceiptItem[]
+  stockDocumentItems StockDocumentItem[]
+  consolidatedSales  ConsolidatedSale[]
 
   @@map("products")
 }
@@ -190,13 +226,17 @@ model Product {
 /// reading stock is one row rather than a sum over every sale. Only the stock ledger writes it,
 /// in the same transaction as the movement line, so the two never disagree. No id: the key is
 /// (location, product). Whole pieces only; nothing the shop sells is sold by weight or length.
-/// SCHEMA-PLAN's min_stock, max_stock and reorder_point come with reorder alerts.
+/// min_stock, max_stock and reorder_point are kept for reorder alerts, which aren't built yet.
 model Inventory {
-  locationId String @map("location_id") @db.Uuid
-  productId  String @map("product_id") @db.Uuid
+  locationId   String @map("location_id") @db.Uuid
+  productId    String @map("product_id") @db.Uuid
   /// Can go below zero. The ledger records what happened; whether a sale is refused when the
   /// count says none are left is a rule for selling to decide, not for the ledger.
-  stock      Int    @default(0)
+  stock        Int    @default(0)
+  minStock     Int    @default(0) @map("min_stock")
+  /// Empty: no ceiling.
+  maxStock     Int?   @map("max_stock")
+  reorderPoint Int    @default(0) @map("reorder_point")
 
   updatedByUser     String?   @map("updated_by_user") @db.Uuid
   updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
@@ -215,8 +255,8 @@ model Inventory {
 }
 
 /// One change to a location's stock of a product: the stock ledger. Append-only: a mistake is put
-/// right by a second line the other way, never by editing or deleting one. movement_type says why
-/// (the migration lists the allowed ones); source_table + source_id say which document caused it,
+/// right by a second line the other way, never by editing or deleting one. movement_type says why:
+/// the migration allows SCHEMA-PLAN's seven, and KVNsysCore records the ones built so far. source_table + source_id say which document caused it,
 /// such as the sale. resulting_on_hand is the stock just after this line, so "what did stock read
 /// at 14:32" is one row, and a running sum that disagrees with it means something wrote outside
 /// the ledger.
@@ -244,11 +284,13 @@ model InventoryLog {
   @@map("inventory_logs")
 }
 
-/// One customer sale, as charged: SCHEMA-PLAN's receipts, without its shift (shifts come later).
-/// The money columns are stored, not worked out again when read: a receipt is evidence of what was
-/// charged, and today's prices must never rewrite it. Numbered per shop with no gaps (number), and
-/// known by the shop's code and that number (code, HQ-000042). Never changed or deleted: the
-/// migration refuses both. created_* is when it was paid, by whom, where.
+/// One customer sale, as charged: SCHEMA-PLAN's receipts. The money columns are stored, not worked out
+/// again when read: a receipt is evidence of what was charged, and today's prices must never rewrite
+/// it. Numbered per shop with no gaps (number), and known by the shop's code and that number (code,
+/// HQ-000042). Never changed or deleted: the migration refuses both. Its three events, as the plan
+/// has them: settled_* is when it was paid, by whom, where (a receipt is recorded only once it's
+/// paid); opened_* stays empty until the register says when the sale began; voided_* and void_reason
+/// wait for voiding.
 model Receipt {
   id                   String  @id @db.Uuid
   /// The shop's code and the receipt's number there: HQ-000042.
@@ -266,12 +308,21 @@ model Receipt {
   discountIdNumber     String? @map("discount_id_number")
   discountCustomerName String? @map("discount_customer_name")
   status               String  @default("Paid")
+  voidReason           String? @map("void_reason")
   description          String?
 
-  createdByUser     String?  @map("created_by_user") @db.Uuid
-  createdAtMachine  String?  @map("created_at_machine") @db.Uuid
-  createdAtLocation String?  @map("created_at_location") @db.Uuid
-  createdAtDate     DateTime @default(now()) @map("created_at_date") @db.Timestamptz(6)
+  openedByUser      String?   @map("opened_by_user") @db.Uuid
+  openedAtMachine   String?   @map("opened_at_machine") @db.Uuid
+  openedAtLocation  String?   @map("opened_at_location") @db.Uuid
+  openedAtDate      DateTime? @map("opened_at_date") @db.Timestamptz(6)
+  settledByUser     String?   @map("settled_by_user") @db.Uuid
+  settledAtMachine  String?   @map("settled_at_machine") @db.Uuid
+  settledAtLocation String?   @map("settled_at_location") @db.Uuid
+  settledAtDate     DateTime  @default(now()) @map("settled_at_date") @db.Timestamptz(6)
+  voidedByUser      String?   @map("voided_by_user") @db.Uuid
+  voidedAtMachine   String?   @map("voided_at_machine") @db.Uuid
+  voidedAtLocation  String?   @map("voided_at_location") @db.Uuid
+  voidedAtDate      DateTime? @map("voided_at_date") @db.Timestamptz(6)
 
   location Location         @relation(fields: [locationId], references: [id], onDelete: Restrict)
   shift    Shift?           @relation(fields: [shiftId], references: [id], onDelete: Restrict)
@@ -279,7 +330,7 @@ model Receipt {
   payments ReceiptPayment[]
 
   @@unique([locationId, number])
-  @@index([locationId, createdAtDate])
+  @@index([locationId, settledAtDate])
   @@index([shiftId])
   @@map("receipts")
 }
@@ -364,4 +415,319 @@ model Shift {
   @@unique([locationId, number])
   @@index([locationId, openedByUser, status])
   @@map("shifts")
+}
+
+/// SCHEMA-PLAN 1–5, where things are: the official Philippine place codes (PSGC), each level pointing
+/// at the one above. No id, no status, no lineage: the PSA hands the codes out, they're unique
+/// nationwide and never change, so the code is the key. Empty until PSA's published list is checked
+/// and loaded (SCHEMA-PLAN "Still open" #1).
+model Country {
+  code String @id
+  name String
+
+  regions   Region[]
+  locations Location[]
+
+  @@map("countries")
+}
+
+model Region {
+  code        String @id
+  name        String
+  countryCode String @map("country_code")
+
+  country   Country    @relation(fields: [countryCode], references: [code], onDelete: Restrict)
+  provinces Province[]
+  locations Location[]
+
+  @@map("regions")
+}
+
+model Province {
+  code       String @id
+  name       String
+  regionCode String @map("region_code")
+
+  region         Region         @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  municipalities Municipality[]
+  locations      Location[]
+
+  @@map("provinces")
+}
+
+/// A city or a municipality: peers in the Philippines, not levels, so one table says which (type).
+model Municipality {
+  code         String @id
+  name         String
+  provinceCode String @map("province_code")
+  type         String @default("Municipality")
+
+  province  Province   @relation(fields: [provinceCode], references: [code], onDelete: Restrict)
+  barangays Barangay[]
+  locations Location[]
+
+  @@map("municipalities")
+}
+
+model Barangay {
+  code             String @id
+  name             String
+  municipalityCode String @map("municipality_code")
+
+  municipality Municipality @relation(fields: [municipalityCode], references: [code], onDelete: Restrict)
+  locations    Location[]
+
+  @@map("barangays")
+}
+
+/// SCHEMA-PLAN 11: who changed what. One row per column changed, so "every time anyone changed a
+/// price" is a query rather than a text search. Kept as written: the migration refuses to change or
+/// remove a row. Nothing writes here yet.
+model Audit {
+  id                    String   @id @db.Uuid
+  tableName             String   @map("table_name")
+  recordId              String   @map("record_id") @db.Uuid
+  /// Empty when the change is to the record as a whole, such as creating it.
+  columnName            String?  @map("column_name")
+  valueBefore           String?  @map("value_before")
+  valueAfter            String?  @map("value_after")
+  /// Created, Updated or Decommissioned.
+  changeType            String   @map("change_type")
+  /// Manual (a person, through a screen) or Automatic (setting up, a register recording itself).
+  changeSource          String   @map("change_source")
+  implementedByUser     String?  @map("implemented_by_user") @db.Uuid
+  implementedAtMachine  String?  @map("implemented_at_machine") @db.Uuid
+  implementedAtLocation String?  @map("implemented_at_location") @db.Uuid
+  implementedAtDate     DateTime @default(now()) @map("implemented_at_date") @db.Timestamptz(6)
+
+  @@index([tableName, recordId])
+  @@map("audits")
+}
+
+/// SCHEMA-PLAN 12–17, the catalogue. HQ owns it and sends it to the branches. No screens yet.
+model Brand {
+  id          String  @id @db.Uuid
+  code        String  @unique
+  name        String
+  status      String  @default("Active")
+  description String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  products     Product[]
+  affiliations Affiliation[]
+
+  @@map("brands")
+}
+
+model Manufacturer {
+  id          String  @id @db.Uuid
+  code        String  @unique
+  name        String
+  status      String  @default("Active")
+  description String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  products     Product[]
+  affiliations Affiliation[]
+
+  @@map("manufacturers")
+}
+
+model Supplier {
+  id          String  @id @db.Uuid
+  code        String  @unique
+  name        String
+  address     String?
+  status      String  @default("Active")
+  description String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  products           Product[]
+  affiliations       Affiliation[]
+  stockDocumentsFrom StockDocument[] @relation("StockDocumentSourceSupplier")
+  stockDocumentsTo   StockDocument[] @relation("StockDocumentDestinationSupplier")
+
+  @@map("suppliers")
+}
+
+/// A tree: a category can sit inside another (parent_category_id), or at the top (empty).
+model Category {
+  id               String  @id @db.Uuid
+  code             String  @unique
+  name             String
+  parentCategoryId String? @map("parent_category_id") @db.Uuid
+  status           String  @default("Active")
+  description      String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  parent       Category?     @relation("CategoryTree", fields: [parentCategoryId], references: [id], onDelete: Restrict)
+  children     Category[]    @relation("CategoryTree")
+  products     Product[]
+  affiliations Affiliation[]
+
+  @@map("categories")
+}
+
+/// The cascading filter for encoding a product: choosing a brand narrows the manufacturers, which
+/// narrows the suppliers, which narrows the categories. Each row is one combination that goes together.
+model Affiliation {
+  id             String  @id @db.Uuid
+  categoryId     String? @map("category_id") @db.Uuid
+  brandId        String? @map("brand_id") @db.Uuid
+  manufacturerId String? @map("manufacturer_id") @db.Uuid
+  supplierId     String? @map("supplier_id") @db.Uuid
+
+  createdByUser     String?  @map("created_by_user") @db.Uuid
+  createdAtMachine  String?  @map("created_at_machine") @db.Uuid
+  createdAtLocation String?  @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brand        Brand?        @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  manufacturer Manufacturer? @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+
+  @@map("affiliations")
+}
+
+/// SCHEMA-PLAN 18–19: a delivery as paperwork, moving stock between two parties. Each end is a
+/// supplier or a shop, exactly one of the two (the migration checks it), and the kind says which:
+/// from_supplier, to_supplier or transfer. draft, open, closed or cancelled. Fully received and
+/// short are worked out from the lines, never stored. No screens yet.
+model StockDocument {
+  id                    String  @id @db.Uuid
+  code                  String  @unique
+  kind                  String
+  sourceSupplierId      String? @map("source_supplier_id") @db.Uuid
+  sourceLocationId      String? @map("source_location_id") @db.Uuid
+  destinationSupplierId String? @map("destination_supplier_id") @db.Uuid
+  destinationLocationId String? @map("destination_location_id") @db.Uuid
+  status                String  @default("draft")
+  description           String?
+
+  updatedByUser     String?   @map("updated_by_user") @db.Uuid
+  updatedAtMachine  String?   @map("updated_at_machine") @db.Uuid
+  updatedAtLocation String?   @map("updated_at_location") @db.Uuid
+  updatedAtDate     DateTime? @map("updated_at_date") @db.Timestamptz(6)
+  createdByUser     String?   @map("created_by_user") @db.Uuid
+  createdAtMachine  String?   @map("created_at_machine") @db.Uuid
+  createdAtLocation String?   @map("created_at_location") @db.Uuid
+  createdAtDate     DateTime  @default(now()) @map("created_at_date") @db.Timestamptz(6)
+
+  sourceSupplier      Supplier?           @relation("StockDocumentSourceSupplier", fields: [sourceSupplierId], references: [id], onDelete: Restrict)
+  sourceLocation      Location?           @relation("StockDocumentSourceLocation", fields: [sourceLocationId], references: [id], onDelete: Restrict)
+  destinationSupplier Supplier?           @relation("StockDocumentDestinationSupplier", fields: [destinationSupplierId], references: [id], onDelete: Restrict)
+  destinationLocation Location?           @relation("StockDocumentDestinationLocation", fields: [destinationLocationId], references: [id], onDelete: Restrict)
+  items               StockDocumentItem[]
+
+  @@map("stock_documents")
+}
+
+/// One product on a delivery: how many were expected, and how many have come. No cost here; a
+/// product's cost price is what someone last typed.
+model StockDocumentItem {
+  id               String @id @db.Uuid
+  documentId       String @map("document_id") @db.Uuid
+  productId        String @map("product_id") @db.Uuid
+  /// Whole pieces.
+  expectedQuantity Int    @map("expected_quantity")
+  receivedQuantity Int    @default(0) @map("received_quantity")
+
+  document StockDocument @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  product  Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([documentId])
+  @@map("stock_document_items")
+}
+
+/// SCHEMA-PLAN 26: "have I already taken this delivery file in?", kept by the shop that took it.
+/// from_location is the sending shop's id, which this database may not hold, so it points nowhere.
+model TransferImport {
+  documentId      String   @id @map("document_id") @db.Uuid
+  fromLocation    String   @map("from_location") @db.Uuid
+  toLocation      String   @map("to_location") @db.Uuid
+  createdAtSource DateTime @map("created_at_source") @db.Timestamptz(6)
+  lineCount       Int      @map("line_count")
+  importedAt      DateTime @default(now()) @map("imported_at") @db.Timestamptz(6)
+
+  to Location @relation(fields: [toLocation], references: [id], onDelete: Restrict)
+
+  @@map("transfer_imports")
+}
+
+/// SCHEMA-PLAN 27: a branch's sales file, taken in at HQ. location_id is the branch's id, kept at
+/// HQ as sent, so it points nowhere.
+model SalesImport {
+  documentId  String   @id @map("document_id") @db.Uuid
+  locationId  String   @map("location_id") @db.Uuid
+  generatedAt DateTime @map("generated_at") @db.Timestamptz(6)
+  importedAt  DateTime @default(now()) @map("imported_at") @db.Timestamptz(6)
+
+  sales ConsolidatedSale[]
+
+  @@map("sales_imports")
+}
+
+/// SCHEMA-PLAN 28: HQ's view of what every branch sold, one row per product per sales file.
+model ConsolidatedSale {
+  id          String  @id @db.Uuid
+  documentId  String  @map("document_id") @db.Uuid
+  locationId  String  @map("location_id") @db.Uuid
+  productId   String  @map("product_id") @db.Uuid
+  productCode String  @map("product_code")
+  productName String  @map("product_name")
+  /// Whole pieces.
+  quantity    Int
+  revenue     Decimal @db.Decimal(14, 2)
+
+  document SalesImport @relation(fields: [documentId], references: [documentId], onDelete: Restrict)
+  product  Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([productId])
+  @@index([locationId])
+  @@map("consolidated_sales")
+}
+
+/// SCHEMA-PLAN 29: what a person changed about how the screens look (columns, sort, theme), kept on
+/// the server so it follows them to whichever counter they sign in at. Opaque to the server.
+model UserSetting {
+  userId    String   @id @map("user_id") @db.Uuid
+  settings  String
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }

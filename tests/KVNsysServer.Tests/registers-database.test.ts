@@ -100,7 +100,7 @@ describeWithDatabase('registers over HTTPS, through the client engine, against a
     const sold = await recordSale(address, ana.session, { cart: [{ product: added.product, quantity: 1 }], discount: null, tendered: '30' }, { pin });
     expect(sold).toMatchObject({ ok: true, register: 'New register (COUNTER-PC)' });
     if (!sold.ok) return;
-    expect(await db.receipt.findUniqueOrThrow({ where: { id: sold.receipt.id } })).toMatchObject({ createdAtMachine: register.id });
+    expect(await db.receipt.findUniqueOrThrow({ where: { id: sold.receipt.id } })).toMatchObject({ settledAtMachine: register.id });
     expect(await db.inventoryLog.findFirstOrThrow({ where: { sourceId: sold.receipt.id } })).toMatchObject({ createdAtMachine: register.id });
 
     const noRegister = await signInAt('ana', null);
@@ -119,7 +119,7 @@ describeWithDatabase('registers over HTTPS, through the client engine, against a
     ]);
     const r01 = listed.registers[1]!;
     expect(await changeRegister(address, admin.session, r01.id, { name: ' Counter 1 ', status: 'Active' }, { pin })).toMatchObject({ ok: true, register: { name: 'Counter 1' } });
-    const receipt = await db.receipt.findFirstOrThrow({ where: { createdAtMachine: r01.id } });
+    const receipt = await db.receipt.findFirstOrThrow({ where: { settledAtMachine: r01.id } });
     expect(await getReceipt(address, (await signInAt('ana', counter)).session, receipt.id, { pin })).toMatchObject({ ok: true, register: 'Counter 1' });
     expect((await signInAt('ana', counter)).user.register).toEqual({ code: 'HQ-R01', name: 'Counter 1' });
   });

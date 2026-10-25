@@ -136,6 +136,13 @@ and everything a user sees, is called KVNsys.
   Alt+Right, and the mouse's own back and forward buttons, too), and on every list a search box
   that keeps only the rows holding every word typed. "Saved …" pops up in a corner and goes on its
   own. Throwing work away asks first: closing a delivery that has lines in it, and Clear sale.
+- **The whole planned database.** Every table and column in `Release/SCHEMA-PLAN.md` is in place:
+  the place tables, the catalogue (brands, manufacturers, suppliers, categories, and every product
+  field), deliveries as paperwork, reorder levels, voiding on receipts, the audit log, HQ's files,
+  and each person's settings. The database itself checks the plan's rules, such as a delivery going
+  from exactly one supplier or shop to exactly one. Most of the new tables have no screens yet.
+  [`docs/schema.md`](docs/schema.md) lists every table, what uses it, and where Phoenix differs from
+  the plan and why.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
@@ -148,7 +155,7 @@ building a screen.
   `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
   trust the next server it connects to.
 - The server prints its certificate fingerprint when it starts, so the first connection can be
-  checked against it. The schema (twelve tables, in one baseline migration) is in
+  checked against it. The schema (all 29 of SCHEMA-PLAN's tables, in one baseline migration) is in
   `src/KVNsysPostgres/prisma/`.
 
 ## How it runs
