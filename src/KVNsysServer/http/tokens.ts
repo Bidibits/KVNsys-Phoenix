@@ -26,3 +26,6 @@ export const RegistersOperation = Symbol('RegistersOperation');
 
 /** The shifts, the server's shop, the accounts and the rights check, or null when there's no database. */
 export const ShiftsOperation = Symbol('ShiftsOperation');
+
+/** The catalogue's four lists and the rights check, or null when there's no database. */
+export const CatalogOperation = Symbol('CatalogOperation');

@@ -2,7 +2,7 @@ import type { AccessName, SignedInUser } from '@kvnsys/client';
 import { Tile } from '@kvnsys/ui';
 
 /** The areas Home can open. Each joins as it's built (design-direction.md, rule 4). */
-export type Area = 'sell' | 'sales' | 'products' | 'stock' | 'users' | 'roles' | 'registers';
+export type Area = 'sell' | 'sales' | 'products' | 'suppliers' | 'brands' | 'manufacturers' | 'categories' | 'stock' | 'users' | 'roles' | 'registers';
 
 const Areas: { area: Area; title: string; description: string; right: AccessName; cannot: string }[] = [
   {
@@ -25,6 +25,34 @@ const Areas: { area: Area; title: string; description: string; right: AccessName
     description: 'Every product, with its code, barcode and price.',
     right: 'products.view',
     cannot: "Your role can't see products. Ask a manager.",
+  },
+  {
+    area: 'suppliers',
+    title: 'Suppliers',
+    description: 'Who the shop buys from, and where they are.',
+    right: 'products.view',
+    cannot: "Your role can't see the product lists. Ask a manager.",
+  },
+  {
+    area: 'brands',
+    title: 'Brands',
+    description: 'The brands products are sold under.',
+    right: 'products.view',
+    cannot: "Your role can't see the product lists. Ask a manager.",
+  },
+  {
+    area: 'manufacturers',
+    title: 'Manufacturers',
+    description: 'Who makes the products.',
+    right: 'products.view',
+    cannot: "Your role can't see the product lists. Ask a manager.",
+  },
+  {
+    area: 'categories',
+    title: 'Categories',
+    description: 'How products are grouped, one group inside another.',
+    right: 'products.view',
+    cannot: "Your role can't see the product lists. Ask a manager.",
   },
   {
     area: 'stock',

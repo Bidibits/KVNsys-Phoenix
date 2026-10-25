@@ -2,6 +2,7 @@
 export { checkDatabase, knownMigrations, type DatabaseCheck, type DatabaseProblem } from './check-database.js';
 export { applyDatabaseUpdates, createDatabaseIfMissing, isEmptyDatabase } from './database-updates.js';
 export { createPrismaClient, type PrismaClient } from './connection.js';
+export { PrismaCatalogBook } from './catalog/prisma-catalog-book.js';
 export { PrismaProductCatalog } from './catalog/prisma-product-catalog.js';
 export { PrismaStockLedger } from './inventory/prisma-stock-ledger.js';
 export { PrismaShopDirectory } from './locations/prisma-shop-directory.js';

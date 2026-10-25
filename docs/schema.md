@@ -18,7 +18,7 @@ written down on this page instead.
 | 9 | `users` | 6–11 | ✅ Users screen, sign-in |
 | 10 | `machines` | 6–11 | ✅ Registers screen; every register records itself at sign-in |
 | 11 | `audits` | 6–11 | Nothing writes here yet |
-| 12–15 | `brands`, `manufacturers`, `suppliers`, `categories` | 12–17 The catalogue | No screens yet |
+| 12–15 | `brands`, `manufacturers`, `suppliers`, `categories` | 12–17 The catalogue | One list screen and form panel for all four (2026-10-25) |
 | 16 | `affiliations` | 12–17 | No screens yet |
 | 17 | `products` | 12–17 | ✅ Code, barcode, name, retail price, status. The other 13 fields are kept, not yet shown or applied |
 | 18–19 | `stock_documents`, `stock_document_items` | 18–21 Stock | No screens yet |

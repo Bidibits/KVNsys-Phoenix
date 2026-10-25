@@ -22,6 +22,10 @@ in this round:
 
 478 tests, across every project. The protocol is at 12.
 
+Since then (2026-10-25): the whole of SCHEMA-PLAN is in the database (see
+[`schema.md`](schema.md)), and suppliers, brands, manufacturers and categories have their lists
+and forms. 514 tests; the protocol is at 13.
+
 ## Getting it onto your PC
 
 Needs Node 24, pnpm 10 (`npm install -g pnpm@10.34.7`) and PostgreSQL. In the Phoenix folder:
@@ -34,7 +38,7 @@ pnpm build
 ```
 
 **Use a new database.** The tables changed, and they live in one baseline migration that's edited in
-place (see below), so a database made before 2026-10-24 won't match. In `.env`, point `DATABASE_URL`
+place (see below), so a database made before 2026-10-25 won't match. In `.env`, point `DATABASE_URL`
 at a database name you haven't used yet. Never put a real shop's password in `.env` or anywhere it
 could be copied from.
 

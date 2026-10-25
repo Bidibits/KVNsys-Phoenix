@@ -82,6 +82,23 @@ export {
   readRetailPrice,
   type ProductForm,
 } from './catalog/product-form.js';
+export {
+  blankCatalogEntryForm,
+  CatalogBook,
+  catalogEntryFormFor,
+  CatalogEntryLimits,
+  CatalogEntryStatuses,
+  CatalogLists,
+  CatalogListShapes,
+  checkCatalogEntry,
+  readCatalogEntryForm,
+  type CatalogEntry,
+  type CatalogEntryDetails,
+  type CatalogEntryForm,
+  type CatalogEntryStatus,
+  type CatalogList,
+  type CatalogListShape,
+} from './catalog/catalog-lists.js';
 
 export {
   checkStockChange,

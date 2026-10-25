@@ -54,7 +54,7 @@ export class PrismaRoleCatalog extends RoleCatalog {
     return row ? toRole(row) : null;
   }
 
-  create(typed: RoleDetails, lineage: Lineage): Promise<Role> {
+  async create(typed: RoleDetails, lineage: Lineage): Promise<Role> {
     const details = checkRoleDetails(typed);
     return this.db.$transaction(async (tx) => {
       await refuseNameTaken(tx, details.name, null);
@@ -75,7 +75,7 @@ export class PrismaRoleCatalog extends RoleCatalog {
     });
   }
 
-  update(id: string, typed: RoleDetails, lineage: Lineage): Promise<Role> {
+  async update(id: string, typed: RoleDetails, lineage: Lineage): Promise<Role> {
     const details = checkRoleDetails(typed);
     return this.db.$transaction(async (tx) => {
       const existing = Uuid.test(id) ? await tx.role.findUnique({ where: { id }, select: { code: true } }) : null;

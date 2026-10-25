@@ -33,6 +33,16 @@ export {
 } from './catalog/products.js';
 export { loadProductForm, saveProductForm, type ProductFormResult } from './catalog/product-form.js';
 export {
+  listCatalog,
+  loadCatalogEntryForm,
+  saveCatalogEntryForm,
+  type CatalogEntryFormResult,
+  type CatalogEntryResult,
+  type CatalogListResult,
+} from './catalog/catalog-lists.js';
+/** The four list names, for the desktop side to check what the screens ask for. */
+export { CatalogLists } from '@kvnsys/core';
+export {
   findStockItem,
   getProductStock,
   listStock,
@@ -91,6 +101,11 @@ export type {
   AccessName,
   Account,
   AccountStatus,
+  CatalogEntry,
+  CatalogEntryForm,
+  CatalogEntryStatus,
+  CatalogList,
+  CatalogListShape,
   CartLine,
   CountForm,
   DiscountKind,

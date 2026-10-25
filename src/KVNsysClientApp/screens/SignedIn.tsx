@@ -1,6 +1,7 @@
 import type { SignedInUser } from '@kvnsys/client';
 import { AppFrame, ToastProvider } from '@kvnsys/ui';
 import { useState } from 'react';
+import { CatalogListScreen } from './catalog/CatalogListScreen';
 import { HomeScreen, type Area } from './home/HomeScreen';
 import { ProductsScreen } from './products/ProductsScreen';
 import { RegistersScreen } from './registers/RegistersScreen';
@@ -17,6 +18,10 @@ const Titles: Record<Place, string> = {
   sell: 'Sell',
   sales: 'Sales',
   products: 'Products',
+  suppliers: 'Suppliers',
+  brands: 'Brands',
+  manufacturers: 'Manufacturers',
+  categories: 'Categories',
   stock: 'Stock',
   users: 'Users',
   roles: 'Roles',
@@ -24,7 +29,7 @@ const Titles: Record<Place, string> = {
 };
 
 /** The screens with a list the title bar's search box filters. Sell has its own code box. */
-const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'stock', 'users', 'roles', 'registers']);
+const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'stock', 'users', 'roles', 'registers']);
 
 /**
  * Every screen opened, in order, and where Back and Forward have got to (design-direction.md,
@@ -93,6 +98,9 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
           {place === 'sell' && <SellScreen onSignInAgain={onSignedOut} />}
           {place === 'sales' && <SalesScreen {...screen} />}
           {place === 'products' && <ProductsScreen user={user} {...screen} />}
+          {(place === 'suppliers' || place === 'brands' || place === 'manufacturers' || place === 'categories') && (
+            <CatalogListScreen list={place} user={user} {...screen} />
+          )}
           {place === 'stock' && <StockScreen user={user} {...screen} />}
           {place === 'users' && <UsersScreen user={user} {...screen} />}
           {place === 'roles' && <RolesScreen user={user} {...screen} />}

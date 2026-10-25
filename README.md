@@ -143,6 +143,13 @@ and everything a user sees, is called KVNsys.
   from exactly one supplier or shop to exactly one. Most of the new tables have no screens yet.
   [`docs/schema.md`](docs/schema.md) lists every table, what uses it, and where Phoenix differs from
   the plan and why.
+- **Suppliers, brands, manufacturers and categories.** A tile for each on Home lists its entries
+  by name: code, name, status, a supplier's address, and the category a category sits inside.
+  Someone whose role may change products gets Add and Edit, in one panel: code, name, Active or
+  Inactive, a description, and for a supplier its address, for a category the one it sits inside.
+  A code belongs to one entry in its list, ignoring capitals, and a refusal names whose it is. A
+  category can't end up inside itself, however deep. Seeing them needs "see products"; changing
+  them, "change products". The product form doesn't offer them yet: that's next.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before

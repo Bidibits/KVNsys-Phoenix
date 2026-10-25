@@ -16,8 +16,9 @@ import { z } from 'zod';
  * 11: registers: sign-in says which PC, the person signed in comes with their register, a receipt
  *     names its register, and the registers can be listed, renamed and switched off.
  * 12: shifts: start one with the cash in the drawer, end it with the cash counted; a sale needs one.
+ * 13: the catalogue's lists: suppliers, brands, manufacturers and categories (list, get, add, change).
  */
-export const ProtocolVersion = 12;
+export const ProtocolVersion = 13;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

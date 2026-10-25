@@ -11,6 +11,15 @@ export {
   productPath,
 } from './products.js';
 export {
+  CatalogEntryFields,
+  CatalogEntryOnWire,
+  CatalogEntryReply,
+  CatalogListName,
+  CatalogListReply,
+  catalogEntryPath,
+  catalogPath,
+} from './catalog.js';
+export {
   AccountFields,
   AccountOnWire,
   NewAccountFields,

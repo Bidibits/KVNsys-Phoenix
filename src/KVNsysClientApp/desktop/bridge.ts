@@ -1,4 +1,9 @@
 import type {
+  CatalogEntryForm,
+  CatalogEntryFormResult,
+  CatalogEntryResult,
+  CatalogList,
+  CatalogListResult,
   ConnectResult,
   CurrentShiftResult,
   DaySalesResult,
@@ -56,6 +61,12 @@ export interface KvnsysBridge {
   signIn(username: string, password: string): Promise<SignInForScreens>;
   /** Cancels this register's pass at the server, and forgets it here. Always ends signed out. */
   signOut(): Promise<void>;
+  /** Every entry in one of the catalogue's lists (suppliers, brands, manufacturers, categories), by name. */
+  listCatalog(list: CatalogList): Promise<CatalogListResult>;
+  /** A list entry's form: blank for a new one (null), or the entry as the server has it now, with what it can sit inside. */
+  catalogEntryForm(list: CatalogList, id: string | null): Promise<CatalogEntryFormResult>;
+  /** Saves what was typed, as a new entry (null) or over the one with that id. */
+  saveCatalogEntry(list: CatalogList, id: string | null, form: CatalogEntryForm): Promise<CatalogEntryResult>;
   /** Every product, by name, if the signed-in person may see them. Prices are whole centavos. */
   listProducts(): Promise<ProductListResult>;
   /** The form to fill in: blank for a new product (null), or the product as the server has it now. */
@@ -122,6 +133,9 @@ export const ConnectChannel = 'kvnsys:connect-to-server';
 export const SavedAddressChannel = 'kvnsys:saved-server-address';
 export const SignInChannel = 'kvnsys:sign-in';
 export const SignOutChannel = 'kvnsys:sign-out';
+export const ListCatalogChannel = 'kvnsys:list-catalog';
+export const CatalogEntryFormChannel = 'kvnsys:catalog-entry-form';
+export const SaveCatalogEntryChannel = 'kvnsys:save-catalog-entry';
 export const ListProductsChannel = 'kvnsys:list-products';
 export const ProductFormChannel = 'kvnsys:product-form';
 export const SaveProductChannel = 'kvnsys:save-product';

@@ -58,7 +58,7 @@ export class PrismaUserAccounts extends UserAccounts {
     return this.db.role.findMany({ select: { id: true, name: true, status: true }, orderBy: [{ level: 'desc' }, { name: 'asc' }] });
   }
 
-  create(typed: AccountDetails, passwordHash: string, lineage: Lineage): Promise<Account> {
+  async create(typed: AccountDetails, passwordHash: string, lineage: Lineage): Promise<Account> {
     const details = checkAccountDetails(typed);
     return this.saving(async (tx) => {
       await refuseTaken(tx, details.username, null);
@@ -79,7 +79,7 @@ export class PrismaUserAccounts extends UserAccounts {
     });
   }
 
-  update(id: string, typed: AccountDetails, lineage: Lineage): Promise<Account> {
+  async update(id: string, typed: AccountDetails, lineage: Lineage): Promise<Account> {
     const details = checkAccountDetails(typed);
     return this.saving(async (tx) => {
       if (!Uuid.test(id) || !(await tx.user.findUnique({ where: { id }, select: { id: true } }))) throw new Refusal('not-found', NotFound);

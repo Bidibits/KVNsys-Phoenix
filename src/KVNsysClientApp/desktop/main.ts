@@ -34,6 +34,15 @@ import {
   type RecordStockResult,
   type StockItemResult,
   type StockListResult,
+  CatalogLists,
+  listCatalog,
+  loadCatalogEntryForm,
+  saveCatalogEntryForm,
+  type CatalogEntryForm,
+  type CatalogEntryFormResult,
+  type CatalogEntryResult,
+  type CatalogList,
+  type CatalogListResult,
   listProducts,
   listRoles,
   listUsers,
@@ -85,6 +94,9 @@ import {
   ListStockChannel,
   ProductStockChannel,
   ReceiveStockChannel,
+  CatalogEntryFormChannel,
+  ListCatalogChannel,
+  SaveCatalogEntryChannel,
   ListProductsChannel,
   ListRolesChannel,
   ListUsersChannel,
@@ -274,6 +286,41 @@ function asCountForm(value: unknown): CountForm | undefined {
 }
 
 const NotAForm: Refused = { ok: false, reason: 'refused', message: "The form didn't arrive whole. Close it and try again." };
+
+/** One of the catalogue's four lists, by name, or nothing. */
+function asCatalogList(value: unknown): CatalogList | undefined {
+  return (CatalogLists as readonly unknown[]).includes(value) ? (value as CatalogList) : undefined;
+}
+
+/** A list entry's form as the screens sent it: six pieces of text, none absurdly long, or nothing. */
+function asCatalogEntryForm(value: unknown): CatalogEntryForm | undefined {
+  const fields = ['code', 'name', 'address', 'parentId', 'status', 'description'] as const;
+  if (typeof value !== 'object' || value === null) return undefined;
+  const form = value as Record<string, unknown>;
+  if (!fields.every((field) => typeof form[field] === 'string' && (form[field] as string).length <= 2000)) return undefined;
+  return Object.fromEntries(fields.map((field) => [field, form[field]])) as unknown as CatalogEntryForm;
+}
+
+ipcMain.handle(ListCatalogChannel, async (_event, list: unknown): Promise<CatalogListResult> => {
+  const which = asCatalogList(list);
+  if (!which) return NotAForm;
+  return withPass((address, pass, options) => listCatalog(address, pass, which, options));
+});
+
+ipcMain.handle(CatalogEntryFormChannel, async (_event, list: unknown, id: unknown): Promise<CatalogEntryFormResult> => {
+  const which = asCatalogList(list);
+  const entryId = asProductId(id);
+  if (!which || entryId === undefined) return NotAForm;
+  return withPass((address, pass, options) => loadCatalogEntryForm(address, pass, which, entryId, options));
+});
+
+ipcMain.handle(SaveCatalogEntryChannel, async (_event, list: unknown, id: unknown, typed: unknown): Promise<CatalogEntryResult> => {
+  const which = asCatalogList(list);
+  const entryId = asProductId(id);
+  const form = asCatalogEntryForm(typed);
+  if (!which || entryId === undefined || !form) return NotAForm;
+  return withPass((address, pass, options) => saveCatalogEntryForm(address, pass, which, entryId, form, options));
+});
 
 ipcMain.handle(ListProductsChannel, (): Promise<ProductListResult> => withPass(listProducts));
 

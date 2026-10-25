@@ -206,7 +206,7 @@ Key:
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
 | Products (list, form, search) | Products with codes, prices, classification and images | ✅ The list (2026-10-18), and the form: code, barcode, name, price, status (2026-10-19) · 🟢 and **importing the product list from a spreadsheet**, since nobody can type thousands of items before launch · ⏭ classification, images, a search screen |
-| Brands, Categories, Manufacturers, Suppliers (list, form, search each) | The classification lists | ✅ Their tables (2026-10-25) · ⏭ the screens |
+| Brands, Categories, Manufacturers, Suppliers (list, form, search each) | The classification lists | ✅ Their tables, and one list screen and form panel for all four (2026-10-25) |
 | Affiliations | Links between them, so picking a brand narrows the manufacturers, then the suppliers, then the categories | ⏭ |
 | Markup Manager | A markup rule per category, brand, supplier or manufacturer | ⏭ |
 | Price Tag Display | Electronic shelf labels (ESP32) updated over the network | ⏭ a hardware project of its own |
