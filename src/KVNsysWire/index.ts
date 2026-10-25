@@ -5,10 +5,13 @@ export {
   ProblemReply,
   ProductFields,
   ProductListReply,
+  PictureText,
   ProductOnWire,
+  ProductPictureReply,
   ProductReply,
   ProductsPath,
   productPath,
+  productPicturePath,
 } from './products.js';
 export {
   CatalogEntryFields,

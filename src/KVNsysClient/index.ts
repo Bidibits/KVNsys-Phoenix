@@ -25,13 +25,21 @@ export {
   changeProduct,
   findProduct,
   getProduct,
+  getProductPicture,
   listProducts,
   type ProductCallOptions,
   type ProductListResult,
+  type ProductPictureResult,
   type ProductResult,
   type ProductsProblem,
 } from './catalog/products.js';
-export { loadProductForm, saveProductForm, type ProductFormResult } from './catalog/product-form.js';
+export {
+  loadProductForm,
+  saveProductForm,
+  type ProductChoice,
+  type ProductChoices,
+  type ProductFormResult,
+} from './catalog/product-form.js';
 export {
   listCatalog,
   loadCatalogEntryForm,
@@ -42,6 +50,8 @@ export {
 } from './catalog/catalog-lists.js';
 /** The four list names, for the desktop side to check what the screens ask for. */
 export { CatalogLists } from '@kvnsys/core';
+/** How big a product's picture may be, for the desktop side to shrink one to. */
+export { ProductPictureLimit } from '@kvnsys/core';
 export {
   findStockItem,
   getProductStock,
@@ -120,6 +130,7 @@ export type {
   Product,
   ProductDetails,
   ProductForm,
+  ProductSortingField,
   ProductStatus,
   Role,
   RoleChoice,

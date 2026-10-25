@@ -4,9 +4,11 @@ import {
   ProductFields,
   ProductListReply,
   ProductOnWire,
+  ProductPictureReply,
   ProductReply,
   ProductsPath,
   productPath,
+  productPicturePath,
   ProtocolVersion,
 } from '@kvnsys/wire';
 import { describe, expect, it } from 'vitest';
@@ -18,6 +20,18 @@ const rice = {
   retailPrice: '1450.50',
   status: 'Active',
   description: null,
+  categoryId: null,
+  brandId: null,
+  supplierId: null,
+  manufacturerId: null,
+  unitOfMeasure: 'sack',
+  tracksStock: true,
+  costPrice: '1200.00',
+  promoPrice: null,
+  wholesalePrice: '1400.00',
+  wholesaleQuantity: 10,
+  hasWarranty: false,
+  warrantyMonths: 0,
 };
 const saved = { ...rice, id: '0199c7a0-0000-7000-8000-000000000001' };
 
@@ -48,6 +62,29 @@ describe('the product calls', () => {
     for (const retailPrice of ['1450.5', '1,450.50', '1450', '-1.00']) {
       expect(ProductOnWire.safeParse({ ...saved, retailPrice }).success, retailPrice).toBe(false);
     }
+    for (const price of ['costPrice', 'promoPrice', 'wholesalePrice']) {
+      expect(ProductOnWire.safeParse({ ...saved, [price]: '1450' }).success, price).toBe(false);
+    }
+  });
+
+  it("carry the rest of a product's fields (protocol 14): counts as whole numbers, stock and warranty as yes or no", () => {
+    expect(ProtocolVersion).toBeGreaterThanOrEqual(14);
+    expect(ProductFields.safeParse({ ...rice, wholesaleQuantity: 2.5 }).success).toBe(false);
+    expect(ProductFields.safeParse({ ...rice, warrantyMonths: '12' }).success).toBe(false);
+    expect(ProductFields.safeParse({ ...rice, tracksStock: 'yes' }).success).toBe(false);
+    expect(ProductFields.safeParse({ ...rice, costPrice: null }).success).toBe(false);
+    const { unitOfMeasure: _unit, ...withoutUnit } = rice;
+    expect(ProductFields.safeParse(withoutUnit).success).toBe(false);
+  });
+
+  it("send a picture with the details if there is one, and never hand one back with a product", () => {
+    expect(ProductFields.safeParse({ ...rice, picture: '/9j/4AAQSkZJRg==' }).success).toBe(true);
+    expect(ProductFields.safeParse({ ...rice, picture: null }).success).toBe(true);
+    expect(ProductFields.safeParse({ ...rice, picture: 'x'.repeat(400_001) }).success).toBe(false);
+    expect(ProductOnWire.parse({ ...saved, picture: '/9j/4AAQSkZJRg==' })).not.toHaveProperty('picture');
+    expect(productPicturePath('a/b')).toBe('/api/products/a%2Fb/picture');
+    expect(ProductPictureReply.safeParse({ picture: null }).success).toBe(true);
+    expect(ProductPictureReply.safeParse({}).success).toBe(false);
   });
 
   it('answer with a product, a list, or a reason', () => {

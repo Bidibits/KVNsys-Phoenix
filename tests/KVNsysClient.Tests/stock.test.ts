@@ -48,8 +48,23 @@ async function fakeServer(certificate: ServerCertificate, status: number, reply:
 const pass: SessionPass = { token: 'the-pass-the-pass-the-pass-the-pass-the-pas', expiresAt: '2026-10-18T20:00:00.000Z' };
 const id = '0199c7a0-0000-7000-8000-000000000001';
 const shop = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
-const rice = { id, code: 'PRD-0042', barcode: null, name: 'Sack of rice 25kg', retailPrice: 145050, status: 'Active' as const, description: null };
-const riceOnWire = { ...rice, retailPrice: '1450.50' };
+/** The fields after the launch list's, as a product left without them has them. */
+const extras = {
+  categoryId: null,
+  brandId: null,
+  supplierId: null,
+  manufacturerId: null,
+  unitOfMeasure: null,
+  tracksStock: true,
+  costPrice: 0,
+  promoPrice: null,
+  wholesalePrice: null,
+  wholesaleQuantity: null,
+  hasWarranty: false,
+  warrantyMonths: 0,
+};
+const rice = { id, code: 'PRD-0042', barcode: null, name: 'Sack of rice 25kg', retailPrice: 145050, status: 'Active' as const, description: null, ...extras };
+const riceOnWire = { ...rice, retailPrice: '1450.50', costPrice: '0.00' };
 const line = {
   id: '0199c7a0-0000-7000-8000-0000000000bb',
   productId: id,

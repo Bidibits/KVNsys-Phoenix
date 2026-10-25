@@ -3,6 +3,7 @@ import {
   catalogEntryFormFor,
   CatalogLists,
   CatalogListShapes,
+  categoryPaths,
   checkCatalogEntry,
   readCatalogEntryForm,
   type CatalogEntryDetails,
@@ -60,5 +61,19 @@ describe('an entry', () => {
     const entry = { ...hanabishi, id: 'e1', parentName: null, description: 'Fans and appliances' };
     expect(readCatalogEntryForm('brands', catalogEntryFormFor(entry))).toEqual({ ...hanabishi, description: 'Fans and appliances' });
     expect(blankCatalogEntryForm()).toEqual({ code: '', name: '', address: '', parentId: '', status: 'Active', description: '' });
+  });
+});
+
+describe("a category's path", () => {
+  it('names each category with every one above it, top first, and survives a loop or a missing parent', () => {
+    const at = (id: string, name: string, parentId: string | null) => ({ id, name, parentId });
+    const paths = categoryPaths([at('stand', 'Stand fans', 'fans'), at('fans', 'Fans', 'app'), at('app', 'Appliances', null), at('lost', 'Lost', 'gone')]);
+    expect(Object.fromEntries(paths)).toEqual({
+      stand: 'Appliances › Fans › Stand fans',
+      fans: 'Appliances › Fans',
+      app: 'Appliances',
+      lost: 'Lost',
+    });
+    expect(categoryPaths([at('a', 'A', 'b'), at('b', 'B', 'a')]).get('a')).toBe('B › A');
   });
 });

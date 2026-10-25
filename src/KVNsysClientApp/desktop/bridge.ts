@@ -49,6 +49,15 @@ export type ConnectReply = ConnectResult & { remembered?: boolean };
 export type SignInForScreens = { ok: true; user: SignedInUser } | Extract<SignInResult, { ok: false }>;
 
 /**
+ * A picture chosen for a product, ready to keep: a small JPEG as base64 text. Or nothing, when
+ * the person closed the window without choosing, or the reason the file won't do.
+ */
+export type PictureChoice =
+  | { ok: true; picture: string }
+  | { ok: false; reason: 'cancelled' }
+  | { ok: false; reason: 'unreadable'; message: string };
+
+/**
  * What the screens may ask the desktop side to do, and nothing more. The screens can't reach the
  * network, the disk or the PC themselves: they ask through this, and the desktop side, where the
  * client engine runs, does it.
@@ -76,6 +85,11 @@ export interface KvnsysBridge {
    * the text as typed; what it means (a price, a status) is decided here and at the server.
    */
   saveProduct(id: string | null, form: ProductForm): Promise<ProductResult>;
+  /**
+   * Asks the person to choose a picture file on this PC, and makes it what a product keeps (see
+   * product-picture.ts). The screens never see the file itself, only the result.
+   */
+  chooseProductPicture(): Promise<PictureChoice>;
   /** Every account, by name, if the signed-in person may see them. */
   listUsers(): Promise<UserListResult>;
   /** The account form and the roles it can offer: blank for a new account (null), or the account as the server has it now. */
@@ -139,6 +153,7 @@ export const SaveCatalogEntryChannel = 'kvnsys:save-catalog-entry';
 export const ListProductsChannel = 'kvnsys:list-products';
 export const ProductFormChannel = 'kvnsys:product-form';
 export const SaveProductChannel = 'kvnsys:save-product';
+export const ChooseProductPictureChannel = 'kvnsys:choose-product-picture';
 export const ListUsersChannel = 'kvnsys:list-users';
 export const UserFormChannel = 'kvnsys:user-form';
 export const SaveUserChannel = 'kvnsys:save-user';

@@ -21,6 +21,18 @@ const product = {
   retailPrice: '1450.50',
   status: 'Active',
   description: null,
+  categoryId: null,
+  brandId: null,
+  supplierId: null,
+  manufacturerId: null,
+  unitOfMeasure: null,
+  tracksStock: true,
+  costPrice: '0.00',
+  promoPrice: null,
+  wholesalePrice: null,
+  wholesaleQuantity: null,
+  hasWarranty: false,
+  warrantyMonths: 0,
 };
 const shop = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
 const line = {

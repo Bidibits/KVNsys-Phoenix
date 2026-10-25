@@ -127,6 +127,29 @@ export function readCatalogEntryForm(list: CatalogList, form: CatalogEntryForm):
 }
 
 /**
+ * Each category's name with every category above it, top first: "Appliances › Fans › Stand fans",
+ * so a picker tells apart two categories with the same name in different places. A parent that
+ * isn't among the entries ends the path there.
+ */
+export function categoryPaths(categories: Pick<CatalogEntry, 'id' | 'name' | 'parentId'>[]): Map<string, string> {
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const paths = new Map<string, string>();
+  for (const category of categories) {
+    const names = [category.name];
+    const seen = new Set([category.id]);
+    let parent = category.parentId === null ? undefined : byId.get(category.parentId);
+    // The store never lets the tree loop; seen stops a loop anyway, rather than hanging a screen.
+    while (parent && !seen.has(parent.id)) {
+      names.unshift(parent.name);
+      seen.add(parent.id);
+      parent = parent.parentId === null ? undefined : byId.get(parent.parentId);
+    }
+    paths.set(category.id, names.join(' › '));
+  }
+  return paths;
+}
+
+/**
  * Where the four lists are kept. KVNsysCore only describes it; KVNsysPostgres provides the real one.
  *
  * Saving checks the entry (checkCatalogEntry) and refuses a code another entry in the same list

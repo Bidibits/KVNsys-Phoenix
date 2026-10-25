@@ -68,11 +68,18 @@ export {
 
 export {
   checkProduct,
+  checkProductPicture,
+  chosenEntryGone,
   ProductCatalog,
+  ProductDefaults,
   ProductLimits,
+  ProductPictureLimit,
+  ProductSortingFields,
   ProductStatuses,
+  type FullProductDetails,
   type Product,
   type ProductDetails,
+  type ProductSortingField,
   type ProductStatus,
 } from './catalog/products.js';
 export {
@@ -88,6 +95,7 @@ export {
   catalogEntryFormFor,
   CatalogEntryLimits,
   CatalogEntryStatuses,
+  categoryPaths,
   CatalogLists,
   CatalogListShapes,
   checkCatalogEntry,

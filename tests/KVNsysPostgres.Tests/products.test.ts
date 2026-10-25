@@ -1,4 +1,6 @@
-import { createPrismaClient, PrismaProductCatalog, type PrismaClient } from '@kvnsys/postgres';
+import { randomUUID } from 'node:crypto';
+import { ProductDefaults } from '@kvnsys/core';
+import { createPrismaClient, PrismaCatalogBook, PrismaProductCatalog, type PrismaClient } from '@kvnsys/postgres';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
@@ -6,6 +8,7 @@ const hq = { userId: '0199c7a0-0000-7000-8000-000000000001', machineId: '0199c7a
 const branch = { userId: '0199c7a0-0000-7000-8000-000000000011', machineId: '0199c7a0-0000-7000-8000-000000000012', locationId: '0199c7a0-0000-7000-8000-000000000013' };
 
 const rice = {
+  ...ProductDefaults,
   code: 'PRD-0042',
   barcode: '4800016641503',
   name: 'Sack of rice 25kg',
@@ -131,5 +134,80 @@ describeWithDatabase('the product catalog in PostgreSQL', () => {
     await catalog.create(rice, hq);
     await catalog.create({ ...rice, code: 'PRD-0100', barcode: null, name: 'Cooking oil 1L', retailPrice: 9800 }, hq);
     expect((await catalog.list()).map((p) => p.name)).toEqual(['Cooking oil 1L', 'Sack of rice 25kg', 'Sardines 155g']);
+  });
+
+  /** A category, brand, supplier and manufacturer to sort a product under. */
+  async function sorting() {
+    const book = new PrismaCatalogBook(db);
+    const entry = (code: string, name: string) => ({ code, name, address: null, parentId: null, status: 'Active' as const, description: null });
+    return {
+      categoryId: (await book.create('categories', entry('CAT-FAN', 'Fans'), hq)).id,
+      brandId: (await book.create('brands', entry('HANABISHI', 'Hanabishi'), hq)).id,
+      supplierId: (await book.create('suppliers', entry('SUP-001', 'Asia Appliances'), hq)).id,
+      manufacturerId: (await book.create('manufacturers', entry('MF-001', 'Hanabishi Corp.'), hq)).id,
+    };
+  }
+
+  it("keeps every one of the plan's fields, prices exact to the centavo", async () => {
+    const fan = {
+      ...rice,
+      code: 'HNB-SF16',
+      barcode: null,
+      name: 'Hanabishi stand fan 16"',
+      retailPrice: 189900,
+      ...(await sorting()),
+      unitOfMeasure: 'pc',
+      tracksStock: false,
+      costPrice: 145029,
+      promoPrice: 169929,
+      wholesalePrice: 159929,
+      wholesaleQuantity: 10,
+      hasWarranty: true,
+      warrantyMonths: 12,
+    };
+    const saved = await catalog.create(fan, hq);
+    expect(saved).toEqual({ ...fan, id: saved.id });
+    expect(await catalog.get(saved.id)).toEqual(saved);
+    expect(await catalog.list()).toEqual([saved]);
+    const stored = await db.$queryRaw<{ cost: string; promo: string; wholesale: string }[]>`
+      SELECT cost_price::text AS cost, promo_price::text AS promo, wholesale_price::text AS wholesale FROM products`;
+    expect(stored).toEqual([{ cost: '1450.29', promo: '1699.29', wholesale: '1599.29' }]);
+    const changed = await catalog.update(saved.id, { ...fan, promoPrice: null, wholesalePrice: null, wholesaleQuantity: null, hasWarranty: false, warrantyMonths: 0 }, hq);
+    expect(changed).toMatchObject({ promoPrice: null, wholesalePrice: null, wholesaleQuantity: null, hasWarranty: false, warrantyMonths: 0 });
+  });
+
+  it('refuses a category, brand, supplier or manufacturer that is not there, in words', async () => {
+    const chosen = await sorting();
+    for (const [field, one] of [['categoryId', 'category'], ['brandId', 'brand'], ['supplierId', 'supplier'], ['manufacturerId', 'manufacturer']]) {
+      await expect(catalog.create({ ...rice, ...chosen, [field!]: randomUUID() }, hq), field).rejects.toMatchObject({
+        kind: 'invalid',
+        message: `That ${one} isn't there any more. Choose another.`,
+      });
+    }
+    expect(await catalog.list()).toEqual([]);
+  });
+
+  /** The start of a real JPEG, then filler: enough for KVNsysCore's check. */
+  const jpeg = (fill: number, length = 2000) => Uint8Array.from({ length }, (_, i) => [0xff, 0xd8, 0xff, 0xe0][i] ?? fill);
+
+  it('keeps a picture apart from the details: saved with them, kept when a change leaves it out, removed by none', async () => {
+    const saved = await catalog.create(rice, hq, jpeg(1));
+    expect(saved).not.toHaveProperty('picture');
+    expect(await catalog.picture(saved.id)).toEqual(jpeg(1));
+    await catalog.update(saved.id, { ...rice, name: 'Rice 25kg' }, hq);
+    expect(await catalog.picture(saved.id)).toEqual(jpeg(1));
+    await catalog.update(saved.id, rice, hq, jpeg(2));
+    expect(await catalog.picture(saved.id)).toEqual(jpeg(2));
+    await catalog.update(saved.id, rice, hq, null);
+    expect(await catalog.picture(saved.id)).toBeNull();
+    expect(await catalog.picture(randomUUID())).toBeNull();
+    expect(await catalog.picture((await catalog.create(sardines, hq)).id)).toBeNull();
+  });
+
+  it('refuses a picture that is not a JPEG, or too big, before saving anything', async () => {
+    const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    await expect(catalog.create(rice, hq, png)).rejects.toMatchObject({ kind: 'invalid', message: "A product's picture has to be a JPEG." });
+    await expect(catalog.create(rice, hq, jpeg(1, 256 * 1024 + 1))).rejects.toMatchObject({ kind: 'invalid' });
+    expect(await catalog.list()).toEqual([]);
   });
 });

@@ -72,7 +72,7 @@ import {
   type ProductsProblem,
   type SessionPass,
 } from '@kvnsys/client';
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 import {
   ClearSaleChannel,
   CloseShiftChannel,
@@ -104,6 +104,8 @@ import {
   ResetPasswordChannel,
   RoleFormChannel,
   SaveProductChannel,
+  ChooseProductPictureChannel,
+  type PictureChoice,
   SaveRoleChannel,
   SaveUserChannel,
   UserFormChannel,
@@ -113,6 +115,7 @@ import {
   type ConnectReply,
   type SignInForScreens,
 } from './bridge.js';
+import { shrinkPicture } from './product-picture.js';
 import { SettingsFile } from './settings-file.js';
 import { TrustFile } from './trust-file.js';
 
@@ -233,13 +236,36 @@ function asProductId(value: unknown): string | null | undefined {
   return typeof value === 'string' && value.length > 0 && value.length <= 100 ? value : undefined;
 }
 
-/** The form as the screens sent it: six pieces of text, none absurdly long, or nothing. */
+/**
+ * The form as the screens sent it: sixteen pieces of text, none absurdly long, two ticks, and a
+ * picture's text no longer than one KVNsys keeps can be; or nothing.
+ */
 function asProductForm(value: unknown): ProductForm | undefined {
-  const fields = ['code', 'barcode', 'name', 'retailPrice', 'status', 'description'] as const;
+  const texts = [
+    'code',
+    'barcode',
+    'name',
+    'retailPrice',
+    'status',
+    'description',
+    'categoryId',
+    'brandId',
+    'supplierId',
+    'manufacturerId',
+    'unitOfMeasure',
+    'costPrice',
+    'promoPrice',
+    'wholesalePrice',
+    'wholesaleQuantity',
+    'warrantyMonths',
+  ] as const;
+  const ticks = ['tracksStock', 'hasWarranty'] as const;
   if (typeof value !== 'object' || value === null) return undefined;
   const form = value as Record<string, unknown>;
-  if (!fields.every((field) => typeof form[field] === 'string' && (form[field] as string).length <= 2000)) return undefined;
-  return Object.fromEntries(fields.map((field) => [field, form[field]])) as unknown as ProductForm;
+  if (!texts.every((field) => typeof form[field] === 'string' && (form[field] as string).length <= 2000)) return undefined;
+  if (!ticks.every((field) => typeof form[field] === 'boolean')) return undefined;
+  if (typeof form.picture !== 'string' || form.picture.length > 400_000) return undefined;
+  return Object.fromEntries([...texts, ...ticks, 'picture'].map((field) => [field, form[field]])) as unknown as ProductForm;
 }
 
 /** The account form as the screens sent it: eight pieces of text, none absurdly long, or nothing. */
@@ -328,6 +354,19 @@ ipcMain.handle(ProductFormChannel, async (_event, id: unknown): Promise<ProductF
   const productId = asProductId(id);
   if (productId === undefined) return NotAForm;
   return withPass((address, pass, options) => loadProductForm(address, pass, productId, options));
+});
+
+ipcMain.handle(ChooseProductPictureChannel, async (event): Promise<PictureChoice> => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  const options = {
+    title: 'Choose a picture of the product',
+    properties: ['openFile' as const],
+    filters: [{ name: 'Pictures', extensions: ['jpg', 'jpeg', 'png'] }],
+  };
+  const chosen = await (window ? dialog.showOpenDialog(window, options) : dialog.showOpenDialog(options));
+  const path = chosen.filePaths[0];
+  if (chosen.canceled || !path) return { ok: false, reason: 'cancelled' };
+  return shrinkPicture(path);
 });
 
 ipcMain.handle(SaveProductChannel, async (_event, id: unknown, typed: unknown): Promise<ProductResult> => {

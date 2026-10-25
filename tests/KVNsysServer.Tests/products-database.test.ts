@@ -7,13 +7,17 @@ import {
   checkSession,
   findProduct,
   getProduct,
+  getProductPicture,
   listProducts,
+  loadProductForm,
+  saveProductForm,
   signIn,
   type ProductDetails,
   type ServerPin,
   type SessionPass,
 } from '@kvnsys/client';
-import { createPrismaClient, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
+import { ProductDefaults } from '@kvnsys/core';
+import { createPrismaClient, PrismaCatalogBook, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import {
   createServer,
   createServerCertificate,
@@ -31,6 +35,7 @@ import { createThrowawayDatabase, describeWithDatabase } from './throwaway-datab
 
 const Password = 'test-password-1234';
 const rice: ProductDetails = {
+  ...ProductDefaults,
   code: 'PRD-0042',
   barcode: '4800016641503',
   name: 'Sack of rice 25kg',
@@ -171,7 +176,7 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
     });
     const post = (body: unknown) =>
       httpsJson(address + ProductsPath, { ca: certificate.cert, method: 'POST', body, headers: { Authorization: `Bearer ${pass.token}` } });
-    const fields = { ...rice, code: 'PRD-0101', barcode: null };
+    const fields = { ...rice, code: 'PRD-0101', barcode: null, costPrice: '0.00' };
     expect(await post({ ...fields, retailPrice: '12.555' })).toMatchObject({ status: 400, body: { message: expect.stringMatching(/isn't a price/) } });
     expect(await post({ ...fields, retailPrice: 12.5 })).toMatchObject({ status: 400 });
     expect(await post({ ...fields, retailPrice: '1,234.50' })).toMatchObject({ status: 201, body: { product: { retailPrice: '1234.50' } } });
@@ -225,6 +230,95 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
       await db.access.create({ data: { id: randomUUID(), roleId: cashierRole.id, access: 'products.view' } });
     }
     expect(await listProducts(address, pass, options)).toMatchObject({ ok: true });
+  });
+
+  /** The start of a real JPEG, then filler, as base64 text: enough for KVNsysCore's check. */
+  const jpegText = (length: number, fill = 0x20) =>
+    Buffer.from(Uint8Array.from({ length }, (_, i) => [0xff, 0xd8, 0xff, 0xe0][i] ?? fill)).toString('base64');
+
+  it('keeps every field and the picture through the form, with each picker offering what is switched on', async () => {
+    const { pass, options } = as('manager');
+    const book = new PrismaCatalogBook(db);
+    const lineage = { userId: null, machineId: null, locationId: null };
+    const entry = (code: string, name: string, extra = {}) => ({ code, name, address: null, parentId: null, status: 'Active' as const, description: null, ...extra });
+    const appliances = await book.create('categories', entry('CAT-APP', 'Appliances'), lineage);
+    const fans = await book.create('categories', entry('CAT-FAN', 'Fans', { parentId: appliances.id }), lineage);
+    const hanabishi = await book.create('brands', entry('HANABISHI', 'Hanabishi'), lineage);
+    const oldBrand = await book.create('brands', entry('OLD', 'Old brand', { status: 'Inactive' }), lineage);
+    const supplier = await book.create('suppliers', entry('SUP-001', 'Asia Appliances'), lineage);
+
+    const blank = await loadProductForm(address, pass, null, options);
+    if (!blank.ok) throw new Error(blank.message);
+    expect(blank.choices).toEqual({
+      categoryId: [
+        { value: appliances.id, label: 'Appliances' },
+        { value: fans.id, label: 'Appliances › Fans' },
+      ],
+      brandId: [{ value: hanabishi.id, label: 'Hanabishi' }],
+      supplierId: [{ value: supplier.id, label: 'Asia Appliances' }],
+      manufacturerId: [],
+    });
+
+    // Near the most a picture may be, so the server's request limit is proved too (Express's own is 100 KB).
+    const picture = jpegText(250 * 1024);
+    const form = {
+      ...blank.form,
+      code: 'HNB-SF16',
+      name: 'Hanabishi stand fan 16"',
+      retailPrice: '1899',
+      categoryId: fans.id,
+      brandId: hanabishi.id,
+      supplierId: supplier.id,
+      unitOfMeasure: 'pc',
+      costPrice: '1450',
+      promoPrice: '1699',
+      wholesalePrice: '1599',
+      wholesaleQuantity: '10',
+      hasWarranty: true,
+      warrantyMonths: '12',
+      picture,
+    };
+    const saved = await saveProductForm(address, pass, null, form, options);
+    if (!saved.ok) throw new Error(saved.message);
+    expect(saved.product).toMatchObject({ categoryId: fans.id, costPrice: 145000, promoPrice: 169900, wholesaleQuantity: 10, warrantyMonths: 12 });
+
+    const editing = await loadProductForm(address, pass, saved.product.id, options);
+    expect(editing).toMatchObject({ ok: true, form: { ...form, retailPrice: '1899.00', costPrice: '1450.00', promoPrice: '1699.00', wholesalePrice: '1599.00' } });
+
+    // A brand switched off since is still offered to the product that has it, said so; never to another.
+    await saveProductForm(address, pass, saved.product.id, { ...form, brandId: oldBrand.id }, options);
+    const withOld = await loadProductForm(address, pass, saved.product.id, options);
+    expect(withOld.ok && withOld.choices.brandId).toEqual([
+      { value: hanabishi.id, label: 'Hanabishi' },
+      { value: oldBrand.id, label: 'Old brand (switched off)' },
+    ]);
+
+    // Anyone who may see products may see the picture; without one, it's none.
+    const cashier = as('cashier');
+    expect(await getProductPicture(address, cashier.pass, saved.product.id, cashier.options)).toEqual({ ok: true, picture });
+    await saveProductForm(address, pass, saved.product.id, { ...form, picture: '' }, options);
+    expect(await getProductPicture(address, cashier.pass, saved.product.id, cashier.options)).toEqual({ ok: true, picture: null });
+    const guest = as('guest');
+    expect(await getProductPicture(address, guest.pass, saved.product.id, guest.options)).toEqual({
+      ok: false,
+      reason: 'not-allowed',
+      message: lacksRight('products.view'),
+    });
+    expect(await getProductPicture(address, pass, randomUUID(), options)).toMatchObject({ ok: false, reason: 'not-found' });
+  });
+
+  it('refuses a picture that is not whole or not a JPEG, a choice that has gone, and a price it cannot read', async () => {
+    const { pass } = as('admin');
+    const post = (body: unknown) =>
+      httpsJson(address + ProductsPath, { ca: certificate.cert, method: 'POST', body, headers: { Authorization: `Bearer ${pass.token}` } });
+    const fields = { ...rice, code: 'PRD-0200', barcode: null, retailPrice: '100.00', costPrice: '0.00' };
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).toString('base64');
+    expect(await post({ ...fields, picture: 'not base64!' })).toMatchObject({ status: 400, body: { message: "The product's picture didn't arrive whole." } });
+    expect(await post({ ...fields, picture: png })).toMatchObject({ status: 400, body: { message: "A product's picture has to be a JPEG." } });
+    expect(await post({ ...fields, brandId: randomUUID() })).toMatchObject({ status: 400, body: { message: "That brand isn't there any more. Choose another." } });
+    expect(await post({ ...fields, costPrice: '1.234' })).toMatchObject({ status: 400, body: { message: 'The cost "1.234" isn\'t a price.' } });
+    expect(await post({ ...fields, promoPrice: '150.00' })).toMatchObject({ status: 400, body: { message: 'A promo price has to be below the shelf price (₱100.00).' } });
+    expect(await db.product.count({ where: { code: 'PRD-0200' } })).toBe(0);
   });
 });
 

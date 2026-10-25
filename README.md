@@ -57,11 +57,20 @@ and everything a user sees, is called KVNsys.
   product in a table, with prices in pesos and statuses as coloured labels. The screens follow
   Beta's Standard colours ([`docs/design-direction.md`](docs/design-direction.md)).
 - **Adding and changing products.** Someone whose role may manage products gets Add product
-  above the list and Edit on every row. Each opens a panel from the right with the code,
-  barcode, name, price and status. Save checks it and sends it to the server, and the list
-  shows the result; a refusal says what to fix and keeps what was typed. Editing starts from
-  the product as the server has it now. A barcode scanner's Enter in the Barcode box moves on
-  to Name instead of saving.
+  above the list and Edit on every row. Each opens a wide panel from the right, in two columns.
+  On the left, what the product is: code, barcode, name, its category, brand, manufacturer and
+  supplier (each picked from its list, only those switched on, a category with those above it:
+  "Appliances › Fans"), its unit and a description. On the right: a picture, the price, the
+  cost, a promo price, a wholesale price and the pieces it starts at, whether selling it takes
+  it out of stock, a warranty and its months, and the status. A promo or wholesale price has to
+  be below the price; a wholesale price and its pieces (2 or more) go together; a warranty
+  lasts 1 to 120 months. Choose picture… takes a JPEG or PNG from the PC and keeps it small: at
+  most 600 pixels across, a JPEG, white behind any see-through parts. Save checks it all and
+  sends it to the server, and the list shows the result; a refusal says what to fix and keeps
+  what was typed. Editing starts from the product as the server has it now, picture included.
+  A barcode scanner's Enter in the Barcode box moves on to Name instead of saving. The till
+  still sells at the price only: promo and wholesale prices, and not taking a product out of
+  stock, aren't applied yet.
 - **Users.** The Users tile lists every account: name, username, role and status. Someone whose
   role may manage users gets Add user and Edit, in the same panel: names, username, role, Active
   or switched off, and a first password typed twice. A password is never shown; Edit has its own
@@ -149,7 +158,7 @@ and everything a user sees, is called KVNsys.
   Inactive, a description, and for a supplier its address, for a category the one it sits inside.
   A code belongs to one entry in its list, ignoring capitals, and a refusal names whose it is. A
   category can't end up inside itself, however deep. Seeing them needs "see products"; changing
-  them, "change products". The product form doesn't offer them yet: that's next.
+  them, "change products". The product form offers the ones switched on.
 
 Everything else is still to come. How the screens will look and work, and which features come
 before January, is in [`docs/design-direction.md`](docs/design-direction.md). Read it before
