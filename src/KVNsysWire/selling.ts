@@ -1,4 +1,4 @@
-import { DiscountKinds, PaymentTypes, ProductStatuses } from '@kvnsys/core';
+import { DiscountKinds, PaymentTypes, PriceBases, ProductStatuses } from '@kvnsys/core';
 import { z } from 'zod';
 import { ShopOnWire } from './stock.js';
 
@@ -28,13 +28,16 @@ export const receiptPath = (id: string) => `${SalesPath}/${encodeURIComponent(id
 /** Pesos as text, "1450.50", as everywhere on the wire: never a JSON number. */
 const PesosOnWire = z.string().regex(/^\d+\.\d{2}$/);
 
-/** A product as the till needs it to ring it up. */
+/** A product as the till needs it to ring it up: every price it could be charged at. */
 export const SaleProductOnWire = z.object({
   id: z.string(),
   code: z.string(),
   name: z.string(),
   retailPrice: PesosOnWire,
   status: z.enum(ProductStatuses),
+  promoPrice: PesosOnWire.nullable(),
+  wholesalePrice: PesosOnWire.nullable(),
+  wholesaleQuantity: z.number().int().nullable(),
 });
 export type SaleProductOnWire = z.infer<typeof SaleProductOnWire>;
 
@@ -71,6 +74,8 @@ export const ReceiptOnWire = z.object({
       name: z.string(),
       quantity: z.number().int().positive(),
       unitPrice: PesosOnWire,
+      /** Which of the product's prices unitPrice is. */
+      priceBasis: z.enum(PriceBases),
       subtotal: PesosOnWire,
       discount: PesosOnWire,
       total: PesosOnWire,

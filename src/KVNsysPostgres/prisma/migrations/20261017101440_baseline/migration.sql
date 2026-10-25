@@ -759,7 +759,7 @@ ALTER TABLE "receipt_items" ADD CONSTRAINT "receipt_items_adds_up" CHECK (
   "quantity" >= 1 AND "unit_price" >= 0 AND "discount_value" >= 0 AND "line_total" >= 0
   AND "line_total" = "quantity" * "unit_price" - "discount_value"
 );
-ALTER TABLE "receipt_items" ADD CONSTRAINT "receipt_items_price_basis_known" CHECK ("price_basis" IN ('Retail'));
+ALTER TABLE "receipt_items" ADD CONSTRAINT "receipt_items_price_basis_known" CHECK ("price_basis" IN ('Retail', 'Promo', 'Wholesale'));
 -- Cash only, for now. The change is never more than what was handed over.
 ALTER TABLE "receipt_payments" ADD CONSTRAINT "receipt_payments_type_known" CHECK ("payment_type" IN ('Cash'));
 ALTER TABLE "receipt_payments" ADD CONSTRAINT "receipt_payments_money_sensible" CHECK (

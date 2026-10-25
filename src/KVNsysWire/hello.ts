@@ -19,8 +19,10 @@ import { z } from 'zod';
  * 13: the catalogue's lists: suppliers, brands, manufacturers and categories (list, get, add, change).
  * 14: every product field (sorting, unit, stock or not, cost, promo, wholesale, warranty), and its picture.
  * 15: a product says whether it has a picture.
+ * 16: the till charges promo and wholesale prices: a product to ring up carries them, and each
+ *     receipt line says which price it was charged at.
  */
-export const ProtocolVersion = 15;
+export const ProtocolVersion = 16;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

@@ -69,14 +69,21 @@ and everything a user sees, is called KVNsys.
   sends it to the server, and the list shows the result; a refusal says what to fix and keeps
   what was typed. Editing starts from the product as the server has it now, picture included.
   A barcode scanner's Enter in the Barcode box moves on to Name instead of saving. The till
-  still sells at the price only: promo and wholesale prices, and not taking a product out of
-  stock, aren't applied yet.
+  uses the promo and wholesale prices and "takes it out of stock" (below).
 - **The products list shows where each product is sorted.** Beside the code, barcode and name: a
   small picture, the category with those above it ("Appliances › Fans") and the brand, long ones
   wrapping onto a second line. The search box finds a product by those too: "appliances" finds
   every product under Appliances, fans included, and "hanabishi" every Hanabishi. Pictures are
   made small on the register and fetched only as their rows come into view, so a long list never
   pulls every picture over the network.
+- **The till charges promo and wholesale prices.** Each line is charged the cheapest price the
+  customer qualifies for: the promo price while there is one, and the wholesale price once the
+  line reaches its pieces (one more and it switches, one fewer and it switches back). The Sell
+  screen says "Promo price" or "Wholesale price" under the price, the receipt says it beside the
+  price, and each receipt line keeps which price it was. With a senior/PWD discount, a line gets
+  the better of its promo or wholesale price and 20% off the shelf price, not both: a stand-in
+  until the owners decide (decisions.md, Open). A product that doesn't take itself out of stock,
+  such as a service, sells without touching the stock.
 - **Users.** The Users tile lists every account: name, username, role and status. Someone whose
   role may manage users gets Add user and Edit, in the same panel: names, username, role, Active
   or switched off, and a first password typed twice. A password is never shown; Edit has its own

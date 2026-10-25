@@ -1,4 +1,4 @@
-import { priceSale, readCash, takeCash, type CartLine, type SaleProduct } from '@kvnsys/core';
+import { bestPrice, priceSale, readCash, takeCash, type CartLine, type SaleProduct } from '@kvnsys/core';
 import { describe, expect, it } from 'vitest';
 
 const refusalOf = (work: () => unknown) => {
@@ -25,8 +25,8 @@ describe('pricing a sale', () => {
   it('charges each line its price times its pieces, and adds them up', () => {
     const sale = priceSale([{ product: sardines, quantity: 3 }, { product: rice, quantity: 1 }], null);
     expect(sale.lines).toEqual([
-      { productId: 'id-PRD-0007', code: 'PRD-0007', name: 'Sardines 155g', quantity: 3, unitPrice: 2575, subtotal: 7725, discount: 0, total: 7725 },
-      { productId: 'id-PRD-0042', code: 'PRD-0042', name: 'Sack of rice 25kg', quantity: 1, unitPrice: 145050, subtotal: 145050, discount: 0, total: 145050 },
+      { productId: 'id-PRD-0007', code: 'PRD-0007', name: 'Sardines 155g', quantity: 3, unitPrice: 2575, priceBasis: 'Retail', subtotal: 7725, discount: 0, total: 7725 },
+      { productId: 'id-PRD-0042', code: 'PRD-0042', name: 'Sack of rice 25kg', quantity: 1, unitPrice: 145050, priceBasis: 'Retail', subtotal: 145050, discount: 0, total: 145050 },
     ]);
     expect(sale).toMatchObject({ subtotal: 152775, discountTotal: 0, total: 152775, discount: null });
   });
@@ -42,6 +42,40 @@ describe('pricing a sale', () => {
     expect(priceSale([{ product: sardines, quantity: 1 }], { ...senior, kind: 'pwd' }).discountTotal).toBe(515);
   });
 
+  // Shelf ₱100, promo ₱90, ₱85 each from 10 pieces: the user's own example, with wholesale added.
+  const fan = { ...product('HNB-SF16', 'Stand fan', 10000), promoPrice: 9000, wholesalePrice: 8500, wholesaleQuantity: 10 };
+  const line = (cart: CartLine[], discount: typeof senior | null = null) =>
+    priceSale(cart, discount).lines.map(({ unitPrice, priceBasis, discount: off, total }) => ({ unitPrice, priceBasis, off, total }));
+
+  it('charges the promo price while there is one, and says on the line which price it was', () => {
+    expect(line([{ product: fan, quantity: 2 }])).toEqual([{ unitPrice: 9000, priceBasis: 'Promo', off: 0, total: 18000 }]);
+    expect(line([{ product: { ...fan, promoPrice: null }, quantity: 2 }])).toEqual([{ unitPrice: 10000, priceBasis: 'Retail', off: 0, total: 20000 }]);
+  });
+
+  it('charges the wholesale price once a line reaches its pieces, and the cheaper when promo and wholesale both apply', () => {
+    expect(line([{ product: fan, quantity: 9 }])).toEqual([{ unitPrice: 9000, priceBasis: 'Promo', off: 0, total: 81000 }]);
+    expect(line([{ product: fan, quantity: 10 }])).toEqual([{ unitPrice: 8500, priceBasis: 'Wholesale', off: 0, total: 85000 }]);
+    // A promo below the wholesale price wins at any quantity; on a tie, the promo.
+    expect(bestPrice({ ...fan, promoPrice: 8000 }, 50)).toEqual({ unitPrice: 8000, priceBasis: 'Promo' });
+    expect(bestPrice({ ...fan, promoPrice: 8500 }, 50)).toEqual({ unitPrice: 8500, priceBasis: 'Promo' });
+    expect(bestPrice({ ...fan, promoPrice: null }, 10)).toEqual({ unitPrice: 8500, priceBasis: 'Wholesale' });
+    // A product without the newer fields at all is charged its shelf price.
+    expect(bestPrice(sardines, 100)).toEqual({ unitPrice: 2575, priceBasis: 'Retail' });
+  });
+
+  it("gives a senior or PWD the better of the promo or wholesale price and 20% off the shelf price, not both", () => {
+    // ₱90 promo against ₱100 less 20% = ₱80: the 20% is better.
+    expect(line([{ product: fan, quantity: 1 }], senior)).toEqual([{ unitPrice: 10000, priceBasis: 'Retail', off: 2000, total: 8000 }]);
+    // ₱70 promo against ₱80: the promo is better, with no discount on top.
+    expect(line([{ product: { ...fan, promoPrice: 7000 }, quantity: 1 }], senior)).toEqual([{ unitPrice: 7000, priceBasis: 'Promo', off: 0, total: 7000 }]);
+    // ₱80 promo against ₱80: a tie takes the 20%, so the discount is on record.
+    expect(line([{ product: { ...fan, promoPrice: 8000 }, quantity: 1 }], senior)).toEqual([{ unitPrice: 10000, priceBasis: 'Retail', off: 2000, total: 8000 }]);
+    // Wholesale at ₱75 each for 10: ₱750 against ₱800.
+    expect(line([{ product: { ...fan, wholesalePrice: 7500 }, quantity: 10 }], senior)).toEqual([
+      { unitPrice: 7500, priceBasis: 'Wholesale', off: 0, total: 75000 },
+    ]);
+  });
+
   it('rounds a discount to the centavo, half a centavo and up rounding up', () => {
     const cheap = (centavos: number) => priceSale([{ product: product('X', 'Candy', centavos), quantity: 1 }], senior).discountTotal;
     expect(cheap(2)).toBe(0); // 0.4 of a centavo
@@ -52,10 +86,16 @@ describe('pricing a sale', () => {
 
   it('always adds up: the lines are the total, whatever is in the cart', () => {
     for (let round = 0; round < 200; round++) {
-      const cart: CartLine[] = Array.from({ length: 1 + (round % 7) }, (_, i) => ({
-        product: product(`P${i}`, `Product ${i}`, 1 + ((round * 7919 + i * 104729) % 500_000)),
-        quantity: 1 + ((round + i) % 12),
-      }));
+      const cart: CartLine[] = Array.from({ length: 1 + (round % 7) }, (_, i) => {
+        const shelf = 2 + ((round * 7919 + i * 104729) % 500_000);
+        // Every third product has a promo, every fourth a wholesale price from 5 pieces.
+        const promoPrice = i % 3 === 0 ? Math.max(1, shelf - 1 - (round % 50)) : null;
+        const wholesalePrice = i % 4 === 0 ? Math.max(1, Math.floor(shelf * 0.9)) : null;
+        return {
+          product: { ...product(`P${i}`, `Product ${i}`, shelf), promoPrice, wholesalePrice, wholesaleQuantity: wholesalePrice === null ? null : 5 },
+          quantity: 1 + ((round + i) % 12),
+        };
+      });
       const sale = priceSale(cart, round % 2 ? senior : null);
       expect(sale.lines.reduce((sum, line) => sum + line.total, 0)).toBe(sale.total);
       expect(sale.total).toBe(sale.subtotal - sale.discountTotal);

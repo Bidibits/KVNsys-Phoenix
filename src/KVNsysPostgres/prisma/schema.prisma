@@ -350,7 +350,7 @@ model ReceiptItem {
   unitPrice     Decimal @map("unit_price") @db.Decimal(14, 2)
   discountValue Decimal @map("discount_value") @db.Decimal(14, 2)
   lineTotal     Decimal @map("line_total") @db.Decimal(14, 2)
-  /// Which of the shop's prices it was charged at. Retail only for now; Promo and Wholesale later.
+  /// Which of the shop's prices it was charged at: Retail, Promo or Wholesale (KVNsysCore's bestPrice).
   priceBasis    String  @default("Retail") @map("price_basis")
 
   receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Restrict)

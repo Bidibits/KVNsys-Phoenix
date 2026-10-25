@@ -1,6 +1,7 @@
 import type { SaleResult } from '@kvnsys/client';
 import { Pesos, ShopTime } from '@kvnsys/ui';
 import { DiscountChoices } from './discounts';
+import { PriceBasisWords } from './prices';
 
 /**
  * A receipt as it was given, on screen until there's a printer: the shop, the receipt's number,
@@ -27,6 +28,7 @@ export function ReceiptPaper({ sale }: { sale: Extract<SaleResult, { ok: true }>
               {line.quantity} × {line.name}
               <span className="block text-[13px] text-muted-foreground">
                 @ <Pesos centavos={line.unitPrice} />
+                {PriceBasisWords[line.priceBasis] && ` · ${PriceBasisWords[line.priceBasis]}`}
               </span>
             </span>
             <Pesos centavos={line.subtotal} />

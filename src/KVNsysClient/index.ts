@@ -120,6 +120,7 @@ export type {
   CartLine,
   CountForm,
   DiscountKind,
+  PriceBasis,
   PricedLine,
   PricedSale,
   RegisterStatus,

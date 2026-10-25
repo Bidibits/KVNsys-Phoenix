@@ -6,6 +6,7 @@ import {
   takeCash,
   type CartLine,
   type PaymentType,
+  type PriceBasis,
   type DayTotals,
   type DiscountKind,
   type PricedSale,
@@ -63,7 +64,12 @@ export async function findSaleProduct(address: string, pass: SessionPass, codeOr
   const path = `${FindSaleProductPath}?codeOrBarcode=${encodeURIComponent(codeOrBarcode)}`;
   const answer = await call(address, pass, options, { path }, SaleProductReply);
   if (!answer.ok) return answer;
-  return { ok: true, product: { ...answer.reply.product, retailPrice: money(answer.reply.product.retailPrice) } };
+  const found = answer.reply.product;
+  const optional = (pesos: string | null) => (pesos === null ? null : money(pesos));
+  return {
+    ok: true,
+    product: { ...found, retailPrice: money(found.retailPrice), promoPrice: optional(found.promoPrice), wholesalePrice: optional(found.wholesalePrice) },
+  };
 }
 
 /**
@@ -135,6 +141,7 @@ function receiptFromWire(receipt: ReceiptOnWire): PaidReceipt {
     number: receipt.number,
     lines: receipt.lines.map((line) => ({
       ...line,
+      priceBasis: line.priceBasis as PriceBasis,
       unitPrice: money(line.unitPrice),
       subtotal: money(line.subtotal),
       discount: money(line.discount),

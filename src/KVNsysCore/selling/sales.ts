@@ -20,14 +20,23 @@ export type PaymentType = (typeof PaymentTypes)[number];
 
 export const SaleLimits = { lines: 200, quantity: 10_000, idNumber: 40, customerName: 100 } as const;
 
-/** A product as the till prices it. */
+/** Which of a product's prices a line was charged at: SCHEMA-PLAN's price_basis. */
+export const PriceBases = ['Retail', 'Promo', 'Wholesale'] as const;
+export type PriceBasis = (typeof PriceBases)[number];
+
+/** A product as the till prices it. Money is in centavos. */
 export interface SaleProduct {
   id: string;
   code: string;
   name: string;
-  /** Centavos. */
+  /** The shelf price. */
   retailPrice: number;
   status: ProductStatus;
+  /** Below the shelf price while there's a promo. Left out, there's none. */
+  promoPrice?: number | null;
+  /** The price once a line reaches wholesaleQuantity pieces. Left out, there's none. */
+  wholesalePrice?: number | null;
+  wholesaleQuantity?: number | null;
 }
 
 /** What the cashier rang up: a product, and how many. */
@@ -50,6 +59,8 @@ export interface PricedLine {
   name: string;
   quantity: number;
   unitPrice: number;
+  /** Which of the product's prices unitPrice is. */
+  priceBasis: PriceBasis;
   /** quantity × unitPrice */
   subtotal: number;
   discount: number;
@@ -80,6 +91,41 @@ function percentOf(centavos: number, percent: number): number {
   return Math.floor((centavos * percent + 50) / 100);
 }
 
+/**
+ * The price a line is charged at without a statutory discount: the cheapest the customer qualifies
+ * for (SCHEMA-PLAN). That's the promo price while there is one, and the wholesale price once the
+ * line reaches its pieces. KVNsysCore's product rules keep both below the shelf price; on a tie the
+ * promo wins, and the shelf price is charged only when nothing beats it.
+ */
+export function bestPrice(product: SaleProduct, quantity: number): { unitPrice: number; priceBasis: PriceBasis } {
+  let best: { unitPrice: number; priceBasis: PriceBasis } = { unitPrice: product.retailPrice, priceBasis: 'Retail' };
+  const promo = product.promoPrice ?? null;
+  if (promo !== null && promo > 0 && promo < best.unitPrice) best = { unitPrice: promo, priceBasis: 'Promo' };
+  const wholesale = product.wholesalePrice ?? null;
+  const from = product.wholesaleQuantity ?? null;
+  if (wholesale !== null && from !== null && wholesale > 0 && quantity >= from && wholesale < best.unitPrice) {
+    best = { unitPrice: wholesale, priceBasis: 'Wholesale' };
+  }
+  return best;
+}
+
+/**
+ * A line for a customer with a senior/PWD discount: **the better of the two, not both** — the
+ * promo or wholesale price as it is, or 20% off the shelf price, whichever comes to less (a tie
+ * takes the 20%, so the discount is on record). A stand-in the user hasn't settled (decisions.md,
+ * Open): "both" would be 20% off the price charged instead, and this is the one place to change.
+ */
+function withStatutoryDiscount(product: SaleProduct, quantity: number): Omit<PricedLine, 'productId' | 'code' | 'name' | 'quantity'> {
+  const best = bestPrice(product, quantity);
+  const shelf = product.retailPrice * quantity;
+  const off = percentOf(shelf, StatutoryDiscountPercent);
+  const asIs = best.unitPrice * quantity;
+  if (best.priceBasis === 'Retail' || shelf - off <= asIs) {
+    return { unitPrice: product.retailPrice, priceBasis: 'Retail', subtotal: shelf, discount: off, total: shelf - off };
+  }
+  return { ...best, subtotal: asIs, discount: 0, total: asIs };
+}
+
 /** The discount as given: tidied, or refused with what's missing. */
 export function checkDiscount(discount: StatutoryDiscount): StatutoryDiscount {
   if (!DiscountKinds.includes(discount.kind)) refuse(`"${discount.kind}" isn't a discount this version of KVNsys knows.`);
@@ -95,10 +141,11 @@ export function checkDiscount(discount: StatutoryDiscount): StatutoryDiscount {
 
 /**
  * What the sale comes to, the one place it's worked out, so the till and the server never
- * disagree. Each line is its price times its quantity; a statutory discount takes 20% off each
- * line, so the lines always add up to the total. Refuses a sale that can't be rung up: nothing in
- * it, a part piece, a product switched off, or one with no price yet (an unpriced item once rang up
- * free).
+ * disagree. Each line is its price (bestPrice: the cheapest the customer qualifies for) times its
+ * quantity; with a statutory discount, each line is the better of that price and 20% off the shelf
+ * price (withStatutoryDiscount), so the lines always add up to the total. Refuses a sale that can't
+ * be rung up: nothing in it, a part piece, a product switched off, or one with no price yet (an
+ * unpriced item once rang up free).
  */
 export function priceSale(cart: readonly CartLine[], discount: StatutoryDiscount | null): PricedSale {
   if (cart.length === 0) refuse('Scan or type at least one product.');
@@ -110,24 +157,20 @@ export function priceSale(cart: readonly CartLine[], discount: StatutoryDiscount
     if (quantity > SaleLimits.quantity) refuse(`${product.name}: one line can be at most ${SaleLimits.quantity.toLocaleString('en-US')} pieces.`);
     if (product.status !== 'Active') refuse(`${product.name} is switched off, so it can't be sold.`);
     if (product.retailPrice <= 0) refuse(`${product.name} has no price yet, so it can't be sold. Ask whoever manages products to price it.`);
-    const subtotal = product.retailPrice * quantity;
-    const off = given ? percentOf(subtotal, StatutoryDiscountPercent) : 0;
-    return {
-      productId: product.id,
-      code: product.code,
-      name: product.name,
-      quantity,
-      unitPrice: product.retailPrice,
-      subtotal,
-      discount: off,
-      total: subtotal - off,
-    };
+    const charged = given ? withStatutoryDiscount(product, quantity) : undiscounted(product, quantity);
+    return { productId: product.id, code: product.code, name: product.name, quantity, ...charged };
   });
 
   const subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0);
   const discountTotal = lines.reduce((sum, line) => sum + line.discount, 0);
   if (subtotal > MaxCentavos) refuse('That sale is more than KVNsys can record in one receipt. Split it.');
   return { lines, subtotal, discountTotal, total: subtotal - discountTotal, discount: given };
+}
+
+function undiscounted(product: SaleProduct, quantity: number): Omit<PricedLine, 'productId' | 'code' | 'name' | 'quantity'> {
+  const best = bestPrice(product, quantity);
+  const subtotal = best.unitPrice * quantity;
+  return { ...best, subtotal, discount: 0, total: subtotal };
 }
 
 /** The customer's cash against the total: enough, and the change, or a refusal that says how much is short. */
@@ -167,7 +210,8 @@ export interface Receipt extends PricedSale {
  * The record of sales. KVNsysCore only describes it; KVNsysPostgres provides the real one.
  *
  * Recording a sale saves its receipt, its lines and its payment, and takes its pieces out of the
- * shop's stock, all in one go: all of it, or none. Receipt numbers count up per shop with no gaps.
+ * shop's stock (except a product that doesn't track stock, such as a service), all in one go: all
+ * of it, or none. Receipt numbers count up per shop with no gaps.
  * A recorded receipt is never changed or deleted.
  */
 export abstract class SalesJournal {

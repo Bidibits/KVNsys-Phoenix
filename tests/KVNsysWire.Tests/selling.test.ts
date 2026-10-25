@@ -11,7 +11,7 @@ const receipt = {
   id: '0199c7a0-0000-7000-8000-0000000000bb',
   code: 'HQ-000001',
   number: 1,
-  lines: [{ productId: sale.lines[0]!.productId, code: 'PRD-0007', name: 'Sardines 155g', quantity: 2, unitPrice: '25.75', subtotal: '51.50', discount: '10.30', total: '41.20' }],
+  lines: [{ productId: sale.lines[0]!.productId, code: 'PRD-0007', name: 'Sardines 155g', quantity: 2, unitPrice: '25.75', priceBasis: 'Retail', subtotal: '51.50', discount: '10.30', total: '41.20' }],
   subtotal: '51.50',
   discountTotal: '10.30',
   total: '41.20',
@@ -41,6 +41,21 @@ describe('the selling calls', () => {
     expect(SaleFields.safeParse({ ...sale, discount: { ...sale.discount, kind: 'student' } }).success).toBe(false);
     expect(ReceiptReply.safeParse({ receipt, shop: { id: 'x', code: 'HQ', name: 'Head Office' }, cashier: 'Ana Cruz', register: 'Counter 1' }).success).toBe(true);
     expect(ReceiptReply.safeParse({ receipt: { ...receipt, payment: { ...receipt.payment, type: 'Card' } }, shop: { id: 'x', code: 'HQ', name: 'H' }, cashier: 'A', register: null }).success).toBe(false);
+  });
+
+  it('carry every price a product can be charged at, and say which one each line was (protocol 16)', () => {
+    expect(ProtocolVersion).toBeGreaterThanOrEqual(16);
+    const fan = { id: 'x', code: 'P', name: 'N', retailPrice: '100.00', status: 'Active', promoPrice: '90.00', wholesalePrice: '85.00', wholesaleQuantity: 10 };
+    expect(SaleProductOnWire.safeParse(fan).success).toBe(true);
+    expect(SaleProductOnWire.safeParse({ ...fan, promoPrice: null, wholesalePrice: null, wholesaleQuantity: null }).success).toBe(true);
+    expect(SaleProductOnWire.safeParse({ ...fan, promoPrice: 90 }).success).toBe(false);
+    const { promoPrice: _left, ...withoutPromo } = fan;
+    expect(SaleProductOnWire.safeParse(withoutPromo).success).toBe(false);
+    const shop = { id: 'x', code: 'HQ', name: 'Head Office' };
+    const line = (priceBasis: unknown) => ({ receipt: { ...receipt, lines: [{ ...receipt.lines[0], priceBasis }] }, shop, cashier: null, register: null });
+    for (const basis of ['Retail', 'Promo', 'Wholesale']) expect(ReceiptReply.safeParse(line(basis)).success, basis).toBe(true);
+    expect(ReceiptReply.safeParse(line('Member')).success).toBe(false);
+    expect(ReceiptReply.safeParse(line(undefined)).success).toBe(false);
   });
 });
 

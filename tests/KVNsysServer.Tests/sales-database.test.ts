@@ -39,7 +39,16 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
   async function product(code: string, barcode: string | null, name: string, price: string, status = 'Active'): Promise<SaleProduct> {
     const id = randomUUID();
     await db.product.create({ data: { id, code, barcode, name, retailPrice: price, status } });
-    return { id, code, name, retailPrice: Math.round(Number(price) * 100), status: status as SaleProduct['status'] };
+    return {
+      id,
+      code,
+      name,
+      retailPrice: Math.round(Number(price) * 100),
+      status: status as SaleProduct['status'],
+      promoPrice: null,
+      wholesalePrice: null,
+      wholesaleQuantity: null,
+    };
   }
 
   const as = (username: string) => ({ pass: passes[username]!, options: { pin } });
@@ -218,5 +227,37 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
     expect(await listDaySales(address, pass, null, options)).toEqual(refused);
     const sold = await db.receipt.findFirstOrThrow({ where: { code: 'HQ-000001' } });
     expect(await getReceipt(address, pass, sold.id, options)).toEqual(refused);
+  });
+
+  it('charges the promo and the wholesale price, says which on each line, and leaves alone the stock of a product that tracks none', async () => {
+    const { pass, options } = as('ana');
+    await db.product.create({
+      data: { id: randomUUID(), code: 'FAN-16', name: 'Stand fan', retailPrice: '100.00', promoPrice: '90.00', wholesalePrice: '85.00', wholesaleQuantity: 10 },
+    });
+    await db.product.create({ data: { id: randomUUID(), code: 'SVC-ASM', name: 'Assembly service', retailPrice: '50.00', tracksStock: false } });
+    const fan = await findSaleProduct(address, pass, 'FAN-16', options);
+    const service = await findSaleProduct(address, pass, 'SVC-ASM', options);
+    if (!fan.ok || !service.ok) throw new Error('not found');
+    expect(fan.product).toMatchObject({ promoPrice: 9000, wholesalePrice: 8500, wholesaleQuantity: 10 });
+
+    // 2 fans at the promo price, 10 more at the wholesale price, and a service: ₱180 + ₱850 + ₱50.
+    const sold = await recordSale(
+      address,
+      pass,
+      { cart: [{ product: fan.product, quantity: 2 }, { product: service.product, quantity: 1 }], discount: null, tendered: '230' },
+      options,
+    );
+    expect(sold).toMatchObject({ ok: true, receipt: { total: 23000, lines: [{ priceBasis: 'Promo', unitPrice: 9000 }, { priceBasis: 'Retail', unitPrice: 5000 }] } });
+    const bulk = await recordSale(address, pass, { cart: [{ product: fan.product, quantity: 10 }], discount: null, tendered: '850' }, options);
+    expect(bulk).toMatchObject({ ok: true, receipt: { total: 85000, lines: [{ priceBasis: 'Wholesale', unitPrice: 8500 }] } });
+
+    const kept = await db.receiptItem.findMany({ where: { productId: { in: [fan.product.id, service.product.id] } }, orderBy: { unitPrice: 'desc' } });
+    expect(kept.map((item) => [item.productName, item.priceBasis, item.unitPrice.toFixed(2)])).toEqual([
+      ['Stand fan', 'Promo', '90.00'],
+      ['Stand fan', 'Wholesale', '85.00'],
+      ['Assembly service', 'Retail', '50.00'],
+    ]);
+    expect([await stockOf(fan.product), await stockOf(service.product)]).toEqual([-12, 0]);
+    expect(await db.inventoryLog.count({ where: { productId: service.product.id } })).toBe(0);
   });
 });

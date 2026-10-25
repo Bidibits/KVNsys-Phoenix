@@ -35,14 +35,23 @@ async function fakeServer(certificate: ServerCertificate, status: number, reply:
 }
 
 const pass: SessionPass = { token: 'the-pass-the-pass-the-pass-the-pass-the-pas', expiresAt: '2026-10-18T20:00:00.000Z' };
-const sardines: SaleProduct = { id: '0199c7a0-0000-7000-8000-000000000001', code: 'PRD-0007', name: 'Sardines 155g', retailPrice: 2575, status: 'Active' };
+const sardines: SaleProduct = {
+  id: '0199c7a0-0000-7000-8000-000000000001',
+  code: 'PRD-0007',
+  name: 'Sardines 155g',
+  retailPrice: 2575,
+  status: 'Active',
+  promoPrice: null,
+  wholesalePrice: null,
+  wholesaleQuantity: null,
+};
 const senior = { kind: 'senior' as const, idNumber: 'OSCA-1', customerName: 'Lola Cruz' };
 const shop = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
 const receiptOnWire = {
   id: '0199c7a0-0000-7000-8000-0000000000bb',
   code: 'HQ-000001',
   number: 1,
-  lines: [{ productId: sardines.id, code: 'PRD-0007', name: 'Sardines 155g', quantity: 2, unitPrice: '25.75', subtotal: '51.50', discount: '10.30', total: '41.20' }],
+  lines: [{ productId: sardines.id, code: 'PRD-0007', name: 'Sardines 155g', quantity: 2, unitPrice: '25.75', priceBasis: 'Retail', subtotal: '51.50', discount: '10.30', total: '41.20' }],
   subtotal: '51.50',
   discountTotal: '10.30',
   total: '41.20',
@@ -69,6 +78,14 @@ describe('selling from the register', () => {
     server = await fakeServer(certificate, 200, { product: { ...sardines, retailPrice: '25.75' } });
     expect(await findSaleProduct(server.address, pass, '4800 249/1', pinned())).toEqual({ ok: true, product: sardines });
     expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/sales/find?codeOrBarcode=4800%20249%2F1']);
+  });
+
+  it('finds a product with its promo and wholesale prices, back in centavos too', async () => {
+    server = await fakeServer(certificate, 200, { product: { ...sardines, retailPrice: '25.75', promoPrice: '22.50', wholesalePrice: '21.00', wholesaleQuantity: 24 } });
+    expect(await findSaleProduct(server.address, pass, 'PRD-0007', pinned())).toEqual({
+      ok: true,
+      product: { ...sardines, promoPrice: 2250, wholesalePrice: 2100, wholesaleQuantity: 24 },
+    });
   });
 
   it('prices the cart on the register, with the same rules the server records it with', () => {

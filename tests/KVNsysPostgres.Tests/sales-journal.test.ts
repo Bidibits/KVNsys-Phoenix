@@ -140,6 +140,26 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     expect(await journal.between('nope', new Date(now - hour), new Date(now + hour))).toEqual([]);
   });
 
+  it('keeps the price each line was charged at, and takes nothing out of stock for a product that tracks none', async () => {
+    const fan: SaleProduct = { ...(await product('FAN-16', 'Stand fan', 10000)), promoPrice: 9000, wholesalePrice: 8500, wholesaleQuantity: 10 };
+    const service = await product('SVC-ASM', 'Assembly service', 5000);
+    await db.product.update({ where: { id: service.id }, data: { tracksStock: false } });
+    const sale = priceSale([{ product: fan, quantity: 10 }, { product: service, quantity: 1 }, { product: { ...fan, wholesaleQuantity: null }, quantity: 1 }], null);
+    const receipt = await sell(sale);
+    expect(receipt.lines.map((line) => line.priceBasis)).toEqual(['Wholesale', 'Retail', 'Promo']);
+    expect(await journal.get(receipt.id)).toEqual(receipt);
+    expect([await ledger.onHand(hq, fan.id), await ledger.onHand(hq, service.id)]).toEqual([-11, 0]);
+    expect(await ledger.movements(hq, service.id, 10)).toEqual([]);
+  });
+
+  it('refuses, in the database itself, a price basis it does not know', async () => {
+    const receipt = await sell(priceSale([{ product: sardines, quantity: 1 }], null));
+    const insert = db.$executeRaw`
+      INSERT INTO receipt_items (id, receipt_id, line_number, product_id, product_code, product_name, quantity, unit_price, discount_value, line_total, price_basis)
+      VALUES (${randomUUID()}::uuid, ${receipt.id}::uuid, 2, ${sardines.id}::uuid, 'X', 'X', 1, 1, 0, 1, 'Member')`;
+    await expect(insert).rejects.toThrow(/receipt_items_price_basis_known|receipt_items_no/);
+  });
+
   it("hands back nothing for an id that isn't a receipt", async () => {
     expect(await journal.get(randomUUID())).toBeNull();
     expect(await journal.get('HQ-000001')).toBeNull();

@@ -8,6 +8,7 @@ import {
   type DiscountKind,
   type Lineage,
   type PaymentType,
+  type PriceBasis,
   type PricedSale,
   type Receipt,
   type ReceiptSummary,
@@ -17,6 +18,7 @@ import { recordStockIn } from '../inventory/prisma-stock-ledger.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NoSuchShop = "That shop isn't known here.";
+const NotInCatalog = "That product isn't in the catalog.";
 const withLines = { items: { orderBy: { lineNumber: 'asc' } }, payments: true } as const;
 
 type Row = Prisma.ReceiptGetPayload<{ include: typeof withLines }>;
@@ -44,6 +46,7 @@ function toReceipt(row: Row): Receipt {
         name: item.productName,
         quantity: item.quantity,
         unitPrice,
+        priceBasis: item.priceBasis as PriceBasis,
         subtotal: unitPrice * item.quantity,
         discount: centavos(item.discountValue),
         total: centavos(item.lineTotal),
@@ -84,8 +87,8 @@ function requireSound(sale: PricedSale, payment: CashPayment): void {
 
 /**
  * Sales, kept in PostgreSQL. Recording one is a single transaction: the next receipt number at the
- * shop, the receipt with its lines and payment, and the pieces out of the shop's stock through the
- * ledger. All of it is saved, or none. The database refuses to change or delete a receipt.
+ * shop, the receipt with its lines (each with the price it was charged at) and payment, and the
+ * pieces out of the shop's stock through the ledger, for the products that track stock. All of it is saved, or none. The database refuses to change or delete a receipt.
  */
 export class PrismaSalesJournal extends SalesJournal {
   constructor(private readonly db: PrismaClient) {
@@ -116,10 +119,18 @@ export class PrismaSalesJournal extends SalesJournal {
       const last = await tx.receipt.aggregate({ where: { locationId }, _max: { number: true } });
       const number = (last._max.number ?? 0) + 1;
 
-      // The stock first: it refuses a product that isn't in the catalog, in words a person can act on.
+      // A product that doesn't track stock (a service, say) is sold without taking anything out of
+      // stock. Asked here, of the catalog, not of what was priced: the product decides.
+      const productIds = [...new Set(sale.lines.map((line) => line.productId))];
+      const products = productIds.every((productId) => Uuid.test(productId))
+        ? await tx.product.findMany({ where: { id: { in: productIds } }, select: { id: true, tracksStock: true } })
+        : [];
+      if (products.length !== productIds.length) throw new Refusal('not-found', NotInCatalog);
+      const tracked = new Set(products.filter((product) => product.tracksStock).map((product) => product.id));
+
       await recordStockIn(
         tx,
-        sale.lines.map((line) => ({
+        sale.lines.filter((line) => tracked.has(line.productId)).map((line) => ({
           locationId,
           productId: line.productId,
           type: 'to_customer',
@@ -164,6 +175,7 @@ export class PrismaSalesJournal extends SalesJournal {
               productName: line.name,
               quantity: line.quantity,
               unitPrice: pesosText(line.unitPrice),
+              priceBasis: line.priceBasis,
               discountValue: pesosText(line.discount),
               lineTotal: pesosText(line.total),
             })),

@@ -5,6 +5,7 @@ import { DiscountPanel } from './DiscountPanel';
 import { EndShiftPanel } from './EndShiftPanel';
 import { ShiftReport, StartShift } from './ShiftViews';
 import { DiscountChoices } from './discounts';
+import { PriceBasisWords } from './prices';
 import { PayPanel } from './PayPanel';
 import { ReceiptView } from './ReceiptView';
 
@@ -135,7 +136,17 @@ function SaleArea({
         </span>
       ),
     },
-    { heading: 'Price', cell: (line) => <span className="whitespace-nowrap"><Pesos centavos={line.unitPrice} /></span>, align: 'right' },
+    {
+      heading: 'Price',
+      align: 'right',
+      // A promo or wholesale price says so under it, so the cashier can tell the customer why it's lower.
+      cell: (line) => (
+        <span className="block py-1 leading-tight whitespace-nowrap">
+          <Pesos centavos={line.unitPrice} />
+          {PriceBasisWords[line.priceBasis] && <span className="block text-[14px] text-success-foreground">{PriceBasisWords[line.priceBasis]}</span>}
+        </span>
+      ),
+    },
     {
       heading: 'Qty',
       align: 'right',

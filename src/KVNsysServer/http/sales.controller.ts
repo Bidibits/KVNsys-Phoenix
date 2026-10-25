@@ -57,7 +57,17 @@ export interface SalesOperationParts {
 }
 
 function productOnWire(product: Product): SaleProductOnWire {
-  return { id: product.id, code: product.code, name: product.name, retailPrice: pesosText(product.retailPrice), status: product.status };
+  const pesos = (centavos: number | null) => (centavos === null ? null : pesosText(centavos));
+  return {
+    id: product.id,
+    code: product.code,
+    name: product.name,
+    retailPrice: pesosText(product.retailPrice),
+    status: product.status,
+    promoPrice: pesos(product.promoPrice),
+    wholesalePrice: pesos(product.wholesalePrice),
+    wholesaleQuantity: product.wholesaleQuantity,
+  };
 }
 
 function receiptOnWire(receipt: Receipt): ReceiptOnWire {
@@ -71,6 +81,7 @@ function receiptOnWire(receipt: Receipt): ReceiptOnWire {
       name: line.name,
       quantity: line.quantity,
       unitPrice: pesosText(line.unitPrice),
+      priceBasis: line.priceBasis,
       subtotal: pesosText(line.subtotal),
       discount: pesosText(line.discount),
       total: pesosText(line.total),
