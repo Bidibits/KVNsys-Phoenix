@@ -172,6 +172,7 @@ Newest at the bottom. A decision made in conversation counts only once it's writ
 | 2026-10-25 | **A senior/PWD discount gets the better of the two, not both,** as a stand-in: a line is its promo or wholesale price as it is, or 20% off the shelf price, whichever comes to less; a tie takes the 20%, so the discount is on record. The user, asked: "lets not worry about this for now". It lives in one function (`withStatutoryDiscount` in KVNsysCore), so "both" is a small change. See Open. | As far as can be told here, the law's rules read this way, and it costs the shop less than "both" until someone decides |
 | 2026-10-25 | **A product that doesn't track stock sells without a stock line.** The record of sales asks the catalog, in the same transaction, which products track stock; only those get a `to_customer` line. | A service, such as assembly, has no pieces on a shelf |
 | 2026-10-25 | **What the till's prices don't do yet:** a promo with start and end dates (SCHEMA-PLAN gap 2: it runs until someone clears it); wholesale counted across different products, or a mixed case; a price a manager types in at the till. | Each needs a decision first |
+| 2026-10-26 | **Every scan counts, however quickly they come.** Enter takes what's in the code box as one scan and empties the box at once; scans wait in a queue and are looked up one at a time, in order. A code that can't be found goes back in the box, selected, as before, so the next scan replaces it. The Add button is never disabled while a scan is looked up. | Found by a screenshot: two quick scans of the same sardines rang up one. While a scan was looked up, Add was disabled, so the browser ignored the next Enter, and the first scan then emptied the box, losing the second: an item given away |
 
 ## Why Electron
 
@@ -307,5 +308,7 @@ column, its index, and the comments written for the browser design.
   so the next scan would have been glued to it ("PRD-00994800249211116") and refused too. The same
   screenshot showed it. A refused code is now selected, and a test types the next code key by key,
   as a scanner does, which `fill` never would have shown.
+- **A test that waits for each step can't see a race.** Every selling test waited for one scan to show before the next, so none saw two quick scans lose one; a screenshot script that didn't wait did. Then the first fast-scan test passed with the bug put back: on this PC a lookup finishes before a test can scan again. The test now runs over a deliberately slow network (100 ms each way), and fails every time the bug is put back.
+- **A browser won't submit a form on Enter while its submit button is disabled.** That rule, not any code of ours, is what swallowed the second scan.
 - **On Windows, never pass a folder path ending in `\` as a program argument.** Before the closing
   quote it reads as an escaped quote, and the program gets a broken path.

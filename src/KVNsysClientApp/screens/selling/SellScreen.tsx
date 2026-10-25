@@ -1,6 +1,7 @@
 import type { CurrentShiftResult, PricedLine, SaleResult, ShiftView, TillResult, TillView } from '@kvnsys/client';
 import { Button, ConfirmDialog, Notice, Pesos, RecordTable, ShopTime, TextField, type Column } from '@kvnsys/ui';
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { DiscountPanel } from './DiscountPanel';
 import { EndShiftPanel } from './EndShiftPanel';
 import { ShiftReport, StartShift } from './ShiftViews';
@@ -87,6 +88,9 @@ function SaleArea({
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState<Paid | null>(null);
   const codeBox = useRef<HTMLInputElement>(null);
+  /** Codes scanned or typed and not yet looked up, oldest first, and whether they're being looked up now. */
+  const scans = useRef<string[]>([]);
+  const scanning = useRef(false);
 
   function show(result: TillResult): boolean {
     if (result.ok) {
@@ -112,11 +116,38 @@ function SaleArea({
     void change(() => window.kvnsys.till());
   }, []);
 
-  async function scan() {
-    if (busy || !code.trim()) return;
-    if (await change(() => window.kvnsys.scanForSale(code))) setCode('');
-    // Left on show, but selected: a scanner types into the box, and the next scan replaces it.
-    else codeBox.current?.select();
+  /**
+   * Takes what's in the box as one scan, and empties the box for the next. A scanner can send the
+   * next code before this one is found (two cans of the same sardines, quickly), so every scan
+   * waits its turn and none is lost: they're looked up one at a time, in the order they came.
+   */
+  function scan() {
+    if (!code.trim()) return;
+    scans.current.push(code);
+    setCode('');
+    void lookUpScans();
+  }
+
+  async function lookUpScans() {
+    if (scanning.current) return;
+    scanning.current = true;
+    setBusy(true);
+    let refused: { code: string; message: string; ended: boolean } | null = null;
+    for (let next = scans.current.shift(); next !== undefined; next = scans.current.shift()) {
+      const result = await window.kvnsys.scanForSale(next).catch((error: unknown): TillResult => somethingWentWrong(error));
+      if (result.ok) setTill(result.till);
+      else refused = { code: next, message: result.message, ended: result.reason === 'ended' };
+    }
+    scanning.current = false;
+    setBusy(false);
+    if (refused) {
+      setProblem({ message: refused.message, ended: refused.ended });
+      // Back in the box, selected, unless something new is being typed: the next scan replaces it.
+      const { code: refusedCode } = refused;
+      flushSync(() => setCode((typed) => (typed === '' ? refusedCode : typed)));
+      if (codeBox.current?.value === refusedCode) codeBox.current.select();
+    } else setProblem(null);
+    codeBox.current?.focus();
   }
 
   function newSale() {
@@ -217,13 +248,14 @@ function SaleArea({
           className="flex items-end gap-3"
           onSubmit={(event) => {
             event.preventDefault();
-            void scan();
+            scan();
           }}
         >
           <div className="flex-1 [&>div]:mb-0">
             <TextField ref={codeBox} label="Scan or type a code" value={code} onChange={(e) => setCode(e.target.value)} autoFocus autoComplete="off" />
           </div>
-          <Button type="submit" size="compact" className="h-14 px-6 text-[17px]" disabled={busy || !code.trim()}>
+          {/* Never disabled while a scan is looked up: Enter in the box only works while this can be pressed. */}
+          <Button type="submit" size="compact" className="h-14 px-6 text-[17px]" disabled={!code.trim()}>
             Add
           </Button>
         </form>

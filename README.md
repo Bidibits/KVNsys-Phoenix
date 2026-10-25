@@ -130,7 +130,8 @@ and everything a user sees, is called KVNsys.
   didn't see. The sale is always at the server's own shop, and the receipt comes back with the
   shop's name and the cashier's.
 - **The selling screen.** A Sell tile on Home opens it, with the cursor already in the code box: a
-  scan, or a code and Enter, adds one; scanning it again adds another. Each line has − and + and
+  scan, or a code and Enter, adds one; scanning it again adds another. Scans that come quickly,
+  one after another, each count, in the order they came. Each line has − and + and
   a × to remove it. The senior/PWD discount takes the ID number and the name on the ID. Pay takes
   the cash given, says if it's short, and records the sale; the receipt then shows on screen (the
   shop, its number, when, the cashier, every line, the discount and whose ID, total, cash and
