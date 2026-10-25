@@ -28,10 +28,11 @@ function centavos(code: string, what: string, value: Prisma.Decimal): number {
   return amount;
 }
 
-/** A row as KVNsys sees it. */
-function fromRow(row: ProductRowWithoutPicture): Product {
+/** A row as KVNsys sees it, and whether it has a picture (worked out apart: see withPictures). */
+function fromRow(row: ProductRowWithoutPicture, hasPicture: boolean): Product {
   return {
     id: row.id,
+    hasPicture,
     code: row.code,
     barcode: row.barcode,
     name: row.name,
@@ -109,7 +110,7 @@ export class PrismaProductCatalog extends ProductCatalog {
         },
         ...WithoutPicture,
       });
-      return fromRow(row);
+      return fromRow(row, picture !== null);
     });
   }
 
@@ -133,13 +134,14 @@ export class PrismaProductCatalog extends ProductCatalog {
         },
         ...WithoutPicture,
       });
-      return fromRow(row);
+      if (picture !== undefined) return fromRow(row, picture !== null);
+      return (await withPictures(tx, [row]))[0]!;
     });
   }
 
   async get(id: string): Promise<Product | null> {
     const row = await this.db.product.findUnique({ where: { id }, ...WithoutPicture });
-    return row ? fromRow(row) : null;
+    return row ? (await withPictures(this.db, [row]))[0]! : null;
   }
 
   async picture(id: string): Promise<Uint8Array | null> {
@@ -157,7 +159,7 @@ export class PrismaProductCatalog extends ProductCatalog {
 
   async list(): Promise<Product[]> {
     const rows = await this.db.product.findMany({ orderBy: [{ name: 'asc' }, { code: 'asc' }], ...WithoutPicture });
-    return rows.map(fromRow);
+    return withPictures(this.db, rows);
   }
 
   /** Capitals ignored, which saving keeps unambiguous: no two products share a code or barcode that way. */
@@ -180,6 +182,15 @@ export class PrismaProductCatalog extends ProductCatalog {
       throw error;
     }
   }
+}
+
+/** The rows as products, each saying whether it has a picture: one question for them all, no picture read. */
+async function withPictures(db: Prisma.TransactionClient | PrismaClient, rows: ProductRowWithoutPicture[]): Promise<Product[]> {
+  if (rows.length === 0) return [];
+  const pictured = await db.$queryRaw<{ id: string }[]>`
+    SELECT id FROM products WHERE id = ANY (${rows.map((row) => row.id)}::uuid[]) AND image IS NOT NULL`;
+  const has = new Set(pictured.map((row) => row.id));
+  return rows.map((row) => fromRow(row, has.has(row.id)));
 }
 
 /**

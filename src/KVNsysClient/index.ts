@@ -33,6 +33,7 @@ export {
   type ProductResult,
   type ProductsProblem,
 } from './catalog/products.js';
+export { listProductRows, type ProductRow, type ProductRowsResult } from './catalog/product-list.js';
 export {
   loadProductForm,
   saveProductForm,

@@ -63,7 +63,7 @@ const extras = {
   hasWarranty: false,
   warrantyMonths: 0,
 };
-const rice = { id, code: 'PRD-0042', barcode: null, name: 'Sack of rice 25kg', retailPrice: 145050, status: 'Active' as const, description: null, ...extras };
+const rice = { id, code: 'PRD-0042', barcode: null, name: 'Sack of rice 25kg', retailPrice: 145050, status: 'Active' as const, description: null, ...extras, hasPicture: false };
 const riceOnWire = { ...rice, retailPrice: '1450.50', costPrice: '0.00' };
 const line = {
   id: '0199c7a0-0000-7000-8000-0000000000bb',

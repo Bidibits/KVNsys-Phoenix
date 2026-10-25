@@ -18,8 +18,9 @@ import { z } from 'zod';
  * 12: shifts: start one with the cash in the drawer, end it with the cash counted; a sale needs one.
  * 13: the catalogue's lists: suppliers, brands, manufacturers and categories (list, get, add, change).
  * 14: every product field (sorting, unit, stock or not, cost, promo, wholesale, warranty), and its picture.
+ * 15: a product says whether it has a picture.
  */
-export const ProtocolVersion = 14;
+export const ProtocolVersion = 15;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

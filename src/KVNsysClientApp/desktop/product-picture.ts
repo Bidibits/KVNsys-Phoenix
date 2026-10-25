@@ -33,6 +33,22 @@ export function shrinkPicture(path: string): PictureChoice {
   return { ok: false, reason: 'unreadable', message: 'That picture is still too big after shrinking it. Choose a plainer one.' };
 }
 
+/** The longest side of a thumbnail: a list shows it at 40 pixels, and twice that stays sharp. */
+export const ThumbnailSide = 80;
+
+/**
+ * A kept picture (base64 JPEG) made small enough for a list, as base64 JPEG again. A list holds
+ * one per row, so each is a few KB instead of the picture's tens. Null if it can't be read.
+ */
+export function thumbnailOf(picture: string): string | null {
+  const image = nativeImage.createFromBuffer(Buffer.from(picture, 'base64'));
+  if (image.isEmpty()) return null;
+  const { width, height } = image.getSize();
+  const scale = Math.min(1, ThumbnailSide / Math.max(width, height));
+  const small = scale < 1 ? image.resize({ width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), quality: 'best' }) : image;
+  return small.toJPEG(80).toString('base64');
+}
+
 /**
  * The picture over a white background. A JPEG has no see-through parts, and Electron would make
  * them black: a product cut out of its background (a common PNG) would end up on black.

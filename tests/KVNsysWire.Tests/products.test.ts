@@ -33,7 +33,7 @@ const rice = {
   hasWarranty: false,
   warrantyMonths: 0,
 };
-const saved = { ...rice, id: '0199c7a0-0000-7000-8000-000000000001' };
+const saved = { ...rice, id: '0199c7a0-0000-7000-8000-000000000001', hasPicture: false };
 
 describe('the product calls', () => {
   // The rule, not today's number: products arrived with protocol 4, and it only goes up.
@@ -85,6 +85,13 @@ describe('the product calls', () => {
     expect(productPicturePath('a/b')).toBe('/api/products/a%2Fb/picture');
     expect(ProductPictureReply.safeParse({ picture: null }).success).toBe(true);
     expect(ProductPictureReply.safeParse({}).success).toBe(false);
+  });
+
+  it('say whether a product has a picture (protocol 15), always as yes or no', () => {
+    expect(ProtocolVersion).toBeGreaterThanOrEqual(15);
+    expect(ProductOnWire.safeParse({ ...saved, hasPicture: true }).success).toBe(true);
+    expect(ProductOnWire.safeParse({ ...saved, hasPicture: undefined }).success).toBe(false);
+    expect(ProductOnWire.safeParse({ ...saved, hasPicture: 'yes' }).success).toBe(false);
   });
 
   it('answer with a product, a list, or a reason', () => {

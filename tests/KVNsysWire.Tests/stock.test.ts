@@ -33,6 +33,7 @@ const product = {
   wholesaleQuantity: null,
   hasWarranty: false,
   warrantyMonths: 0,
+  hasPicture: false,
 };
 const shop = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
 const line = {

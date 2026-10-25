@@ -24,7 +24,7 @@ in this round:
 
 Since then (2026-10-25): the whole of SCHEMA-PLAN is in the database (see
 [`schema.md`](schema.md)), and suppliers, brands, manufacturers and categories have their lists
-and forms, and the product form has every field and a picture. 541 tests; the protocol is at 14.
+and forms, the product form has every field and a picture, and the products list shows each one's picture, category and brand. 552 tests; the protocol is at 15.
 
 ## Getting it onto your PC
 

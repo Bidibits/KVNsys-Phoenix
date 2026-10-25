@@ -21,8 +21,9 @@ import type {
   StockListResult,
   ProductForm,
   ProductFormResult,
-  ProductListResult,
   PasswordResult,
+  ProductPictureResult,
+  ProductRowsResult,
   ProductResult,
   RoleForm,
   RoleFormResult,
@@ -76,8 +77,13 @@ export interface KvnsysBridge {
   catalogEntryForm(list: CatalogList, id: string | null): Promise<CatalogEntryFormResult>;
   /** Saves what was typed, as a new entry (null) or over the one with that id. */
   saveCatalogEntry(list: CatalogList, id: string | null, form: CatalogEntryForm): Promise<CatalogEntryResult>;
-  /** Every product, by name, if the signed-in person may see them. Prices are whole centavos. */
-  listProducts(): Promise<ProductListResult>;
+  /**
+   * Every product, by name, if the signed-in person may see them, each with its category and
+   * brand named. Prices are whole centavos.
+   */
+  listProducts(): Promise<ProductRowsResult>;
+  /** A product's picture made small for a list (see product-picture.ts), or none. */
+  productThumbnail(id: string): Promise<ProductPictureResult>;
   /** The form to fill in: blank for a new product (null), or the product as the server has it now. */
   productForm(id: string | null): Promise<ProductFormResult>;
   /**
@@ -154,6 +160,7 @@ export const ListProductsChannel = 'kvnsys:list-products';
 export const ProductFormChannel = 'kvnsys:product-form';
 export const SaveProductChannel = 'kvnsys:save-product';
 export const ChooseProductPictureChannel = 'kvnsys:choose-product-picture';
+export const ProductThumbnailChannel = 'kvnsys:product-thumbnail';
 export const ListUsersChannel = 'kvnsys:list-users';
 export const UserFormChannel = 'kvnsys:user-form';
 export const SaveUserChannel = 'kvnsys:save-user';

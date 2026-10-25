@@ -36,7 +36,7 @@ describeWithDatabase('the product catalog in PostgreSQL', () => {
 
   it('saves a product and finds it again by id, code and barcode, ignoring capitals', async () => {
     const saved = await catalog.create({ ...rice, code: ' PRD-0042 ' }, hq);
-    expect(saved).toEqual({ ...rice, id: saved.id });
+    expect(saved).toEqual({ ...rice, id: saved.id, hasPicture: false });
     expect(await catalog.get(saved.id)).toEqual(saved);
     expect(await catalog.findByCode('prd-0042')).toEqual(saved);
     expect(await catalog.findByBarcode(' 4800016641503 ')).toEqual(saved);
@@ -61,7 +61,7 @@ describeWithDatabase('the product catalog in PostgreSQL', () => {
   it('records who made it, where, and when; and who changed it, without losing the first', async () => {
     const saved = await catalog.create(rice, hq);
     const changed = await catalog.update(saved.id, { ...rice, name: 'Rice 25kg', retailPrice: 139900, status: 'Inactive' }, branch);
-    expect(changed).toEqual({ ...rice, id: saved.id, name: 'Rice 25kg', retailPrice: 139900, status: 'Inactive' });
+    expect(changed).toEqual({ ...rice, id: saved.id, hasPicture: false, name: 'Rice 25kg', retailPrice: 139900, status: 'Inactive' });
     const row = await db.product.findUniqueOrThrow({ where: { id: saved.id } });
     expect(row).toMatchObject({
       createdByUser: hq.userId,
@@ -166,7 +166,7 @@ describeWithDatabase('the product catalog in PostgreSQL', () => {
       warrantyMonths: 12,
     };
     const saved = await catalog.create(fan, hq);
-    expect(saved).toEqual({ ...fan, id: saved.id });
+    expect(saved).toEqual({ ...fan, id: saved.id, hasPicture: false });
     expect(await catalog.get(saved.id)).toEqual(saved);
     expect(await catalog.list()).toEqual([saved]);
     const stored = await db.$queryRaw<{ cost: string; promo: string; wholesale: string }[]>`
@@ -193,15 +193,29 @@ describeWithDatabase('the product catalog in PostgreSQL', () => {
   it('keeps a picture apart from the details: saved with them, kept when a change leaves it out, removed by none', async () => {
     const saved = await catalog.create(rice, hq, jpeg(1));
     expect(saved).not.toHaveProperty('picture');
+    expect(saved.hasPicture).toBe(true);
     expect(await catalog.picture(saved.id)).toEqual(jpeg(1));
-    await catalog.update(saved.id, { ...rice, name: 'Rice 25kg' }, hq);
+    expect((await catalog.update(saved.id, { ...rice, name: 'Rice 25kg' }, hq)).hasPicture).toBe(true);
     expect(await catalog.picture(saved.id)).toEqual(jpeg(1));
     await catalog.update(saved.id, rice, hq, jpeg(2));
     expect(await catalog.picture(saved.id)).toEqual(jpeg(2));
-    await catalog.update(saved.id, rice, hq, null);
+    expect((await catalog.update(saved.id, rice, hq, null)).hasPicture).toBe(false);
     expect(await catalog.picture(saved.id)).toBeNull();
     expect(await catalog.picture(randomUUID())).toBeNull();
     expect(await catalog.picture((await catalog.create(sardines, hq)).id)).toBeNull();
+  });
+
+  it('says which products have a picture, in a list and one at a time, without reading the pictures', async () => {
+    const pictured = await catalog.create(rice, hq, jpeg(1));
+    const plain = await catalog.create(sardines, hq);
+    expect((await catalog.list()).map((product) => [product.code, product.hasPicture])).toEqual([
+      ['PRD-0042', true],
+      ['PRD-0007', false],
+    ]);
+    expect((await catalog.get(pictured.id))?.hasPicture).toBe(true);
+    expect((await catalog.findByCode('PRD-0007'))?.hasPicture).toBe(false);
+    expect((await catalog.findByBarcode(rice.barcode))?.hasPicture).toBe(true);
+    expect(plain.hasPicture).toBe(false);
   });
 
   it('refuses a picture that is not a JPEG, or too big, before saving anything', async () => {

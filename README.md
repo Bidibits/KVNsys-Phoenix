@@ -71,6 +71,12 @@ and everything a user sees, is called KVNsys.
   A barcode scanner's Enter in the Barcode box moves on to Name instead of saving. The till
   still sells at the price only: promo and wholesale prices, and not taking a product out of
   stock, aren't applied yet.
+- **The products list shows where each product is sorted.** Beside the code, barcode and name: a
+  small picture, the category with those above it ("Appliances › Fans") and the brand, long ones
+  wrapping onto a second line. The search box finds a product by those too: "appliances" finds
+  every product under Appliances, fans included, and "hanabishi" every Hanabishi. Pictures are
+  made small on the register and fetched only as their rows come into view, so a long list never
+  pulls every picture over the network.
 - **Users.** The Users tile lists every account: name, username, role and status. Someone whose
   role may manage users gets Add user and Edit, in the same panel: names, username, role, Active
   or switched off, and a first password typed twice. A password is never shown; Edit has its own

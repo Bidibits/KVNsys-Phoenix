@@ -90,6 +90,7 @@ describe('the first window, driven like a person would', () => {
       'paySale',
       'productForm',
       'productStock',
+      'productThumbnail',
       'receipt',
       'receiveStock',
       'removeFromSale',

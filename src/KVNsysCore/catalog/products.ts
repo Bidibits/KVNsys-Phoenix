@@ -66,6 +66,8 @@ export const ProductDefaults = {
 
 export interface Product extends FullProductDetails {
   id: string;
+  /** Whether it has a picture. The picture itself is fetched apart (ProductCatalog.picture). */
+  hasPicture: boolean;
 }
 
 export const ProductLimits = {

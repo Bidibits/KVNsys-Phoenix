@@ -43,7 +43,8 @@ import {
   type CatalogEntryResult,
   type CatalogList,
   type CatalogListResult,
-  listProducts,
+  getProductPicture,
+  listProductRows,
   listRoles,
   listUsers,
   loadProductForm,
@@ -67,7 +68,8 @@ import {
   type ProductCallOptions,
   type ProductForm,
   type ProductFormResult,
-  type ProductListResult,
+  type ProductPictureResult,
+  type ProductRowsResult,
   type ProductResult,
   type ProductsProblem,
   type SessionPass,
@@ -105,6 +107,7 @@ import {
   RoleFormChannel,
   SaveProductChannel,
   ChooseProductPictureChannel,
+  ProductThumbnailChannel,
   type PictureChoice,
   SaveRoleChannel,
   SaveUserChannel,
@@ -115,7 +118,7 @@ import {
   type ConnectReply,
   type SignInForScreens,
 } from './bridge.js';
-import { shrinkPicture } from './product-picture.js';
+import { shrinkPicture, thumbnailOf } from './product-picture.js';
 import { SettingsFile } from './settings-file.js';
 import { TrustFile } from './trust-file.js';
 
@@ -348,7 +351,15 @@ ipcMain.handle(SaveCatalogEntryChannel, async (_event, list: unknown, id: unknow
   return withPass((address, pass, options) => saveCatalogEntryForm(address, pass, which, entryId, form, options));
 });
 
-ipcMain.handle(ListProductsChannel, (): Promise<ProductListResult> => withPass(listProducts));
+ipcMain.handle(ListProductsChannel, (): Promise<ProductRowsResult> => withPass(listProductRows));
+
+ipcMain.handle(ProductThumbnailChannel, async (_event, id: unknown): Promise<ProductPictureResult> => {
+  const productId = asProductId(id);
+  if (!productId) return NotAForm;
+  const answer = await withPass((address, pass, options) => getProductPicture(address, pass, productId, options));
+  if (!answer.ok || answer.picture === null) return answer;
+  return { ok: true, picture: thumbnailOf(answer.picture) };
+});
 
 ipcMain.handle(ProductFormChannel, async (_event, id: unknown): Promise<ProductFormResult> => {
   const productId = asProductId(id);

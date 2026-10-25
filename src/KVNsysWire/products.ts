@@ -12,8 +12,8 @@ import { z } from 'zod';
  *   POST /api/products                      add one       (201)
  *   PUT  /api/products/<id>                 change one
  *
- * A product never carries its picture: a list would carry every one. Adding or changing one may
- * send it, in the same save (see ProductFields).
+ * A product never carries its picture, only whether it has one: a list would carry every one.
+ * Adding or changing one may send it, in the same save (see ProductFields).
  *
  * A refusal comes back as a ProblemReply with a status that says what kind: 400 the details break
  * a rule, 401 sign in again, 403 the role may not, 404 no such product, 409 a code or barcode
@@ -66,6 +66,8 @@ export type ProductFields = z.infer<typeof ProductFields>;
 /** A product as the server sends it. Prices are plain pesos with two decimals. */
 export const ProductOnWire = ProductFields.omit({ picture: true }).extend({
   id: z.string(),
+  /** Whether it has a picture, so a list knows which rows to fetch one for. */
+  hasPicture: z.boolean(),
   retailPrice: ExactPesos,
   costPrice: ExactPesos,
   promoPrice: ExactPesos.nullable(),

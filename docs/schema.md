@@ -20,7 +20,7 @@ written down on this page instead.
 | 11 | `audits` | 6–11 | Nothing writes here yet |
 | 12–15 | `brands`, `manufacturers`, `suppliers`, `categories` | 12–17 The catalogue | One list screen and form panel for all four, and the product form picks from them (2026-10-25) |
 | 16 | `affiliations` | 12–17 | No screens yet |
-| 17 | `products` | 12–17 | ✅ Every field, on the product form (2026-10-25). The till applies only the retail price so far |
+| 17 | `products` | 12–17 | ✅ Every field, on the product form, and the list shows the picture, category and brand (2026-10-25). The till applies only the retail price so far |
 | 18–19 | `stock_documents`, `stock_document_items` | 18–21 Stock | No screens yet |
 | 20 | `inventory` | 18–21 | ✅ Stock on hand. Min stock, max stock and reorder point are kept; no alerts yet |
 | 21 | `inventory_logs` | 18–21 | ✅ The stock ledger, recording three of its seven kinds so far |

@@ -117,7 +117,7 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
     const { pass, options } = as('admin');
     const added = await addProduct(address, pass, rice, options);
     if (!added.ok) throw new Error(added.message);
-    expect(added.product).toEqual({ ...rice, id: expect.stringMatching(/^[0-9a-f-]{36}$/) });
+    expect(added.product).toEqual({ ...rice, id: expect.stringMatching(/^[0-9a-f-]{36}$/), hasPicture: false });
 
     const cashier = as('cashier');
     expect(await listProducts(address, cashier.pass, cashier.options)).toEqual({ ok: true, products: [added.product] });
@@ -280,7 +280,7 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
     };
     const saved = await saveProductForm(address, pass, null, form, options);
     if (!saved.ok) throw new Error(saved.message);
-    expect(saved.product).toMatchObject({ categoryId: fans.id, costPrice: 145000, promoPrice: 169900, wholesaleQuantity: 10, warrantyMonths: 12 });
+    expect(saved.product).toMatchObject({ categoryId: fans.id, costPrice: 145000, promoPrice: 169900, wholesaleQuantity: 10, warrantyMonths: 12, hasPicture: true });
 
     const editing = await loadProductForm(address, pass, saved.product.id, options);
     expect(editing).toMatchObject({ ok: true, form: { ...form, retailPrice: '1899.00', costPrice: '1450.00', promoPrice: '1699.00', wholesalePrice: '1599.00' } });
@@ -298,6 +298,7 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
     expect(await getProductPicture(address, cashier.pass, saved.product.id, cashier.options)).toEqual({ ok: true, picture });
     await saveProductForm(address, pass, saved.product.id, { ...form, picture: '' }, options);
     expect(await getProductPicture(address, cashier.pass, saved.product.id, cashier.options)).toEqual({ ok: true, picture: null });
+    expect(await getProduct(address, cashier.pass, saved.product.id, cashier.options)).toMatchObject({ ok: true, product: { hasPicture: false } });
     const guest = as('guest');
     expect(await getProductPicture(address, guest.pass, saved.product.id, guest.options)).toEqual({
       ok: false,

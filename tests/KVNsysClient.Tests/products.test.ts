@@ -7,6 +7,7 @@ import {
   findProduct,
   getProduct,
   getProductPicture,
+  listProductRows,
   listProducts,
   loadProductForm,
   saveProductForm,
@@ -70,7 +71,9 @@ const extras = {
   warrantyMonths: 0,
 };
 const rice: ProductDetails = { code: 'PRD-0042', barcode: '4800016641503', name: 'Sack of rice 25kg', retailPrice: 145050, status: 'Active', description: null, ...extras };
-const riceOnWire = { ...rice, retailPrice: '1450.50', costPrice: '0.00' };
+/** What the client sends: the details, never whether there's a picture (the server knows). */
+const riceFields = { ...rice, retailPrice: '1450.50', costPrice: '0.00' };
+const riceOnWire = { ...riceFields, hasPicture: false };
 
 let certificate: ServerCertificate;
 let server: Awaited<ReturnType<typeof fakeServer>> | undefined;
@@ -88,17 +91,17 @@ afterEach(async () => {
 describe('the product calls', () => {
   it('add a product: the pass, and the price as exact pesos text', async () => {
     server = await fakeServer(certificate, 201, { product: { ...riceOnWire, id } });
-    expect(await addProduct(server.address, pass, rice, pinned())).toEqual({ ok: true, product: { ...rice, id } });
-    expect(server.received).toEqual([{ method: 'POST', url: '/api/products', authorization: `Bearer ${pass.token}`, body: { ...riceOnWire, picture: null } }]);
+    expect(await addProduct(server.address, pass, rice, pinned())).toEqual({ ok: true, product: { ...rice, id, hasPicture: false } });
+    expect(server.received).toEqual([{ method: 'POST', url: '/api/products', authorization: `Bearer ${pass.token}`, body: { ...riceFields, picture: null } }]);
   });
 
   it('change a product, by its id', async () => {
     server = await fakeServer(certificate, 200, { product: { ...riceOnWire, id, retailPrice: '0.29' } });
     expect(await changeProduct(server.address, pass, id, { ...rice, retailPrice: 29 }, pinned())).toEqual({
       ok: true,
-      product: { ...rice, id, retailPrice: 29 },
+      product: { ...rice, id, hasPicture: false, retailPrice: 29 },
     });
-    expect(server.received[0]).toMatchObject({ method: 'PUT', url: `/api/products/${id}`, body: { ...riceOnWire, retailPrice: '0.29' } });
+    expect(server.received[0]).toMatchObject({ method: 'PUT', url: `/api/products/${id}`, body: { ...riceFields, retailPrice: '0.29' } });
     expect(server.received[0]!.body).not.toHaveProperty('picture');
   });
 
@@ -106,8 +109,9 @@ describe('the product calls', () => {
     const fan = { ...rice, costPrice: 145029, promoPrice: 169900, wholesalePrice: 159900, wholesaleQuantity: 10 };
     const fanOnWire = { ...riceOnWire, costPrice: '1450.29', promoPrice: '1699.00', wholesalePrice: '1599.00', wholesaleQuantity: 10 };
     server = await fakeServer(certificate, 201, { product: { ...fanOnWire, id } });
-    expect(await addProduct(server.address, pass, fan, pinned(), '/9j/4A==')).toEqual({ ok: true, product: { ...fan, id } });
-    expect(server.received[0]!.body).toEqual({ ...fanOnWire, picture: '/9j/4A==' });
+    expect(await addProduct(server.address, pass, fan, pinned(), '/9j/4A==')).toEqual({ ok: true, product: { ...fan, id, hasPicture: false } });
+    const { hasPicture: _sentByTheServerOnly, ...fanFields } = fanOnWire;
+    expect(server.received[0]!.body).toEqual({ ...fanFields, picture: '/9j/4A==' });
     await server.close();
 
     server = await fakeServer(certificate, 200, { picture: '/9j/4A==' });
@@ -117,7 +121,7 @@ describe('the product calls', () => {
 
   it('list, get, and find by code or barcode, with the value made safe for an address', async () => {
     server = await fakeServer(certificate, 200, { products: [{ ...riceOnWire, id }] });
-    expect(await listProducts(server.address, pass, pinned())).toEqual({ ok: true, products: [{ ...rice, id }] });
+    expect(await listProducts(server.address, pass, pinned())).toEqual({ ok: true, products: [{ ...rice, id, hasPicture: false }] });
     await server.close();
 
     server = await fakeServer(certificate, 200, { product: { ...riceOnWire, id } });
@@ -279,7 +283,7 @@ describe('the product form', () => {
 
   it('adds a new product, or changes the one being edited, sending exact pesos and the picture as the form has it', async () => {
     server = await fakeServer(certificate, 201, { product: { ...riceOnWire, id } });
-    expect(await saveProductForm(server.address, pass, null, typed, pinned())).toEqual({ ok: true, product: { ...rice, id } });
+    expect(await saveProductForm(server.address, pass, null, typed, pinned())).toEqual({ ok: true, product: { ...rice, id, hasPicture: false } });
     const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0]).toString('base64');
     await saveProductForm(server.address, pass, id, { ...typed, picture: jpeg }, pinned());
     type Sent = { retailPrice: string; picture: string | null };
@@ -287,5 +291,48 @@ describe('the product form', () => {
       ['POST', '/api/products', '1450.50', null],
       ['PUT', `/api/products/${id}`, '1450.50', jpeg],
     ]);
+  });
+});
+
+describe('the products list', () => {
+  const category = (n: number, name: string, parentId: string | null = null) => ({
+    id: `0199c7a0-0000-7000-8000-0000000001${n}`,
+    code: `C-${n}`,
+    name,
+    address: null,
+    parentId,
+    parentName: null,
+    status: 'Active',
+    description: null,
+  });
+  const appliances = category(11, 'Appliances');
+  const fans = category(12, 'Fans', appliances.id);
+  const oldBrand = { ...category(21, 'Old brand'), status: 'Inactive' };
+  const products = [
+    { ...riceOnWire, id, categoryId: fans.id, brandId: oldBrand.id, hasPicture: true },
+    { ...riceOnWire, id: '0199c7a0-0000-7000-8000-000000000002', code: 'PRD-0007', barcode: null, name: 'Sardines' },
+  ];
+  const byPath = (brands: [number, unknown]) => (url: string): [number, unknown] => {
+    if (url === '/api/catalog/categories') return [200, { entries: [appliances, fans] }];
+    if (url === '/api/catalog/brands') return brands;
+    return [200, { products }];
+  };
+
+  it("names each product's category with those above it, and its brand, switched off or not", async () => {
+    server = await fakeServer(certificate, 200, null, byPath([200, { entries: [oldBrand] }]));
+    const listed = await listProductRows(server.address, pass, pinned());
+    expect(listed).toMatchObject({
+      ok: true,
+      products: [
+        { code: 'PRD-0042', categoryPath: 'Appliances › Fans', brandName: 'Old brand', hasPicture: true, retailPrice: 145050 },
+        { code: 'PRD-0007', categoryPath: null, brandName: null, hasPicture: false },
+      ],
+    });
+    expect(server.received.map((r) => r.url).sort()).toEqual(['/api/catalog/brands', '/api/catalog/categories', '/api/products']);
+  });
+
+  it("says why when the brands can't be read, rather than showing products without them", async () => {
+    server = await fakeServer(certificate, 200, null, byPath([403, { message: 'No.' }]));
+    expect(await listProductRows(server.address, pass, pinned())).toEqual({ ok: false, reason: 'not-allowed', message: 'No.' });
   });
 });

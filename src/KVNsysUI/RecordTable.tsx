@@ -9,6 +9,11 @@ export interface Column<Row> {
   align?: 'left' | 'right';
   /** For a column of buttons: the heading is there for screen readers, not shown. */
   hiddenHeading?: boolean;
+  /**
+   * Long text, such as a name, wraps onto a second line instead of pushing the table wider than
+   * its box. Other columns stay on one line.
+   */
+  wrap?: boolean;
 }
 
 /**
@@ -69,7 +74,7 @@ export function RecordTable<Row>({
           {shown.map((row) => (
             <TableRow key={rowKey(row)} className="border-border/60 even:bg-row-alt hover:bg-accent/60">
               {columns.map((column) => (
-                <TableCell key={column.heading} className={cn(cell, alignment(column))}>
+                <TableCell key={column.heading} className={cn(cell, alignment(column), column.wrap && 'py-1.5 whitespace-normal')}>
                   {column.cell(row)}
                 </TableCell>
               ))}

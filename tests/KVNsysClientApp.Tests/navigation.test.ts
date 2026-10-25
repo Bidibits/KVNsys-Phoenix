@@ -67,7 +67,12 @@ describeWithDatabase('getting around the real app: Back and Forward, the search 
     window
       .getByRole('table', { name: 'Products' })
       .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => row.querySelectorAll('td')[2]?.textContent ?? row.textContent));
+      .evaluateAll((rows) => {
+        // By heading, not position, so a column added in front (the picture) doesn't move it.
+        const headings = [...(rows[0]?.closest('table')?.querySelectorAll('th') ?? [])].map((heading) => heading.textContent);
+        const name = headings.indexOf('Name');
+        return rows.map((row) => row.querySelectorAll('td')[name]?.textContent ?? row.textContent);
+      });
   async function arrive(name: string) {
     await window.waitForFunction((expected) => document.querySelector('header h1')?.textContent === expected, name);
   }

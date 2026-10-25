@@ -86,7 +86,12 @@ describeWithDatabase('adding and changing products from the real app', () => {
   const rowsShown = () =>
     table()
       .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(0, 5).map((cell) => cell.textContent)));
+      .evaluateAll((rows) => {
+        // By heading, not position, so a column added in front (the picture) doesn't move them.
+        const headings = [...rows[0]!.closest('table')!.querySelectorAll('th')].map((heading) => heading.textContent);
+        const wanted = ['Code', 'Barcode', 'Name', 'Price', 'Status'].map((heading) => headings.indexOf(heading));
+        return rows.map((row) => wanted.map((index) => row.querySelectorAll('td')[index]!.textContent));
+      });
   const isFocused = (locator: ReturnType<Page['getByLabel']>) => locator.evaluate((element) => element === document.activeElement);
 
   it('gives someone who may manage products Add, and Edit on every row', async () => {

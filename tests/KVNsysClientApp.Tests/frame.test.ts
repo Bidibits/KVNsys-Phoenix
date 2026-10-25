@@ -85,11 +85,16 @@ describeWithDatabase('the window frame, Home and the products list, in the real 
 
   const productsTile = () => window.getByRole('button', { name: /^Products/ });
   const table = () => window.getByRole('table', { name: 'Products' });
-  // The five data columns. Someone who may manage products also gets an Edit column (product-form.test.ts).
+  // Five of the data columns, by heading. Someone who may manage products also gets an Edit column (product-form.test.ts).
   const rowsShown = () =>
     table()
       .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(0, 5).map((cell) => cell.textContent)));
+      .evaluateAll((rows) => {
+        // By heading, not position, so a column added in front (the picture) doesn't move them.
+        const headings = [...rows[0]!.closest('table')!.querySelectorAll('th')].map((heading) => heading.textContent);
+        const wanted = ['Code', 'Barcode', 'Name', 'Price', 'Status'].map((heading) => headings.indexOf(heading));
+        return rows.map((row) => wanted.map((index) => row.querySelectorAll('td')[index]!.textContent));
+      });
 
   it('opens Home in the frame after sign-in, with Products open to an administrator', async () => {
     await signIn('admin');

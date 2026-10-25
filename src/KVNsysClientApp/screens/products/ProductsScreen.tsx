@@ -1,28 +1,41 @@
-import type { AccessName, Product, ProductListResult, SignedInUser } from '@kvnsys/client';
+import type { AccessName, ProductRow, ProductRowsResult, SignedInUser } from '@kvnsys/client';
 import { Button, Notice, Pesos, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { ProductFormPanel } from './ProductFormPanel';
+import { ProductThumbnail } from './ProductThumbnail';
 
 const ManageRight: AccessName = 'products.manage';
 
-const Columns: Column<Product>[] = [
+/** The columns; the picture's depends on which time the list was asked for, so a changed picture shows. */
+const columnsFor = (generation: number): Column<ProductRow>[] => [
+  {
+    heading: 'Picture',
+    hiddenHeading: true,
+    cell: (product) => <ProductThumbnail id={product.id} name={product.name} hasPicture={product.hasPicture} generation={generation} />,
+  },
   { heading: 'Code', cell: (product) => product.code },
   { heading: 'Barcode', cell: (product) => product.barcode ?? '' },
-  { heading: 'Name', cell: (product) => product.name },
+  { heading: 'Name', cell: (product) => product.name, wrap: true },
+  { heading: 'Category', cell: (product) => product.categoryPath ?? '', wrap: true },
+  { heading: 'Brand', cell: (product) => product.brandName ?? '', wrap: true },
   { heading: 'Price', cell: (product) => <Pesos centavos={product.retailPrice} />, align: 'right' },
   { heading: 'Status', cell: (product) => <StatusLabel status={product.status} /> },
 ];
 
+/** What the search box finds a product by: what the list shows of it, its category path included, so "Appliances" finds the fans too. */
+const searchText = (product: ProductRow) =>
+  [product.code, product.barcode ?? '', product.name, product.categoryPath ?? '', product.brandName ?? ''].join(' ');
+
 /**
- * Every product. Someone whose role may manage products also gets Add, and Edit on each row, which
- * open the form panel; after a save the list is asked for again, so it shows what the server has.
- * The list is asked for after the screen is on show, never while it's being built, so a server
- * that's slow or down can't freeze the window.
+ * Every product, with its picture, category and brand. Someone whose role may manage products also
+ * gets Add, and Edit on each row, which open the form panel; after a save the list is asked for
+ * again, so it shows what the server has. The list is asked for after the screen is on show, never
+ * while it's being built, so a server that's slow or down can't freeze the window.
  */
 export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
   const toast = useToast();
   const mayManage = user.rights.includes(ManageRight);
-  const [result, setResult] = useState<ProductListResult | null>(null);
+  const [result, setResult] = useState<ProductRowsResult | null>(null);
   const [reloads, setReloads] = useState(0);
   const [editing, setEditing] = useState<{ id: string | null } | null>(null);
 
@@ -35,7 +48,7 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
     let showing = true;
     window.kvnsys
       .listProducts()
-      .catch((error: unknown): ProductListResult => ({
+      .catch((error: unknown): ProductRowsResult => ({
         ok: false,
         reason: 'unreachable',
         message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
@@ -48,9 +61,9 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
     };
   }, [reloads]);
 
-  const columns: Column<Product>[] = mayManage
+  const columns: Column<ProductRow>[] = mayManage
     ? [
-        ...Columns,
+        ...columnsFor(reloads),
         {
           heading: 'Change',
           hiddenHeading: true,
@@ -62,7 +75,7 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
           ),
         },
       ]
-    : Columns;
+    : columnsFor(reloads);
 
   if (!result) {
     return (
@@ -96,7 +109,7 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
         )}
       </div>
       {/* Fits its rows; once there are more than the window holds, it shrinks to fit and scrolls. */}
-      {count > 0 && <RecordTable label="Products" columns={columns} rows={result.products} filter={search} searchText={(product) => [product.code, product.barcode ?? '', product.name].join(' ')} rowKey={(product) => product.id} />}
+      {count > 0 && <RecordTable label="Products" columns={columns} rows={result.products} filter={search} searchText={searchText} rowKey={(product) => product.id} />}
       {editing && (
         <ProductFormPanel
           id={editing.id}
