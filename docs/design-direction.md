@@ -186,7 +186,7 @@ Key:
 | Configurations | This PC's shop and register | ✅ It remembers its server · ⏭ a settings page |
 | Locations (list, form, search) | The shops | ✅ The first shop is made at install · ⏭ screens, when a second branch joins |
 | Storages (list, form, search) | Places stock is kept inside a shop | ⏭ |
-| Server Manager | Start or stop the server, change its port, see connected registers | ✅ The server sets up its own database and first shop, and its port is a setting · ⏭ a list of connected registers, and disconnecting one |
+| Server Manager | Start or stop the server, change its port, see connected registers | ✅ The server starts with Windows, sets up its own database and first shop, and its port is a setting · ⏭ the server's control window, opened from a desktop icon on the server PC: turn the server on and off, who's connected and disconnecting them, a server password on or off and changing it (wanted 2026-10-27) |
 
 ### Selling and the day
 

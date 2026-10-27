@@ -1,1 +1,1 @@
-**KVNsysServerApp** — later: the window for managing the server (database, port, who's connected). May use: KVNsysServer.
+**KVNsysServerApp** — later: the server's control window, opened from a desktop icon on the server PC: turn the server on and off, who's connected and disconnecting them, a server password on or off and changing it, the port. It controls the running service, so closing it doesn't stop the server. May use: KVNsysServer.
