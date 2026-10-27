@@ -3,7 +3,8 @@
 //   out/KVNsys POS & Inventory/            the app for each register: Electron, with its own Chrome and Node
 //   out/KVNsys POS & Inventory Setup.exe   that app as one setup file, to carry to a register
 //   out/KVNsys Server/                     the server: KVNsys Server.exe, a console program, with its own Node
-//   out/KVNsys Server Setup.exe            the server PC's setup file: that server, plus its own PostgreSQL
+//   out/KVNsys Server Dashboard/           the server's dashboard: Electron, like the app, run as administrator
+//   out/KVNsys Server Setup.exe            the server PC's setup file: the server, its dashboard, and its own PostgreSQL
 //
 // None of them needs Node or pnpm on the PC it runs on. `pnpm install:here` installs the app and the
 // server on this PC.
@@ -122,6 +123,66 @@ async function makeClientSetup(packagedApp) {
 }
 
 /**
+ * The server's dashboard, packaged like the register app. It runs as administrator, because only
+ * administrators may turn a service on and off, and only they may read the server's folder, where
+ * the running server leaves the dashboard its key. That's asked for by its icons (the server's
+ * setup marks them "Run as administrator"), not by the program itself: a program marked to always
+ * need administrator rights can't start its own windows' helper processes, so its window crashes.
+ */
+async function packageDashboard() {
+  const app = join(root, 'src', 'KVNsysServerApp');
+  const { productName, version } = readJson(join(app, 'package.json'));
+  const electronVersion = readJson(join(app, 'node_modules', 'electron', 'package.json')).version;
+  const executableName = 'KVNsys Server Dashboard';
+  const dir = join(stage, 'dashboard');
+  rmSync(dir, { recursive: true, force: true });
+
+  await build({
+    entryPoints: [join(app, 'dist', 'desktop', 'main.js')],
+    outfile: join(dir, 'dist', 'desktop', 'main.js'),
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    target: 'node24',
+    keepNames: true,
+    external: ['electron'],
+    banner: { js: "import { createRequire as kvnsysCreateRequire } from 'node:module'; const require = kvnsysCreateRequire(import.meta.url);" },
+    logLevel: 'warning',
+  });
+  copyFileSync(join(app, 'dist', 'desktop', 'preload.cjs'), join(dir, 'dist', 'desktop', 'preload.cjs'));
+  cpSync(join(app, 'dist', 'screens'), join(dir, 'dist', 'screens'), { recursive: true });
+  writeJson(join(dir, 'package.json'), {
+    name: 'kvnsys-server-dashboard',
+    productName,
+    version,
+    description: "KVNsys Server's dashboard: turn the server on and off, and see who's connected",
+    author: 'KVNsys',
+    private: true,
+    type: 'module',
+    main: 'dist/desktop/main.js',
+  });
+
+  const [packaged] = await packager({
+    dir,
+    out: join(stage, 'dashboard-packaged'),
+    overwrite: true,
+    name: executableName,
+    executableName,
+    platform: 'win32',
+    arch: 'x64',
+    electronVersion,
+    appVersion: version,
+    asar: true,
+    prune: false,
+    win32metadata: { CompanyName: 'KVNsys', ProductName: productName, FileDescription: productName },
+  });
+  const target = join(out, executableName);
+  rmSync(target, { recursive: true, force: true });
+  renameSync(packaged, target);
+  return target;
+}
+
+/**
  * The server, as one exe: Node's "single executable application". It runs a single CommonJS file
  * and loads nothing else from disk except Node's own modules, so everything goes into that file.
  */
@@ -189,8 +250,9 @@ async function packageServer() {
 
 /**
  * The server PC's setup file, built by Inno Setup from scripts/server-setup/kvnsys-server.iss. It
- * carries the server packageServer made, PostgreSQL and the Visual C++ runtime from vendor/, the
- * scripts that install PostgreSQL as a service and remove it again, and the nightly backup's.
+ * carries the server packageServer made, the dashboard packageDashboard made, PostgreSQL and the
+ * Visual C++ runtime from vendor/, the scripts that install PostgreSQL as a service and remove it
+ * again, and the nightly backup's.
  */
 function makeServerSetup() {
   const candidates = [
@@ -219,7 +281,7 @@ function makeServerSetup() {
 }
 
 const client = await packageClient();
-const made = [client, await makeClientSetup(client), await packageServer(), makeServerSetup()].filter(Boolean);
+const made = [client, await makeClientSetup(client), await packageServer(), await packageDashboard(), makeServerSetup()].filter(Boolean);
 for (const path of made) {
   if (!existsSync(path)) throw new Error(`Packaging finished but ${path} isn't there.`);
   console.log(`Made ${path}`);

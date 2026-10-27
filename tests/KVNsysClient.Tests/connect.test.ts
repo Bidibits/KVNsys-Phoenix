@@ -4,12 +4,13 @@ import type { AddressInfo } from 'node:net';
 import type { RequestListener } from 'node:http';
 import {
   connectToServer,
+  joinServer,
   mismatchMessage,
   normalizeServerAddress,
   type ServerPin,
   type ServerTrust,
 } from '@kvnsys/client';
-import { createServer, createServerCertificate, ServerVersion, type ServerCertificate } from '@kvnsys/server';
+import { createServer, createServerCertificate, ServerPassword, ServerVersion, type ServerCertificate } from '@kvnsys/server';
 import { ProtocolVersion } from '@kvnsys/wire';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -86,7 +87,7 @@ describe('connectToServer', () => {
     const result = await connectToServer(kvnsysAddress, { trust });
     expect(result).toEqual({
       ok: true,
-      server: { address: `https://${kvnsysAddress}`, version: ServerVersion, protocol: ProtocolVersion, firstTrust: true },
+      server: { address: `https://${kvnsysAddress}`, version: ServerVersion, protocol: ProtocolVersion, firstTrust: true, needsServerPassword: false },
     });
     expect(trust.pinFor(`https://${kvnsysAddress}`)?.fingerprint256).toBe(certificate.fingerprint256);
   });
@@ -99,7 +100,7 @@ describe('connectToServer', () => {
   });
 
   it('refuses an impostor: a different certificate where a trusted server should be', async () => {
-    const impostor = await fakeServer(otherCertificate, json(200, { product: 'KVNsys Server', version: '0.1.0', protocol: ProtocolVersion }));
+    const impostor = await fakeServer(otherCertificate, json(200, { product: 'KVNsys Server', version: '0.1.0', protocol: ProtocolVersion, serverPassword: false }));
     try {
       const trust = new MemoryTrust();
       const realPin = { fingerprint256: certificate.fingerprint256, certificate: certificate.cert };
@@ -125,7 +126,7 @@ describe('connectToServer', () => {
   });
 
   it("doesn't trust a KVNsys Server it can't talk to, and says to update the app", async () => {
-    const newer = await fakeServer(otherCertificate, json(200, { product: 'KVNsys Server', version: '9.9.9', protocol: ProtocolVersion + 1 }));
+    const newer = await fakeServer(otherCertificate, json(200, { product: 'KVNsys Server', version: '9.9.9', protocol: ProtocolVersion + 1, serverPassword: false }));
     try {
       const trust = new MemoryTrust();
       const result = await connectToServer(newer.address, { trust });
@@ -138,7 +139,7 @@ describe('connectToServer', () => {
   });
 
   it('turns down a server that only speaks plain HTTP', async () => {
-    const plain = await listen(createPlainServer(json(200, { product: 'KVNsys Server', version: '0.1.0', protocol: ProtocolVersion })));
+    const plain = await listen(createPlainServer(json(200, { product: 'KVNsys Server', version: '0.1.0', protocol: ProtocolVersion, serverPassword: false })));
     try {
       const result = await connectToServer(plain.address, { trust: new MemoryTrust(), timeoutMs: 3000 });
       expect(result).toMatchObject({ ok: false, reason: 'not-kvnsys' });
@@ -182,6 +183,69 @@ describe('connectToServer', () => {
       expect(await connectToServer(other.address, { trust: new MemoryTrust() })).toMatchObject({ ok: false, reason: 'not-kvnsys' });
     } finally {
       await other.close();
+    }
+  });
+});
+
+describe('a server with a password', () => {
+  let certificate: ServerCertificate;
+  let kvnsys: Awaited<ReturnType<typeof createServer>>;
+  let address: string;
+  let trust: MemoryTrust;
+
+  beforeAll(async () => {
+    certificate = await createServerCertificate();
+    kvnsys = await createServer({ logger: false, certificate });
+    await kvnsys.listen(0, '127.0.0.1');
+    address = `https://127.0.0.1:${(kvnsys.getHttpServer().address() as AddressInfo).port}`;
+    await kvnsys.get(ServerPassword).set('shop-door-1234', 'shop-door-1234');
+    trust = new MemoryTrust();
+  });
+
+  afterAll(async () => {
+    await kvnsys?.close();
+  });
+
+  it('says so when the register connects', async () => {
+    expect(await connectToServer(address, { trust })).toMatchObject({ ok: true, server: { needsServerPassword: true } });
+  });
+
+  it('lets the register join with the right password', async () => {
+    expect(await joinServer(address, 'shop-door-1234', { pin: trust.pinFor(address) })).toEqual({ ok: true });
+  });
+
+  it('turns the wrong password down, and says it was the server password', async () => {
+    const result = await joinServer(address, 'shop-door-9999', { pin: trust.pinFor(address) });
+    expect(result).toEqual({ ok: false, reason: 'server-password', message: "That isn't this server's password." });
+  });
+
+  it('asks for a password before sending anything, when none was typed', async () => {
+    expect(await joinServer(address, '', { pin: trust.pinFor(address) })).toMatchObject({ ok: false, reason: 'server-password' });
+  });
+
+  it('never sends the password to a server it has not pinned', async () => {
+    let asked = 0;
+    const listener = await fakeServer(certificate, (_req, res) => {
+      asked++;
+      res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ joined: true }));
+    });
+    try {
+      const result = await joinServer(`https://${listener.address}`, 'shop-door-1234', { pin: null });
+      expect(result).toMatchObject({ ok: false, reason: 'not-connected' });
+      expect(asked).toBe(0);
+    } finally {
+      await listener.close();
+    }
+  });
+
+  it('says a server without a password needs none', async () => {
+    const open = await createServer({ logger: false, certificate: await createServerCertificate() });
+    await open.listen(0, '127.0.0.1');
+    try {
+      const where = `127.0.0.1:${(open.getHttpServer().address() as AddressInfo).port}`;
+      expect(await connectToServer(where, { trust: new MemoryTrust() })).toMatchObject({ ok: true, server: { needsServerPassword: false } });
+    } finally {
+      await open.close();
     }
   });
 });

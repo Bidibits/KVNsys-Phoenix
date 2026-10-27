@@ -1,15 +1,16 @@
 <!--
   KVNsys Server as a Windows service. WinSW reads this: it's installed beside it as
   kvnsys-server-service.exe, which is WinSW renamed, and the two names must match. The server's setup
-  file installs both, and the service starts with Windows, after KVNsys's own PostgreSQL.
+  file installs both. A new service starts only when asked; the server's dashboard turns it on and
+  off, and switches it to start with Windows (after KVNsys's own PostgreSQL) when someone ticks that.
 -->
 <service>
   <id>kvnsys-server</id>
   <name>KVNsys Server</name>
-  <description>Serves KVNsys POS &amp; Inventory to the shop's registers. Starts with Windows.</description>
+  <description>Serves KVNsys POS &amp; Inventory to the shop's registers. Turned on and off from the KVNsys Server dashboard, where it can also be set to start with Windows.</description>
   <executable>%BASE%\KVNsys Server.exe</executable>
   <workingdirectory>%BASE%</workingdirectory>
-  <startmode>Automatic</startmode>
+  <startmode>Manual</startmode>
   <depend>kvnsys-postgresql</depend>
   <!-- Its own narrow account, which can only reach what it's given. -->
   <serviceaccount>

@@ -2,10 +2,13 @@
 // It speaks to the server over pinned HTTPS, so it runs in Node (the app's desktop side), not in a page.
 export {
   connectToServer,
+  joinServer,
   mismatchMessage,
   type ConnectedServer,
   type ConnectProblem,
   type ConnectResult,
+  type JoinProblem,
+  type JoinResult,
   type ServerTrust,
 } from './connection/connect.js';
 export { describeTransportFailure, type TransportProblem } from './connection/failures.js';

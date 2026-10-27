@@ -13,7 +13,7 @@ export class SessionController {
     const token = bearerToken(authorization);
     const session = token ? this.sessions.find(token) : null;
     if (!session) {
-      throw new HttpException({ signedIn: false, message: SignInEnded } satisfies SessionReply, 401);
+      throw new HttpException({ signedIn: false, message: token ? this.sessions.whyEnded(token) : SignInEnded } satisfies SessionReply, 401);
     }
     const { username, displayName, roleCode, rights } = session.user;
     const register = session.register && { code: session.register.code, name: session.register.name };

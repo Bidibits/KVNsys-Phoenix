@@ -7,6 +7,8 @@ import type {
   ConnectResult,
   CurrentShiftResult,
   DaySalesResult,
+  JoinProblem,
+  TransportProblem,
   ShiftResult,
   RegisterListResult,
   RegisterResult,
@@ -40,8 +42,11 @@ import type {
 /**
  * A connect result, plus whether this PC managed to save the address for next time. It's only
  * set after a successful connect, because a failed attempt never replaces the saved address.
+ * 'server-password': the server has a password, and none was given, or the one given was wrong.
  */
-export type ConnectReply = ConnectResult & { remembered?: boolean };
+export type ConnectReply =
+  | (ConnectResult & { remembered?: boolean })
+  | { ok: false; reason: Exclude<JoinProblem, TransportProblem>; message: string };
 
 /**
  * A sign-in result as the screens get it: who signed in, but not the pass. The pass proves who's
@@ -64,7 +69,11 @@ export type PictureChoice =
  * client engine runs, does it.
  */
 export interface KvnsysBridge {
-  connectToServer(address: string): Promise<ConnectReply>;
+  /**
+   * Connects to the server at `address`. A server with a password needs `serverPassword` the first
+   * time; after that, this PC remembers it for that server.
+   */
+  connectToServer(address: string, serverPassword?: string): Promise<ConnectReply>;
   /** The address that last connected, if this PC remembers one. */
   savedServerAddress(): Promise<string | null>;
   /** Checks a username and password with the server this register is connected to. */

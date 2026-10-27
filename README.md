@@ -20,7 +20,8 @@ and everything a user sees, is called KVNsys.
   Every other role is made by hand.
 - **KVNsys Server starts and answers on the shop's network.** Other PCs can ask it what it is,
   which version it is, and which protocol it speaks. On a shop's server PC it installs from one
-  setup file and starts with Windows, with a nightly backup (see "For the server PC" below).
+  setup file, with a nightly backup and a dashboard that turns it on and off (see "For the server
+  PC" below).
 - **The client engine can connect to a server.** Given an address the way a person types it
   (`192.168.0.111`), it checks the server is a KVNsys Server speaking the same protocol. If not,
   it says why in plain words: a bad address, nothing there, not a KVNsys Server, or a different
@@ -192,7 +193,7 @@ building a screen.
 
 | Where | What runs | Who starts it |
 |---|---|---|
-| The server PC at each branch, and at HQ | **KVNsys Server** and PostgreSQL | It starts with Windows, in the background. Nobody double-clicks it. |
+| The server PC at each branch, and at HQ | **KVNsys Server** and PostgreSQL | It runs in the background, and can start with Windows. Its **KVNsys Server** icon opens the dashboard that turns it on and off. |
 | Each register | **KVNsys POS & Inventory**, the desktop app | The cashier double-clicks it. It finds the branch server over the shop's own network. |
 
 A branch never needs the internet to sell.
@@ -208,7 +209,7 @@ Phoenix/
 │  ├─ KVNsysWire/        the calls between client and server, and the shape of each
 │  ├─ KVNsysPostgres/    the only place with SQL: schema, migrations, saving and loading
 │  ├─ KVNsysServer/      the server engine: answers the calls, checks permissions
-│  ├─ KVNsysServerApp/   later: a window for managing the server
+│  ├─ KVNsysServerApp/   the server's dashboard: on and off, who's connected, its password
 │  ├─ KVNsysClient/      the client engine: connection, sign-in, the cart. No screens.
 │  ├─ KVNsysUI/          shared screen pieces: big buttons, keypad, tables
 │  └─ KVNsysClientApp/   the desktop app cashiers double-click
@@ -230,7 +231,7 @@ Dependencies point inward, as in Release:
 | `KVNsysWire` | Shared | The calls and their shapes | Core |
 | `KVNsysPostgres` | Backend | The only project containing SQL | Core |
 | `KVNsysServer` | Backend | The server engine. No screens | Core, Wire, Postgres |
-| `KVNsysServerApp` | Backend | The server's window (later) | Server |
+| `KVNsysServerApp` | Backend | The server's dashboard | Server, UI |
 | `KVNsysClient` | Frontend | The client engine. No screens | Core, Wire |
 | `KVNsysUI` | Frontend | Shared screen pieces | Core |
 | `KVNsysClientApp` | Frontend | The desktop app | Client, UI |
@@ -323,7 +324,8 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's password; any other database must already be KVNsys's, or it refuses to start. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
-| `pnpm package` | Builds everything, then makes the two programs in `out/`: `KVNsys POS & Inventory` (the app) and `KVNsys Server` (one `KVNsys Server.exe`), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register, and `KVNsys Server Setup.exe` for the server PC. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
+| `pnpm start:dashboard` | Opens the server's dashboard on this PC, looking at the installed KVNsys Server service. Started like this it has no administrator rights, so Windows refuses to turn the server on or off; the installed dashboard asks for them. |
+| `pnpm package` | Builds everything, then makes the programs in `out/`: `KVNsys POS & Inventory` (the app), `KVNsys Server` (one `KVNsys Server.exe`) and `KVNsys Server Dashboard` (the server's dashboard), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register, and `KVNsys Server Setup.exe` for the server PC, which carries the server and its dashboard. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
 | `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
 | `pnpm fetch:installer-parts` | Downloads what the server's setup file will carry into `vendor/`, which isn't committed: PostgreSQL 18.6 for Windows from EDB (unpacked), and Microsoft's Visual C++ runtime. Each file is checked against its recorded fingerprint. |
 
@@ -343,15 +345,26 @@ once for administrator rights, because services need them. On a new install, one
 shop's name and an administrator's password. Then it installs:
 - Microsoft's Visual C++ runtime, if the PC lacks it
 - its own PostgreSQL (port 5433, this PC only, passwords nobody sees)
-- KVNsys Server
+- KVNsys Server, and its dashboard, with a **KVNsys Server** icon on the desktop
 - a nightly backup of the shop's database
 
-PostgreSQL and KVNsys Server both run as Windows services that start whenever the PC starts, so there's
-no window or icon to open. One option, ticked by default, lets the shop's registers reach the server
-through Windows Firewall, on private networks only. To remove it, use Windows' list of apps: the
+PostgreSQL runs as a Windows service that starts whenever the PC starts. KVNsys Server is a Windows
+service too, but a new install leaves it off: open **KVNsys Server** from the desktop to turn it on,
+and tick "Start the server when this PC starts" there, so it comes back on its own after a power cut.
+Installing again keeps whatever was chosen. One option, ticked by default, lets the shop's registers
+reach the server through Windows Firewall, on private networks only. To remove it, use Windows' list of apps: the
 programs, the services, the backup task and the firewall rule go, and the shop's data and backups stay
 in `C:\ProgramData\KVNsys`. Installing again picks that data up, so the shop and its accounts are still
 there.
+
+**The server's dashboard.** Windows asks for administrator rights each time it's opened from its icon,
+because only administrators may turn a service on and off. It shows whether the server is on, the address registers
+type, and who's signed in at which register, with a Disconnect button for each. Its two tick boxes
+choose whether the server starts when the PC starts, and whether closing the dashboard turns the server
+off too; unticked, closing it leaves the server running. It also sets the **server password**: when
+that's on, a register has to give it once before anyone can sign in there, and remembers it after that.
+It can be set, changed or turned off while the server is on. "Open the logs folder" opens
+`C:\ProgramData\KVNsys\Logs`.
 
 **The nightly backup.** A Windows scheduled task, "KVNsys Nightly Backup", saves a copy of the
 database to `C:\ProgramData\KVNsys\Backups` every night at 11 PM. If the PC was off at 11 PM, it makes
@@ -366,7 +379,8 @@ dying; a USB copy is a later step.
 and double-click it. It installs the app for the person signed in to Windows, asking nothing and
 needing no administrator rights. It puts an icon on the desktop and in the Start menu, then opens
 the app. To remove it, use Windows' list of apps. The app's settings (which server it uses, and
-which server it trusts) are kept, so a reinstall picks up where it left off.
+which server it trusts) are kept, so a reinstall picks up where it left off. If the server has a
+password, the app asks for it the first time it connects, and again only if it changes.
 
 **KVNsys's own PostgreSQL:** `scripts/postgresql/install-postgresql.ps1` installs it as a Windows
 service: port 5433, answering on this PC only, with random passwords nobody sees. `remove-postgresql.ps1`

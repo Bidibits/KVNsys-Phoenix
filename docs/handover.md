@@ -24,7 +24,12 @@ in this round:
 
 Since then (2026-10-25): the whole of SCHEMA-PLAN is in the database (see
 [`schema.md`](schema.md)), and suppliers, brands, manufacturers and categories have their lists
-and forms, the product form has every field and a picture, and the products list shows each one's picture, category and brand, and the till charges promo and wholesale prices. 568 tests; the protocol is at 16.
+and forms, the product form has every field and a picture, and the products list shows each one's picture, category and brand, and the till charges promo and wholesale prices.
+
+Since then (2026-10-27): the server has a dashboard (`KVNsysServerApp`, an Electron window run as
+administrator) that turns it on and off, chooses whether it starts with the PC, lists who's connected
+and disconnects them, and sets the server password registers must give. 637 tests; the protocol is
+at 17.
 
 ## Getting it onto your PC
 

@@ -1,6 +1,5 @@
 // Starts KVNsys Server on this PC, reachable from the shop's network: `pnpm start:server` from
 // source, double-clicking KVNsys Server.exe, or as the Windows service the server's setup installs.
-import { networkInterfaces } from 'node:os';
 import { createInterface } from 'node:readline/promises';
 import { isSea } from 'node:sea';
 import {
@@ -12,9 +11,12 @@ import {
   PrismaSetupStore,
 } from '@kvnsys/postgres';
 import { DefaultPort } from '@kvnsys/wire';
+import { startServerControl } from './control/control-server.js';
+import { lanAddresses } from './control/lan-addresses.js';
 import { createServer } from './http/create-server.js';
 import { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
-import { defaultServerDataDir, earlierServerDataDir, loadOrCreateServerCertificate } from './security/server-certificate.js';
+import { loadOrCreateServerCertificate } from './security/server-certificate.js';
+import { earlierServerDataDir, serverDataDir } from './setup/server-folder.js';
 import { consoleQuestions } from './setup/console-questions.js';
 import { answersFrom, setUpFirstShop } from './setup/first-shop.js';
 import { InstallSeed } from './setup/install-seed.js';
@@ -35,10 +37,9 @@ const setUpOnly = process.argv.includes('--set-up');
 const atAWindow = isSea() && process.stdin.isTTY === true && process.stdout.isTTY === true && !setUpOnly;
 
 async function main(): Promise<void> {
-  // The server's own folder: its certificate, and its settings file.
-  const chosen = process.env.KVNSYS_SERVER_DATA;
-  const dataDir = chosen || defaultServerDataDir();
-  if (!chosen) {
+  // The server's own folder: its certificate, its settings file, and the server password.
+  const dataDir = serverDataDir();
+  if (!process.env.KVNSYS_SERVER_DATA) {
     const moved = adoptEarlierServerData(earlierServerDataDir(), dataDir);
     if (moved.length > 0) console.log(`Brought ${moved.join(', ')} over to ${dataDir}. The originals stay where they were.`);
   }
@@ -133,7 +134,7 @@ async function main(): Promise<void> {
   }
   if (certificate.created) console.log(`Made this server's security certificate, in ${dataDir}.`);
 
-  const app = await createServer({ databaseUrl, certificate });
+  const app = await createServer({ databaseUrl, certificate, dataDir });
   try {
     // 0.0.0.0, not localhost: the registers are other PCs on the shop's network.
     await app.listen(port, '0.0.0.0');
@@ -145,13 +146,16 @@ async function main(): Promise<void> {
     throw error;
   }
 
-  const addresses = Object.values(networkInterfaces())
-    .flat()
-    .filter((a) => a !== undefined && a.family === 'IPv4' && !a.internal)
-    .map((a) => a!.address);
+  // The dashboard's way in, on this PC only. Its key is taken out of the folder on the way out
+  // (NestJS handles stopping on those two signals; this only adds to it). A key left behind by a
+  // hard stop does no harm: the next run writes a new one, and the old one opens nothing.
+  const control = await startServerControl(app, { dataDir, port });
+  process.once('exit', control.forgetKey);
+  process.once('SIGINT', control.forgetKey);
+  process.once('SIGTERM', control.forgetKey);
 
   console.log(`KVNsys Server is running on port ${port}, connected to its database.`);
-  for (const address of addresses) {
+  for (const address of lanAddresses()) {
     console.log(`  Other PCs on this network can reach it at https://${address}:${port}`);
   }
   console.log(`  Its certificate fingerprint, for checking a register's first connection:

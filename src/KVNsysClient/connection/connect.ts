@@ -1,5 +1,5 @@
-import { HelloPath, ProtocolVersion, ServerHello } from '@kvnsys/wire';
-import { describeTransportFailure } from './failures.js';
+import { HelloPath, JoinPath, JoinReply, ProtocolVersion, ServerHello } from '@kvnsys/wire';
+import { describeTransportFailure, type TransportProblem } from './failures.js';
 import { requestJson, type ServerPin } from './secure-request.js';
 import { normalizeServerAddress } from './server-address.js';
 
@@ -10,6 +10,8 @@ export interface ConnectedServer {
   protocol: number;
   /** True the first time this register meets this server: its certificate has just been trusted. */
   firstTrust: boolean;
+  /** True when the server has a password: give it with joinServer, then at every sign-in. */
+  needsServerPassword: boolean;
 }
 
 export type ConnectProblem = 'bad-address' | 'unreachable' | 'not-kvnsys' | 'protocol-mismatch' | 'not-trusted';
@@ -74,8 +76,50 @@ export async function connectToServer(
   if (!pin) options.trust.remember(address, response.presented);
   return {
     ok: true,
-    server: { address, version: hello.data.version, protocol: hello.data.protocol, firstTrust: !pin },
+    server: {
+      address,
+      version: hello.data.version,
+      protocol: hello.data.protocol,
+      firstTrust: !pin,
+      needsServerPassword: hello.data.serverPassword,
+    },
   };
+}
+
+export type JoinProblem = 'server-password' | 'not-connected' | TransportProblem;
+
+export type JoinResult = { ok: true } | { ok: false; reason: JoinProblem; message: string };
+
+/**
+ * Checks the server password with a server that has one. Like any password, it only ever goes to a
+ * server this register has already pinned: connectToServer first.
+ */
+export async function joinServer(
+  address: string,
+  serverPassword: string,
+  options: { pin: ServerPin | null; timeoutMs?: number },
+): Promise<JoinResult> {
+  if (!options.pin) {
+    return {
+      ok: false,
+      reason: 'not-connected',
+      message: "This register hasn't connected to that server securely yet, so it won't send a password there. Connect first.",
+    };
+  }
+  if (!serverPassword) return { ok: false, reason: 'server-password', message: 'Type the server password.' };
+
+  const timeoutMs = options.timeoutMs ?? DefaultTimeoutMs;
+  let response;
+  try {
+    response = await requestJson({ address, path: JoinPath, method: 'POST', body: { serverPassword }, pin: options.pin, timeoutMs });
+  } catch (error) {
+    return { ok: false, ...describeTransportFailure(error, address, timeoutMs) };
+  }
+  const reply = JoinReply.safeParse(response.body);
+  if (!reply.success) {
+    return { ok: false, reason: 'not-kvnsys', message: `The server at ${address} gave an answer this app doesn't understand.` };
+  }
+  return reply.data.joined ? { ok: true } : { ok: false, reason: 'server-password', message: reply.data.message };
 }
 
 function failure(error: unknown, address: string, timeoutMs: number): ConnectResult {

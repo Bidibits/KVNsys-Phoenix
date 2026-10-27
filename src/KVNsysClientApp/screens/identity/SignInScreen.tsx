@@ -8,10 +8,13 @@ export function SignInScreen({
   connected,
   onSignedIn,
   onChangeServer,
+  onServerPasswordNeeded,
 }: {
   connected: Connected;
   onSignedIn: (user: SignedInUser) => void;
   onChangeServer: () => void;
+  /** The server turned the sign-in down for want of its own password, which has changed: ask for it again. */
+  onServerPasswordNeeded: (problem: string) => void;
 }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -32,6 +35,8 @@ export function SignInScreen({
     setSigningIn(false);
     if (result.ok) {
       onSignedIn(result.user);
+    } else if (result.reason === 'server-password') {
+      onServerPasswordNeeded(result.message);
     } else {
       setProblem(result.message);
       // A wrong password is typed again from scratch, never edited.

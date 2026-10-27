@@ -6,6 +6,7 @@ import {
   changeRegister,
   closeShift,
   connectToServer,
+  joinServer,
   currentShift,
   openShift,
   type CurrentShiftResult,
@@ -74,7 +75,7 @@ import {
   type ProductsProblem,
   type SessionPass,
 } from '@kvnsys/client';
-import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage } from 'electron';
 import {
   ClearSaleChannel,
   CloseShiftChannel,
@@ -136,6 +137,38 @@ const thisPc = readThisPc();
 /** The server this register last connected to in this run. Sign-in only ever goes there. */
 let connectedAddress: string | null = null;
 
+/** That server's password, when it has one: sent with every sign-in. Null when it has none. */
+let connectedServerPassword: string | null = null;
+
+/** The server password this PC remembers for `address`, unsealed, or null. */
+function rememberedServerPassword(address: string): string | null {
+  const kept = settings.load().serverPassword;
+  if (!kept || kept.address !== address || !safeStorage.isEncryptionAvailable()) return null;
+  try {
+    return safeStorage.decryptString(Buffer.from(kept.sealed, 'base64'));
+  } catch {
+    // Sealed by another Windows account, or damaged: it's no use here.
+    return null;
+  }
+}
+
+/**
+ * Keeps a server password for next time, sealed by Windows for this account, or forgets it (null).
+ * Where Windows can't seal it, it isn't kept: it's asked for again next time instead.
+ */
+function rememberServerPassword(address: string, password: string | null): void {
+  const { serverPassword: _old, ...rest } = settings.load();
+  try {
+    if (password !== null && safeStorage.isEncryptionAvailable()) {
+      settings.save({ ...rest, serverPassword: { address, sealed: safeStorage.encryptString(password).toString('base64') } });
+    } else {
+      settings.save(rest);
+    }
+  } catch (error) {
+    console.error(`Couldn't save ${settings.path}:`, error);
+  }
+}
+
 /**
  * The pass from the current sign-in, and the server that gave it. It lives only here, in memory:
  * never handed to the screens, never written to disk. Closing the app drops it, and the server
@@ -148,10 +181,13 @@ let till = new Till();
 
 ipcMain.handle(SavedAddressChannel, (): string | null => settings.load().serverAddress ?? null);
 
-ipcMain.handle(ConnectChannel, async (_event, typed: unknown): Promise<ConnectReply> => {
+ipcMain.handle(ConnectChannel, async (_event, typed: unknown, typedPassword: unknown): Promise<ConnectReply> => {
   // The screens are trusted no further than this: check what they send.
   if (typeof typed !== 'string' || typed.length > 200) {
     return { ok: false, reason: 'bad-address', message: "That isn't a server address." };
+  }
+  if (typedPassword !== undefined && (typeof typedPassword !== 'string' || typedPassword.length > 200)) {
+    return { ok: false, reason: 'server-password', message: "That isn't a server password." };
   }
 
   // Read fresh every time, so IT resetting the file takes effect without restarting the app.
@@ -177,7 +213,35 @@ ipcMain.handle(ConnectChannel, async (_event, typed: unknown): Promise<ConnectRe
   }
   // A failed attempt never replaces the address that worked: the server may just be off.
   if (!result.ok) return result;
+
+  // A server with a password: the one just typed, or the one this PC remembers for it.
+  let serverPassword: string | null = null;
+  if (result.server.needsServerPassword) {
+    const address = result.server.address;
+    const given = typedPassword ? (typedPassword as string) : null;
+    serverPassword = given ?? rememberedServerPassword(address);
+    if (!serverPassword) {
+      return { ok: false, reason: 'server-password', message: 'This server has a password. Type it to connect.' };
+    }
+    // Read again: a first connection has only just pinned the server, and the password goes nowhere else.
+    const pinned = trustFile.read();
+    if (!pinned.ok) return { ok: false, reason: 'not-trusted', message: pinned.message };
+    const joined = await joinServer(address, serverPassword, { pin: pinned.servers[address] ?? null });
+    if (!joined.ok) {
+      if (joined.reason !== 'server-password') return joined;
+      if (!given) {
+        rememberServerPassword(address, null);
+        return { ok: false, reason: 'server-password', message: "This server's password has changed since this register last connected. Type the new one." };
+      }
+      return joined;
+    }
+    if (given) rememberServerPassword(address, given);
+  } else if (settings.load().serverPassword?.address === result.server.address) {
+    // Its password was turned off: nothing to keep.
+    rememberServerPassword(result.server.address, null);
+  }
   connectedAddress = result.server.address;
+  connectedServerPassword = serverPassword;
   try {
     settings.save({ ...settings.load(), serverAddress: result.server.address });
     return { ...result, remembered: true };
@@ -197,8 +261,20 @@ ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknow
   const trusted = trustFile.read();
   if (!trusted.ok) return { ok: false, reason: 'not-trusted', message: trusted.message };
   // The password is used for this one request and kept nowhere: not logged, not stored.
-  const result = await signIn(connectedAddress, { username, password }, { pin: trusted.servers[connectedAddress] ?? null, register: thisPc });
-  if (!result.ok) return result;
+  const result = await signIn(
+    connectedAddress,
+    { username, password },
+    { pin: trusted.servers[connectedAddress] ?? null, register: thisPc, serverPassword: connectedServerPassword },
+  );
+  if (!result.ok) {
+    // The server's password changed (or was switched on) since this register connected: the
+    // remembered one is no use any more, and the screens go back to ask for the new one.
+    if (result.reason === 'server-password') {
+      rememberServerPassword(connectedAddress, null);
+      connectedServerPassword = null;
+    }
+    return result;
+  }
   session = { address: connectedAddress, pass: result.session };
   till = new Till();
   return { ok: true, user: result.user };

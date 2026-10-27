@@ -1,7 +1,9 @@
 ; KVNsys Server Setup.exe: installs KVNsys Server and its own PostgreSQL on a shop's server PC, both as
-; Windows services that start with Windows, and the nightly backup. `pnpm package` builds it with
-; Inno Setup 7, passing the version. Paths are relative to this folder. The reasoning is in
-; docs/server-setup-plan.md.
+; Windows services, the server's dashboard with its desktop icon, and the nightly backup. PostgreSQL
+; starts with Windows. On a new install the server itself is off until someone turns it on from the
+; dashboard, which is also where it's set to start with Windows; a reinstall keeps whatever was
+; chosen. `pnpm package` builds it with Inno Setup 7, passing the version. Paths are relative to
+; this folder. The reasoning is in docs/server-setup-plan.md.
 
 #ifndef AppVersion
   #error Build this with pnpm package, which says which version it is.
@@ -30,12 +32,12 @@ Compression=lzma2/normal
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName=KVNsys Server
-UninstallDisplayIcon={app}\KVNsys Server.exe
+UninstallDisplayIcon={app}\Dashboard\KVNsys Server Dashboard.exe
 CloseApplications=yes
 SetupLogging=yes
 
 [Messages]
-FinishedLabelNoIcons=KVNsys Server is installed and running. It's a Windows service now, so it starts by itself whenever this PC starts. There's no window to open.
+FinishedLabel=KVNsys Server is installed. Open it from the KVNsys Server icon on the desktop to turn the server on or off, see who's connected, and choose whether it starts when this PC starts.
 
 [Tasks]
 Name: firewall; Description: "Let the shop's registers reach KVNsys Server through Windows Firewall (private networks only)"
@@ -50,6 +52,8 @@ Name: "{commonappdata}\KVNsys\Backups"; Flags: uninsneveruninstall
 
 [Files]
 Source: "..\..\out\KVNsys Server\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; The dashboard: its own window. Its icons below open it as administrator.
+Source: "..\..\out\KVNsys Server Dashboard\*"; DestDir: "{app}\Dashboard"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; WinSW, renamed: it reads the settings file with the same name beside it.
 Source: "..\..\vendor\winsw\WinSW.NET461.exe"; DestDir: "{app}"; DestName: "kvnsys-server-service.exe"; Flags: ignoreversion
 Source: "kvnsys-server-service.xml"; DestDir: "{app}"; Flags: ignoreversion
@@ -65,6 +69,15 @@ Source: "..\..\vendor\postgresql\pgsql\share\*"; DestDir: "{autopf}\KVNsys\Postg
 Source: "..\..\vendor\postgresql\pgsql\server_license.txt"; DestDir: "{autopf}\KVNsys\PostgreSQL\18"; Flags: ignoreversion
 Source: "..\..\vendor\postgresql\pgsql\commandlinetools_3rd_party_licenses.txt"; DestDir: "{autopf}\KVNsys\PostgreSQL\18"; Flags: ignoreversion
 Source: "..\..\vendor\vc-redist\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+
+[Icons]
+; For everyone who uses this PC. Only administrators can use the dashboard: the setup marks both
+; "Run as administrator" (MarkRunAsAdministrator), so Windows asks.
+Name: "{autodesktop}\KVNsys Server"; Filename: "{app}\Dashboard\KVNsys Server Dashboard.exe"; Comment: "Turn KVNsys Server on and off, and see who's connected"
+Name: "{autoprograms}\KVNsys Server"; Filename: "{app}\Dashboard\KVNsys Server Dashboard.exe"; Comment: "Turn KVNsys Server on and off, and see who's connected"
+
+[Run]
+Filename: "{app}\Dashboard\KVNsys Server Dashboard.exe"; Description: "Open KVNsys Server now"; Flags: postinstall nowait skipifsilent shellexec
 
 [UninstallRun]
 ; In this order, before any file goes: the nightly backup's task, the server's service, its firewall
@@ -84,6 +97,8 @@ var
   ShopPage: TInputQueryWizardPage;
   { No database on this PC yet, so there's a shop to set up. A reinstall finds the kept one. }
   IsNewShop: Boolean;
+  { The server was on when this setup began. A new install's never is. }
+  ServerWasRunning: Boolean;
 
 function SetEnvironmentVariable(Name, Value: String): Boolean;
   external 'SetEnvironmentVariableW@kernel32.dll stdcall';
@@ -96,6 +111,24 @@ end;
 function Sys(const Name: String): String;
 begin
   Result := ExpandConstant('{sys}\' + Name);
+end;
+
+{ Marks a shortcut "Run as administrator" (its Advanced properties): Windows asks for administrator
+  rights each time it's opened. The dashboard needs them, but its program can't say so itself: a
+  program marked to always need them can't start its window's helper processes, and the window
+  crashes. The mark is bit 0x20 of byte 0x15 of the shortcut file. }
+procedure MarkRunAsAdministrator(const Shortcut: String);
+begin
+  Run(Sys('WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -NonInteractive -Command "$p = ''' + Shortcut + '''; if (Test-Path -LiteralPath $p) { $b = [IO.File]::ReadAllBytes($p); $b[0x15] = $b[0x15] -bor 0x20; [IO.File]::WriteAllBytes($p, $b) }"');
+end;
+
+{ Asked by the service's state as .NET names it, not by sc.exe's words, which a Windows in another
+  language may translate. }
+function ServiceIsRunning(const Name: String): Boolean;
+begin
+  Result := Run(Sys('WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -NonInteractive -Command "if ((Get-Service -Name ''' + Name + ''' -ErrorAction SilentlyContinue).Status -eq ''Running'') { exit 0 } else { exit 1 }"') = 0;
 end;
 
 procedure InitializeWizard;
@@ -187,11 +220,16 @@ var
 begin
   if CurStep = ssInstall then
   begin
-    { Programs are about to be replaced, so the services have to let go of them first. }
+    { Programs are about to be replaced, so the services have to let go of them first. Whether the
+      server was on is noted first, so a reinstall leaves it as it found it. }
+    ServerWasRunning := ServiceIsRunning(ServerService);
     Run(Sys('net.exe'), 'stop ' + ServerService);
     Run(Sys('net.exe'), 'stop ' + PostgreSQLService);
   end;
   if CurStep <> ssPostInstall then Exit;
+
+  MarkRunAsAdministrator(ExpandConstant('{autodesktop}\KVNsys Server.lnk'));
+  MarkRunAsAdministrator(ExpandConstant('{autoprograms}\KVNsys Server.lnk'));
 
   { Files already in the settings folder take their permissions from the folder again, whatever an
     earlier install left them with. Administrators own them, so this works even on a locked file. }
@@ -239,8 +277,10 @@ begin
     Exit;
   end;
 
-  { The service: under its own narrow account, or Windows' LocalService if a PC refuses that. }
-  WizardForm.StatusLabel.Caption := 'Starting KVNsys Server as a Windows service...';
+  { The service: under its own narrow account, or Windows' LocalService if a PC refuses that. A new
+    one starts only when asked (kvnsys-server-service.xml); an existing one keeps its setting. It's
+    started here once either way, to prove it can start, and turned off again below if it was off. }
+  WizardForm.StatusLabel.Caption := 'Checking that KVNsys Server starts...';
   if Run(Sys('sc.exe'), 'query ' + ServerService) <> 0 then
     Run(ExpandConstant('{app}\kvnsys-server-service.exe'), 'install');
   GiveFoldersTo('NT SERVICE\' + ServerService);
@@ -259,6 +299,10 @@ begin
     if Run(Sys('net.exe'), 'start ' + ServerService) <> 0 then
       ReportFailure('starting the KVNsys Server service', ExpandConstant('{commonappdata}\KVNsys\Logs'));
   end;
+
+  { Off until someone turns it on from the dashboard, unless it was on before this setup ran. }
+  if not ServerWasRunning then
+    Run(Sys('net.exe'), 'stop ' + ServerService);
 
   { A copy of the database every night at 11 PM, or soon after the PC starts if it was off then. }
   WizardForm.StatusLabel.Caption := 'Setting up the nightly backup...';

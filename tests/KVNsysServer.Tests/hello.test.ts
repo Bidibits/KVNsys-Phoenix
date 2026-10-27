@@ -24,10 +24,15 @@ describe('KVNsys Server, over real HTTPS', () => {
     await app?.close();
   });
 
-  it('answers hello with what it is, its version, and the protocol it speaks', async () => {
+  it('answers hello with what it is, its version, the protocol it speaks, and that it has no server password', async () => {
     const response = await httpsJson(base + HelloPath, { ca: certificate.cert });
     expect(response.status).toBe(200);
-    expect(ServerHello.parse(response.body)).toEqual({ product: 'KVNsys Server', version: ServerVersion, protocol: ProtocolVersion });
+    expect(ServerHello.parse(response.body)).toEqual({
+      product: 'KVNsys Server',
+      version: ServerVersion,
+      protocol: ProtocolVersion,
+      serverPassword: false,
+    });
   });
 
   it('says it cannot sign anyone in when it was started without a database', async () => {

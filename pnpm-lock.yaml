@@ -143,6 +143,9 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@types/express':
         specifier: 5.0.6
@@ -156,13 +159,40 @@ importers:
       '@kvnsys/server':
         specifier: workspace:*
         version: link:../KVNsysServer
+      '@kvnsys/ui':
+        specifier: workspace:*
+        version: link:../KVNsysUI
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
     devDependencies:
+      '@tailwindcss/vite':
+        specifier: 4.3.3
+        version: 4.3.3(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0))
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: 6.1.2
+        version: 6.1.2(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0))
       electron:
         specifier: 44.9.0
         version: 44.9.0
+      tailwindcss:
+        specifier: 4.3.3
+        version: 4.3.3
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)
 
   src/KVNsysUI:
     dependencies:
@@ -292,10 +322,22 @@ importers:
 
   tests/KVNsysServerApp.Tests:
     dependencies:
+      '@kvnsys/core':
+        specifier: workspace:*
+        version: link:../../src/KVNsysCore
+      '@kvnsys/postgres':
+        specifier: workspace:*
+        version: link:../../src/KVNsysPostgres
+      '@kvnsys/server':
+        specifier: workspace:*
+        version: link:../../src/KVNsysServer
       '@kvnsys/server-app':
         specifier: workspace:*
         version: link:../../src/KVNsysServerApp
     devDependencies:
+      playwright-core:
+        specifier: 1.64.1
+        version: 1.64.1
       vitest:
         specifier: 5.0.5
         version: 5.0.5(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0))

@@ -26,7 +26,7 @@ export class Authorizer {
   /** With several rights, the person needs every one; a refusal names the first they lack. */
   async check(token: string | null, access: AccessName | readonly AccessName[]): Promise<Authorization> {
     const session = token ? this.sessions.find(token) : null;
-    if (!token || !session) return { ok: false, status: 401, message: SignInEnded };
+    if (!token || !session) return { ok: false, status: 401, message: token ? this.sessions.whyEnded(token) : SignInEnded };
 
     const standing = await this.users.findStanding(session.user.id);
     if (!standing || !maySignIn(standing)) {

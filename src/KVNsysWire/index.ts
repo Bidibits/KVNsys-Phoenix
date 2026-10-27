@@ -54,6 +54,9 @@ export {
 export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
 export { RegisterFields, RegisterListReply, RegisterOnWire, RegisterReply, registerPath, RegistersPath } from './registers.js';
 export {
+  JoinPath,
+  JoinReply,
+  JoinRequest,
   RegisterIdentity,
   SessionPass,
   SessionPath,

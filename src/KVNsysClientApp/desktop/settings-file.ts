@@ -5,6 +5,11 @@ import { dirname } from 'node:path';
 export interface ClientSettings {
   /** The KVNsys Server this register last connected to, such as "http://192.168.0.111:9000". */
   serverAddress?: string;
+  /**
+   * That server's password, when it has one, so the register reconnects on its own. Never kept as
+   * typed: `sealed` is encrypted by Windows for this PC's account, and is useless copied elsewhere.
+   */
+  serverPassword?: { address: string; sealed: string };
 }
 
 /**
@@ -21,13 +26,26 @@ export class SettingsFile {
     } catch {
       return {};
     }
+    let data: { serverAddress?: unknown; serverPassword?: unknown } | null;
     try {
-      const data = JSON.parse(text) as { serverAddress?: unknown } | null;
-      const address = data?.serverAddress;
-      return typeof address === 'string' && address.length > 0 && address.length <= 200 ? { serverAddress: address } : {};
+      data = JSON.parse(text) as typeof data;
     } catch {
       return {};
     }
+    const settings: ClientSettings = {};
+    const address = data?.serverAddress;
+    if (typeof address === 'string' && address.length > 0 && address.length <= 200) settings.serverAddress = address;
+    const password = data?.serverPassword as { address?: unknown; sealed?: unknown } | undefined;
+    if (
+      typeof password?.address === 'string' &&
+      password.address.length <= 200 &&
+      typeof password.sealed === 'string' &&
+      password.sealed.length > 0 &&
+      password.sealed.length <= 2000
+    ) {
+      settings.serverPassword = { address: password.address, sealed: password.sealed };
+    }
+    return settings;
   }
 
   /**

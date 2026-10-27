@@ -58,7 +58,7 @@ for (const app of apps) {
 // The installed server can't see Phoenix's .env, so on this PC it gets its own settings file,
 // pointing at the same database as `pnpm start:server`. An existing file is never touched.
 const server = (path) => import(pathToFileURL(join(root, 'src', 'KVNsysServer', 'dist', path)).href);
-const { defaultServerDataDir } = await server('security/server-certificate.js');
+const { defaultServerDataDir } = await server('setup/server-folder.js');
 const { serverSettingsFile } = await server('setup/server-settings.js');
 const settings = serverSettingsFile(defaultServerDataDir());
 if (existsSync(settings)) {

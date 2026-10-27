@@ -10,9 +10,27 @@ export const RegisterIdentity = z.object({
 });
 export type RegisterIdentity = z.infer<typeof RegisterIdentity>;
 
+/** Where a register checks the server password, before anyone signs in there. */
+export const JoinPath = '/api/join';
+
+/** The server password as typed. Left out when the register has none to give. */
+export const JoinRequest = z.object({
+  serverPassword: z.string().max(200).optional(),
+});
+export type JoinRequest = z.infer<typeof JoinRequest>;
+
+/** Yes, or no with a message it's safe to show at the register. A server without a password always says yes. */
+export const JoinReply = z.discriminatedUnion('joined', [
+  z.object({ joined: z.literal(true) }),
+  z.object({ joined: z.literal(false), message: z.string() }),
+]);
+export type JoinReply = z.infer<typeof JoinReply>;
+
 export const SignInRequest = z.object({
   username: z.string().trim().min(1),
   password: z.string().min(1).max(200),
+  /** The server password, when the server has one. It's checked before the username and password. */
+  serverPassword: z.string().max(200).optional(),
   /**
    * The register's PC, so the server knows which register the sign-in is at (and records a new
    * one). Left out by a PC that couldn't read its own id: that sign-in is at no register.
@@ -47,10 +65,14 @@ export const SessionPass = z.object({
 });
 export type SessionPass = z.infer<typeof SessionPass>;
 
-/** Yes, with who it is and their pass, or no, with a message it's safe to show at the register. */
+/**
+ * Yes, with who it is and their pass, or no, with a message it's safe to show at the register.
+ * `serverPassword` on a no means it was the server password that was missing or wrong (it may have
+ * changed since the register connected), not the person's.
+ */
 export const SignInReply = z.discriminatedUnion('signedIn', [
   z.object({ signedIn: z.literal(true), user: SignedInUser, session: SessionPass }),
-  z.object({ signedIn: z.literal(false), message: z.string() }),
+  z.object({ signedIn: z.literal(false), message: z.string(), serverPassword: z.literal(true).optional() }),
 ]);
 export type SignInReply = z.infer<typeof SignInReply>;
 

@@ -37,6 +37,16 @@ describe('SettingsFile', () => {
     expect(file.load()).toEqual({});
   });
 
+  it("keeps a server's sealed password beside its address, and drops one that doesn't look right", () => {
+    const serverPassword = { address: 'https://x:9000', sealed: 'c2VhbGVk' };
+    file.save({ serverAddress: 'https://x:9000', serverPassword });
+    expect(file.load()).toEqual({ serverAddress: 'https://x:9000', serverPassword });
+    writeFileSync(file.path, JSON.stringify({ serverAddress: 'https://x:9000', serverPassword: { address: 'https://x:9000', sealed: '' } }));
+    expect(file.load()).toEqual({ serverAddress: 'https://x:9000' });
+    writeFileSync(file.path, JSON.stringify({ serverAddress: 'https://x:9000', serverPassword: 'plain' }));
+    expect(file.load()).toEqual({ serverAddress: 'https://x:9000' });
+  });
+
   it('can save again over a damaged file', () => {
     writeFileSync(join(dir, 'broken.json'), 'garbage');
     const broken = new SettingsFile(join(dir, 'broken.json'));

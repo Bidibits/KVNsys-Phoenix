@@ -21,8 +21,10 @@ import { z } from 'zod';
  * 15: a product says whether it has a picture.
  * 16: the till charges promo and wholesale prices: a product to ring up carries them, and each
  *     receipt line says which price it was charged at.
+ * 17: the server password: hello says whether the server has one, a register checks it at
+ *     /api/join, and every sign-in carries it.
  */
-export const ProtocolVersion = 16;
+export const ProtocolVersion = 17;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;
@@ -35,5 +37,7 @@ export const ServerHello = z.object({
   product: z.literal('KVNsys Server'),
   version: z.string(),
   protocol: z.number().int().positive(),
+  /** True when a register must give the server password (at /api/join, then at every sign-in). */
+  serverPassword: z.boolean(),
 });
 export type ServerHello = z.infer<typeof ServerHello>;

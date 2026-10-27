@@ -1,5 +1,5 @@
 import { inspect } from 'node:util';
-import { SessionHours, Sessions, type SignedInPerson } from '@kvnsys/server';
+import { DisconnectedAtServer, SessionHours, Sessions, SignInEnded, type SignedInPerson } from '@kvnsys/server';
 import { describe, expect, it } from 'vitest';
 
 const ana: SignedInPerson = {
@@ -79,6 +79,48 @@ describe('Sessions', () => {
     expect(sessions.activeCount()).toBe(2);
     advance(1 * Hour);
     expect(sessions.activeCount()).toBe(1);
+  });
+
+  it("lists who's signed in, oldest first, without any pass, and forgets passes that have run out", () => {
+    const { sessions, advance } = sessionsWithClock();
+    const first = sessions.start(ana, { machineId: 'm1', locationId: 'l1', code: 'HQ-R01', name: 'Counter 1' });
+    advance(Hour);
+    sessions.start({ ...ana, id: '0192f3c1-0000-7000-8000-000000000002', username: 'ben' });
+    const listed = sessions.list();
+    expect(listed.map((session) => [session.user.username, session.register?.name ?? null])).toEqual([
+      ['ana', 'Counter 1'],
+      ['ben', null],
+    ]);
+    expect(new Set(listed.map((session) => session.id)).size).toBe(2);
+    expect(JSON.stringify(listed)).not.toContain(first.token);
+    advance(SessionHours * Hour - Hour);
+    expect(sessions.list().map((session) => session.user.username)).toEqual(['ben']);
+  });
+
+  it('disconnects one sign-in by its id, and tells that register why at its next request', () => {
+    const { sessions } = sessionsWithClock();
+    const gone = sessions.start(ana).token;
+    const kept = sessions.start(ana).token;
+    const [goneSession] = sessions.list();
+    expect(sessions.disconnect(goneSession!.id)).toBe(true);
+    expect(sessions.find(gone)).toBeNull();
+    expect(sessions.whyEnded(gone)).toBe(DisconnectedAtServer);
+    expect(sessions.find(kept)).not.toBeNull();
+    // Gone already: nothing more to do, and saying so.
+    expect(sessions.disconnect(goneSession!.id)).toBe(false);
+  });
+
+  it('says a plain "ended" for a pass that was signed out, never made, or disconnected long enough ago to have expired', () => {
+    const { sessions, advance } = sessionsWithClock();
+    const signedOut = sessions.start(ana).token;
+    sessions.cancel(signedOut);
+    expect(sessions.whyEnded(signedOut)).toBe(SignInEnded);
+    expect(sessions.whyEnded('made-up-made-up-made-up-made-up-made-up-mad')).toBe(SignInEnded);
+    const disconnected = sessions.start(ana).token;
+    sessions.disconnect(sessions.list()[0]!.id);
+    advance(SessionHours * Hour);
+    sessions.list(); // forgets what has run out
+    expect(sessions.whyEnded(disconnected)).toBe(SignInEnded);
   });
 
   it('never holds a pass itself, only a scrambled copy that cannot be used as one', () => {

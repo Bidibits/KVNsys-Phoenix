@@ -69,10 +69,10 @@ module.exports = {
       ...mayUse('Server', 'server', [Core, Wire, Postgres]),
     },
     {
-      name: 'server-app-may-use-only-server',
-      comment: 'KVNsysServerApp may use KVNsysServer.',
+      name: 'server-app-may-use-server-ui',
+      comment: 'KVNsysServerApp may use KVNsysServer and KVNsysUI.',
       severity: 'error',
-      ...mayUse('ServerApp', 'server-app', [Server]),
+      ...mayUse('ServerApp', 'server-app', [Server, UI]),
     },
     {
       name: 'client-may-use-core-wire',

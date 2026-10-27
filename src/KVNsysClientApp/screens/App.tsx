@@ -5,7 +5,7 @@ import { SignInScreen } from './identity/SignInScreen';
 import { SignedIn } from './SignedIn';
 
 type Stage =
-  | { kind: 'connect'; autoConnect: boolean }
+  | { kind: 'connect'; autoConnect: boolean; problem?: string; askServerPassword?: boolean }
   | { kind: 'sign-in'; connected: Connected }
   | { kind: 'signed-in'; connected: Connected; user: SignedInUser };
 
@@ -16,7 +16,12 @@ export function App() {
   switch (stage.kind) {
     case 'connect':
       return (
-        <ConnectScreen autoConnect={stage.autoConnect} onConnected={(connected) => setStage({ kind: 'sign-in', connected })} />
+        <ConnectScreen
+          autoConnect={stage.autoConnect}
+          problem={stage.problem ?? null}
+          askServerPassword={stage.askServerPassword ?? false}
+          onConnected={(connected) => setStage({ kind: 'sign-in', connected })}
+        />
       );
     case 'sign-in':
       return (
@@ -25,6 +30,8 @@ export function App() {
           onSignedIn={(user) => setStage({ kind: 'signed-in', connected: stage.connected, user })}
           // Choosing another server mustn't bounce straight back to this one.
           onChangeServer={() => setStage({ kind: 'connect', autoConnect: false })}
+          // The server's password changed since this register connected: ask for the new one.
+          onServerPasswordNeeded={(problem) => setStage({ kind: 'connect', autoConnect: false, problem, askServerPassword: true })}
         />
       );
     case 'signed-in':

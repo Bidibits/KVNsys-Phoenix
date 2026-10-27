@@ -6,8 +6,10 @@ describe('the hello call', () => {
     expect(HelloPath).toBe('/api/hello');
   });
 
-  it("accepts a KVNsys server's answer", () => {
-    expect(ServerHello.safeParse({ product: 'KVNsys Server', version: '0.1.0', protocol: 1 }).success).toBe(true);
+  it("accepts a KVNsys server's answer, which says whether it has a server password", () => {
+    expect(ServerHello.safeParse({ product: 'KVNsys Server', version: '0.1.0', protocol: 1, serverPassword: false }).success).toBe(true);
+    expect(ServerHello.safeParse({ product: 'KVNsys Server', version: '0.1.0', protocol: 1, serverPassword: true }).success).toBe(true);
+    expect(ServerHello.safeParse({ product: 'KVNsys Server', version: '0.1.0', protocol: 1 }).success).toBe(false);
   });
 
   it('turns down an answer from something that is not a KVNsys server', () => {

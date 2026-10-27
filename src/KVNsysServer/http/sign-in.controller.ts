@@ -3,6 +3,7 @@ import { serverMachineCode, type PcIdentity, type RegisterBook, type ShopDirecto
 import { SignInRequest, type SignInReply } from '@kvnsys/wire';
 import { Sessions, type SessionRegister } from '../identity/sessions.js';
 import type { SignIn } from '../identity/sign-in.js';
+import { ServerPassword } from '../security/server-password.js';
 import { FirstShopCode } from '../setup/first-shop.js';
 import { NoDatabase } from './problems.js';
 import { SignInOperation } from './tokens.js';
@@ -22,12 +23,14 @@ export class SignInController {
   constructor(
     @Inject(SignInOperation) private readonly operation: { signIn: SignInOperationParts | null },
     @Inject(Sessions) private readonly sessions: Sessions,
+    @Inject(ServerPassword) private readonly serverPassword: ServerPassword,
   ) {}
 
   /**
    * Yes (200) with who it is, the register it's at, and a pass for later requests, or no with the
-   * reason: 400 bad request, 401 wrong, 403 the account or the register is switched off. A PC
-   * signing in for the first time is recorded as a register of the server's own shop.
+   * reason: 400 bad request, 401 wrong (the server password, or the person's), 403 the account or
+   * the register is switched off. A PC signing in for the first time is recorded as a register of
+   * the server's own shop.
    */
   @Post()
   @HttpCode(200)
@@ -39,6 +42,11 @@ export class SignInController {
     const request = SignInRequest.safeParse(body);
     if (!request.success) {
       throw new HttpException(no('Type a username and a password.'), 400);
+    }
+    // First, so a register without the server password learns nothing about anyone's account.
+    const refusal = await this.serverPassword.check(request.data.serverPassword);
+    if (refusal) {
+      throw new HttpException({ signedIn: false, message: refusal, serverPassword: true } satisfies SignInReply, 401);
     }
     const outcome = await parts.signIn.run(request.data.username, request.data.password);
     if (!outcome.ok) {

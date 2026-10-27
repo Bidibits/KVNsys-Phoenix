@@ -45,7 +45,7 @@ const OpenShiftChannel = 'kvnsys:open-shift';
 const CloseShiftChannel = 'kvnsys:close-shift';
 
 const bridge: KvnsysBridge = {
-  connectToServer: (address) => ipcRenderer.invoke(ConnectChannel, address),
+  connectToServer: (address, serverPassword) => ipcRenderer.invoke(ConnectChannel, address, serverPassword),
   savedServerAddress: () => ipcRenderer.invoke(SavedAddressChannel),
   signIn: (username, password) => ipcRenderer.invoke(SignInChannel, username, password),
   signOut: () => ipcRenderer.invoke(SignOutChannel),

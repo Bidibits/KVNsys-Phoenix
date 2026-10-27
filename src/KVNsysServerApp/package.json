@@ -1,23 +1,28 @@
 {
   "name": "@kvnsys/server-app",
+  "productName": "KVNsys Server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": {
-      "source": "./index.ts",
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
+  "main": "dist/desktop/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.screens.json && vite build",
+    "start": "electron ."
   },
   "dependencies": {
-    "@kvnsys/server": "workspace:*"
+    "@kvnsys/server": "workspace:*",
+    "@kvnsys/ui": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
     "@types/node": "24.19.2",
-    "electron": "44.9.0"
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "electron": "44.9.0",
+    "tailwindcss": "4.3.3",
+    "vite": "8.3.4"
   }
 }

@@ -7,6 +7,9 @@ export const SessionHours = 12;
 /** What a register is told when its pass is unknown, cancelled or expired. */
 export const SignInEnded = 'Your sign-in has ended. Sign in again.';
 
+/** What a register is told when someone disconnected it from the server's dashboard. */
+export const DisconnectedAtServer = 'You were disconnected at the server. Sign in again.';
+
 /** The register a sign-in is at: the PC, its shop, and what the shop calls it. */
 export interface SessionRegister {
   machineId: string;
@@ -16,6 +19,8 @@ export interface SessionRegister {
 }
 
 export interface Session {
+  /** Names the session on the server's dashboard. Not the pass, and no use as one. */
+  id: string;
   user: SignedInPerson;
   /** Null when the sign-in is at no register: a PC that couldn't read its own id. */
   register: SessionRegister | null;
@@ -32,6 +37,11 @@ export interface Session {
  */
 export class Sessions {
   private readonly byHash = new Map<string, Session>();
+  /**
+   * Passes ended from the server's dashboard, kept until they'd have expired anyway, so the
+   * register is told why instead of just "ended".
+   */
+  private readonly disconnected = new Map<string, Date>();
 
   /** `now` is only replaced by tests, to move time forward without waiting 12 hours. */
   constructor(private readonly now: () => Date = () => new Date()) {}
@@ -42,8 +52,35 @@ export class Sessions {
     const token = randomBytes(32).toString('base64url');
     const startedAt = this.now();
     const expiresAt = new Date(startedAt.getTime() + SessionHours * 60 * 60 * 1000);
-    this.byHash.set(hashOf(token), { user, register, startedAt, expiresAt });
+    this.byHash.set(hashOf(token), { id: randomBytes(12).toString('base64url'), user, register, startedAt, expiresAt });
     return { token, expiresAt };
+  }
+
+  /** Every sign-in that's still good, oldest first: what the server's dashboard lists. */
+  list(): Session[] {
+    this.forgetExpired();
+    return [...this.byHash.values()].sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+  }
+
+  /**
+   * Ends one sign-in from the server's dashboard. The register finds out at its next request, and
+   * is told it was disconnected. False when there was no such session, or it had already ended.
+   */
+  disconnect(id: string): boolean {
+    for (const [key, session] of this.byHash) {
+      if (session.id === id) {
+        this.byHash.delete(key);
+        this.disconnected.set(key, session.expiresAt);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Why a pass no longer works, in words for the register. */
+  whyEnded(token: string): string {
+    const until = this.disconnected.get(hashOf(token));
+    return until && until > this.now() ? DisconnectedAtServer : SignInEnded;
   }
 
   /** The session this pass belongs to, or null when the pass is unknown, cancelled or expired. */
@@ -101,6 +138,9 @@ export class Sessions {
     const now = this.now();
     for (const [key, session] of this.byHash) {
       if (session.expiresAt <= now) this.byHash.delete(key);
+    }
+    for (const [key, until] of this.disconnected) {
+      if (until <= now) this.disconnected.delete(key);
     }
   }
 }

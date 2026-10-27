@@ -1,14 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "dist"
+    "rootDir": "desktop",
+    "outDir": "dist/desktop",
+    "types": [
+      "node"
+    ]
   },
   "include": [
-    "**/*.ts"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
+    "desktop/**/*.ts",
+    "desktop/**/*.cts"
   ]
 }

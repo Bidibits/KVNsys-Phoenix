@@ -1,11 +1,11 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseEnv } from 'node:util';
-import { ServerCertificateFile, ServerKeyFile } from '../security/server-certificate.js';
+import { ServerCertificateFile, ServerKeyFile, ServerSettingsFile } from './server-folder.js';
 
 /** The server's settings file. It sits next to the server's certificate, in the same folder. */
 export function serverSettingsFile(dataDir: string): string {
-  return join(dataDir, 'server.env');
+  return join(dataDir, ServerSettingsFile);
 }
 
 /**
@@ -41,6 +41,6 @@ export function adoptEarlierServerData(from: string | null, to: string): string[
   if (pair.every((name) => existsSync(join(from, name))) && pair.every((name) => !existsSync(join(to, name)))) {
     pair.forEach(copy);
   }
-  if (existsSync(serverSettingsFile(from)) && !existsSync(serverSettingsFile(to))) copy('server.env');
+  if (existsSync(serverSettingsFile(from)) && !existsSync(serverSettingsFile(to))) copy(ServerSettingsFile);
   return copied;
 }

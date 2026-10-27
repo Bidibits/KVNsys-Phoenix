@@ -23,6 +23,8 @@ test settled".
 3. On a new install, one page asks the shop's name and an administrator's password.
 4. The setup installs PostgreSQL, KVNsys Server and the nightly backup, and starts them. Both run as
    Windows services from then on, so there's no window to open.
+   *(Changed 2026-10-27: the setup now also installs the server's dashboard, with a desktop icon, and
+   leaves the server off until it's turned on there; see `decisions.md`.)*
 
 Nothing about PostgreSQL is ever shown to anyone or asked of them.
 

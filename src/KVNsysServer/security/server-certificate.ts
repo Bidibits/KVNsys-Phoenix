@@ -1,9 +1,10 @@
 import 'reflect-metadata'; // @peculiar/x509 builds on tsyringe, which needs it loaded first.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { homedir, hostname } from 'node:os';
+import { hostname } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, webcrypto, X509Certificate } from 'node:crypto';
 import * as x509 from '@peculiar/x509';
+import { ServerCertificateFile, ServerKeyFile } from '../setup/server-folder.js';
 
 x509.cryptoProvider.set(webcrypto as unknown as Crypto);
 
@@ -17,8 +18,6 @@ export interface ServerCertificate {
   fingerprint256: string;
 }
 
-export const ServerKeyFile = 'server-key.pem';
-export const ServerCertificateFile = 'server-certificate.pem';
 const KeyFile = ServerKeyFile;
 const CertificateFile = ServerCertificateFile;
 
@@ -88,22 +87,4 @@ export async function loadOrCreateServerCertificate(dir: string): Promise<Server
   writeFileSync(keyPath, made.key, { mode: 0o600 });
   writeFileSync(certPath, made.cert);
   return { ...made, created: true };
-}
-
-/**
- * Where the server keeps its own files when KVNSYS_SERVER_DATA doesn't say otherwise. On Windows
- * it's machine-wide, C:\ProgramData\KVNsys\Server: a server belongs to the PC, not to whoever is
- * signed in, and it has to be found in the same place once it runs as a Windows service.
- */
-export function defaultServerDataDir(): string {
-  return process.platform === 'win32'
-    ? join(process.env.ProgramData ?? 'C:\ProgramData', 'KVNsys', 'Server')
-    : join(homedir(), '.kvnsys', 'server');
-}
-
-/** Where earlier versions kept them on Windows: the signed-in account's own folder. */
-export function earlierServerDataDir(): string | null {
-  return process.platform === 'win32'
-    ? join(process.env.LOCALAPPDATA ?? join(homedir(), 'AppData', 'Local'), 'KVNsys', 'Server')
-    : null;
 }
