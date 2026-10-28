@@ -137,6 +137,15 @@ each list and form from one description.
 
 **Set aside for now:** VAT (the discount stays 20% off the shelf price until it's taken up).
 
+**To do, found while trying the installed setups (2026-10-28):**
+
+| To do | What it takes |
+|---|---|
+| **Rename Registers to Machines,** on screen and in the code | The screen, its tile, the messages ("this register"), and in the code the files, types and calls (`/api/registers`, `RegisterBook`, `ListedRegister` and the rest): about 120 files. "Register" as a verb stays (a PC registers itself, the `machines.register` right, `pg_ctl register`). Check every sense before replacing, as the Release-era rename of "till" had to. |
+| **The Machines list shows every column** | Today it shows code, name, computer name and status. The `machines` table also has the hardware id (`machine_uuid`), the shop, the description, and who changed it and when. |
+| **An audits screen,** to see each change by table, record and column | The `audits` table is built (one row per changed column: which table, which record, which column, before, after, who, which PC, which shop, when), but nothing writes to it yet and nothing shows it. Two parts: every save writes its changes, then a screen to look through them by table, record, column, person and date. |
+| **The first account's username** | In `decisions.md`, "Open": the setup asks for it, or the setup makes the account and shows it. |
+
 ## Continuing with Claude Code
 
 Open Claude Code in the Phoenix folder and start with:
