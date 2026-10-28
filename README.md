@@ -352,10 +352,16 @@ PostgreSQL runs as a Windows service that starts whenever the PC starts. KVNsys 
 service too, but a new install leaves it off: open **KVNsys Server** from the desktop to turn it on,
 and tick "Start the server when this PC starts" there, so it comes back on its own after a power cut.
 Installing again keeps whatever was chosen. One option, ticked by default, lets the shop's registers
-reach the server through Windows Firewall, on private networks only. To remove it, use Windows' list of apps: the
-programs, the services, the backup task and the firewall rule go, and the shop's data and backups stay
-in `C:\ProgramData\KVNsys`. Installing again picks that data up, so the shop and its accounts are still
-there.
+reach the server through Windows Firewall, on private networks only. Running the setup where KVNsys
+Server is already installed updates it and keeps the shop; it closes the dashboard first if it's open.
+
+To remove it, use Windows' list of apps. First the shop is packed into one archive in
+`C:\KVNsys Archives`, named after the shop and the time: the whole database, the nightly backups and
+the logs. Then everything else goes: the programs, the services, the backup task, the firewall rule
+and `C:\ProgramData\KVNsys`. If the archive can't be made, the shop's data stays where it is and the
+uninstaller says so. Only Administrators can open the archives. A new install never picks an old shop
+back up: if an earlier install left anything behind, it's packed into an archive the same way first.
+Putting an archive back isn't built yet.
 
 **The server's dashboard.** Windows asks for administrator rights each time it's opened from its icon,
 because only administrators may turn a service on and off. It shows whether the server is on, the address registers
@@ -378,8 +384,8 @@ dying; a USB copy is a later step.
 **For a register:** copy `out\KVNsys POS & Inventory Setup.exe` to it, on a USB stick for example,
 and double-click it. It installs the app for the person signed in to Windows, asking nothing and
 needing no administrator rights. It puts an icon on the desktop and in the Start menu, then opens
-the app. To remove it, use Windows' list of apps. The app's settings (which server it uses, and
-which server it trusts) are kept, so a reinstall picks up where it left off. If the server has a
+the app. To remove it, use Windows' list of apps; its settings (which server it uses, which server it
+trusts, the server's password) go with it. Installing a newer version over it keeps them. If the server has a
 password, the app asks for it the first time it connects, and again only if it changes.
 
 **KVNsys's own PostgreSQL:** `scripts/postgresql/install-postgresql.ps1` installs it as a Windows

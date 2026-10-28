@@ -2,8 +2,15 @@
 ; Windows services, the server's dashboard with its desktop icon, and the nightly backup. PostgreSQL
 ; starts with Windows. On a new install the server itself is off until someone turns it on from the
 ; dashboard, which is also where it's set to start with Windows; a reinstall keeps whatever was
-; chosen. `pnpm package` builds it with Inno Setup 7, passing the version. Paths are relative to
-; this folder. The reasoning is in docs/server-setup-plan.md.
+; chosen.
+;
+; Run where KVNsys Server is installed, it updates it and keeps the shop. Run where it isn't, it
+; always starts a new shop: anything an earlier install left behind is packed into an archive in
+; C:\KVNsys Archives first (archive-shop.ps1), never picked back up. Uninstalling packs the shop
+; into an archive the same way, then removes everything else.
+;
+; `pnpm package` builds it with Inno Setup 7, passing the version. Paths are relative to this
+; folder. The reasoning is in docs/server-setup-plan.md.
 
 #ifndef AppVersion
   #error Build this with pnpm package, which says which version it is.
@@ -43,9 +50,10 @@ FinishedLabel=KVNsys Server is installed. Open it from the KVNsys Server icon on
 Name: firewall; Description: "Let the shop's registers reach KVNsys Server through Windows Firewall (private networks only)"
 
 [Dirs]
-; The server's settings and certificate, the logs and the backups. Never removed by uninstalling:
-; they're the shop's. Who may use the settings folder is set below, once the service exists; the
-; backups folder, by install-backup-task.ps1.
+; The server's settings and certificate, the logs and the backups. Inno Setup never removes them
+; itself: they're the shop's, so the uninstall packs them into an archive first and removes them
+; only once that worked (CurUninstallStepChanged). Who may use the settings folder is set below,
+; once the service exists; the backups folder, by install-backup-task.ps1.
 Name: "{commonappdata}\KVNsys\Server"; Flags: uninsneveruninstall
 Name: "{commonappdata}\KVNsys\Logs"; Flags: uninsneveruninstall
 Name: "{commonappdata}\KVNsys\Backups"; Flags: uninsneveruninstall
@@ -62,6 +70,7 @@ Source: "..\postgresql\remove-postgresql.ps1"; DestDir: "{app}\setup"; Flags: ig
 Source: "..\postgresql\install-backup-task.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 Source: "..\postgresql\backup-database.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 Source: "..\postgresql\check-backup.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
+Source: "archive-shop.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 ; PostgreSQL's programs, trimmed to what a server needs.
 Source: "..\..\vendor\postgresql\pgsql\bin\*"; DestDir: "{autopf}\KVNsys\PostgreSQL\18\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\vendor\postgresql\pgsql\lib\*"; DestDir: "{autopf}\KVNsys\PostgreSQL\18\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -81,7 +90,8 @@ Filename: "{app}\Dashboard\KVNsys Server Dashboard.exe"; Description: "Open KVNs
 
 [UninstallRun]
 ; In this order, before any file goes: the nightly backup's task, the server's service, its firewall
-; rule, then PostgreSQL's service and programs. The shop's data and its backups stay.
+; rule, then PostgreSQL's service and programs. The shop was packed into an archive just before
+; (CurUninstallStepChanged), and its data goes once these are done.
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""KVNsys Nightly Backup"" /F"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveBackupTask"
 Filename: "{app}\kvnsys-server-service.exe"; Parameters: "stop"; Flags: runhidden waituntilterminated; RunOnceId: "StopServer"
 Filename: "{app}\kvnsys-server-service.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "UninstallServer"
@@ -92,13 +102,21 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile
 const
   PostgreSQLService = 'kvnsys-postgresql';
   ServerService = 'kvnsys-server';
+  { Windows' record of this install, under the AppId above. }
+  UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{FE1FED73-BEAD-48D2-AC69-831D052DCC53}_is1';
+  DashboardProgram = 'KVNsys Server Dashboard.exe';
 
 var
   ShopPage: TInputQueryWizardPage;
-  { No database on this PC yet, so there's a shop to set up. A reinstall finds the kept one. }
+  { No database on this PC yet, so there's a shop to set up. An update finds the one it keeps. }
   IsNewShop: Boolean;
+  { KVNsys Server isn't installed, but an earlier install left its data. It's packed into an
+    archive before anything is installed, and this install starts a new shop. }
+  HasLeftovers: Boolean;
   { The server was on when this setup began. A new install's never is. }
   ServerWasRunning: Boolean;
+  { Uninstalling: the shop was packed into an archive, so its data may go. }
+  ShopArchived: Boolean;
 
 function SetEnvironmentVariable(Name, Value: String): Boolean;
   external 'SetEnvironmentVariableW@kernel32.dll stdcall';
@@ -131,13 +149,48 @@ begin
     '-NoProfile -NonInteractive -Command "if ((Get-Service -Name ''' + Name + ''' -ErrorAction SilentlyContinue).Status -eq ''Running'') { exit 0 } else { exit 1 }"') = 0;
 end;
 
-procedure InitializeWizard;
+function DataFolder: String;
 begin
-  IsNewShop := not FileExists(ExpandConstant('{commonappdata}\KVNsys\PostgreSQL\18\data\PG_VERSION'));
+  Result := ExpandConstant('{commonappdata}\KVNsys');
+end;
+
+function ArchiveFolder: String;
+begin
+  Result := ExpandConstant('{sd}\KVNsys Archives');
+end;
+
+{ The dashboard runs from the folder being replaced or removed, and Windows won't let a running
+  program's files go. It's only a window: closing it leaves the server as it is. }
+procedure CloseDashboard;
+begin
+  Run(Sys('taskkill.exe'), '/F /T /IM "' + DashboardProgram + '"');
+end;
+
+{ Packs the shop's data into one archive in C:\KVNsys Archives. True once the archive is made and
+  checked; only then may the data be removed. }
+function ArchiveShop(const Script: String): Boolean;
+begin
+  Result := Run(Sys('WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -ExecutionPolicy Bypass -File "' + Script + '"' +
+    ' -DataDir "' + DataFolder + '" -ArchiveDir "' + ArchiveFolder + '"' +
+    ' -InstallDir "' + ExpandConstant('{autopf}\KVNsys\PostgreSQL\18') + '"' +
+    ' -LogFile "' + DataFolder + '\Logs\archive-shop.log"') = 0;
+end;
+
+procedure InitializeWizard;
+var
+  About: String;
+begin
+  { Installed means updating: the shop is kept. Not installed means a new shop, always. }
+  HasLeftovers := (not RegKeyExists(HKLM64, UninstallKey)) and DirExists(DataFolder);
+  IsNewShop := HasLeftovers or not FileExists(DataFolder + '\PostgreSQL\18\data\PG_VERSION');
+  About := 'The administrator signs in on a register as "admin" with this password. Keep it somewhere safe: ' +
+    'there''s no other administrator to reset it.';
+  if HasLeftovers then
+    About := 'KVNsys Server was on this PC before. What it left behind will be packed into one archive in ' +
+      ArchiveFolder + ', and this install starts a new shop.' + #13#10#13#10 + About;
   ShopPage := CreateInputQueryPage(wpSelectTasks, 'The shop',
-    'This new install needs two answers, just this once.',
-    'The administrator signs in on a register as "admin" with this password. Keep it somewhere safe: ' +
-    'there''s no other administrator to reset it.');
+    'This new install needs two answers, just this once.', About);
   ShopPage.Add('The shop''s name:', False);
   ShopPage.Add('A password for the administrator (at least 8 characters):', True);
   ShopPage.Add('Type it again:', True);
@@ -211,6 +264,31 @@ begin
   Run(Sys('icacls.exe'), '"' + Data + '\Server\*" /reset /T /C /Q');
   Run(Sys('icacls.exe'), '"' + Data + '\Logs" /grant "' + Account + ':(OI)(CI)M"');
   Run(Sys('icacls.exe'), '"' + Data + '\Logs\*" /reset /T /C /Q');
+end;
+
+{ Before anything is copied. What's said here stops the setup with nothing changed. }
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := '';
+  CloseDashboard;
+  if not HasLeftovers then Exit;
+
+  WizardForm.PreparingLabel.Caption := 'Packing what an earlier install left behind into an archive...';
+  ExtractTemporaryFile('archive-shop.ps1');
+  if not ArchiveShop(ExpandConstant('{tmp}\archive-shop.ps1')) then
+  begin
+    Result := 'KVNsys Server was on this PC before, and what it left behind is still in ' + DataFolder +
+      '. It couldn''t be packed into an archive, so nothing was changed. The details are in ' +
+      DataFolder + '\Logs\archive-shop.log.';
+    Exit;
+  end;
+  { A PostgreSQL an earlier install left registered would still have its files open. }
+  Run(Sys('net.exe'), 'stop ' + ServerService);
+  Run(Sys('net.exe'), 'stop ' + PostgreSQLService);
+  DelTree(DataFolder, True, True, True);
+  if DirExists(DataFolder) then
+    Result := 'What an earlier install left behind was packed into an archive in ' + ArchiveFolder +
+      ', but some of it couldn''t be removed from ' + DataFolder + '. Restart this PC and run the setup again.';
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -314,8 +392,36 @@ begin
     ReportFailure('setting up the nightly backup', ExpandConstant('{commonappdata}\KVNsys\Logs\install-backup-task.log'));
 end;
 
+{ Uninstalling. Before anything is removed, the shop is packed into an archive: with the server
+  stopped, so nothing changes while it's copied, and PostgreSQL still running, so the database can be
+  copied properly. Once everything else is gone, the shop's data goes too, but only if the archive
+  was made. }
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  Said: String;
 begin
-  if (CurUninstallStep = usPostUninstall) and not UninstallSilent then
-    MsgBox('KVNsys Server is removed. The shop''s data was kept, in ' + ExpandConstant('{commonappdata}\KVNsys') + '.', mbInformation, MB_OK);
+  if CurUninstallStep = usUninstall then
+  begin
+    CloseDashboard;
+    Run(Sys('net.exe'), 'stop ' + ServerService);
+    ShopArchived := ArchiveShop(ExpandConstant('{app}\setup\archive-shop.ps1'));
+  end;
+  if CurUninstallStep <> usPostUninstall then Exit;
+
+  { The dashboard's window keeps its own small folder for the person who opened it. }
+  DelTree(ExpandConstant('{userappdata}\KVNsys Server'), True, True, True);
+  if ShopArchived then
+  begin
+    DelTree(DataFolder, True, True, True);
+    Said := 'KVNsys Server is removed. The shop''s records were packed into one archive, in ' + ArchiveFolder + '.';
+    if DirExists(DataFolder) then
+      Said := Said + #13#10#13#10 + 'Some files in ' + DataFolder + ' couldn''t be removed. The archive has them all, ' +
+        'so that folder can be deleted by hand.';
+  end
+  else
+    Said := 'KVNsys Server is removed, but the shop''s records couldn''t be packed into an archive, so they were ' +
+      'left where they are, in ' + DataFolder + '. The details are in ' + DataFolder + '\Logs\archive-shop.log.';
+  Log(Said);
+  if not UninstallSilent then
+    MsgBox(Said, mbInformation, MB_OK);
 end;

@@ -111,8 +111,10 @@ async function makeClientSetup(packagedApp) {
         perMachine: false,
         createDesktopShortcut: true,
         createStartMenuShortcut: true,
-        // The register's settings (its server, and the server it trusts) survive an uninstall and reinstall.
-        deleteAppDataOnUninstall: false,
+        // Uninstalling leaves nothing behind: the register's settings (its server, the server it
+        // trusts, the server's password) go too. An update keeps them; electron-builder only deletes
+        // them on a real uninstall.
+        deleteAppDataOnUninstall: true,
         artifactName: '${productName} Setup.${ext}',
       },
     },
@@ -252,7 +254,7 @@ async function packageServer() {
  * The server PC's setup file, built by Inno Setup from scripts/server-setup/kvnsys-server.iss. It
  * carries the server packageServer made, the dashboard packageDashboard made, PostgreSQL and the
  * Visual C++ runtime from vendor/, the scripts that install PostgreSQL as a service and remove it
- * again, and the nightly backup's.
+ * again, the nightly backup's, and the one that packs a shop into an archive before an uninstall.
  */
 function makeServerSetup() {
   const candidates = [

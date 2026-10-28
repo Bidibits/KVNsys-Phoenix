@@ -63,9 +63,10 @@ Owning the steps is more work once, and fewer surprises at every branch.
 |---|---|---|---|
 | PostgreSQL's programs | `C:\Program Files\KVNsys\PostgreSQL\18\` | Replaced | Yes |
 | KVNsys Server's programs | `C:\Program Files\KVNsys\Server\` | Replaced | Yes |
-| The shop's database | `C:\ProgramData\KVNsys\PostgreSQL\18\data\` | Never | **No** |
-| KVNsys Server's settings and certificate | `C:\ProgramData\KVNsys\Server\` | Never | **No** |
-| Backups | `C:\ProgramData\KVNsys\Backups\` | Never | **No** |
+| The shop's database | `C:\ProgramData\KVNsys\PostgreSQL\18\data\` | Never | Yes, once it's packed into an archive |
+| KVNsys Server's settings and certificate | `C:\ProgramData\KVNsys\Server\` | Never | Yes (a new install makes its own) |
+| Backups and logs | `C:\ProgramData\KVNsys\Backups\`, `Logs\` | Never | Yes, once they're packed into an archive |
+| Archives of uninstalled shops | `C:\KVNsys Archives\` | Never | **No**: they're what's left of a shop |
 
 - **The settings move.** A service runs under no person's Windows account, so its settings have to
   be machine-wide. Today the server keeps them in `%LOCALAPPDATA%`; the step that builds this
@@ -134,14 +135,38 @@ writes it into the settings.
 8. Write KVNsys Server's settings (`DATABASE_URL`, the port), encrypted.
 9. Start KVNsys Server. It sets up its tables and asks its two questions; that part is already built.
 
-**A data folder that already exists is kept and used, never initialised again.** That's what makes
-reinstalling or updating safe.
+**Where KVNsys Server is installed, the setup updates it:** the data folder is kept and used,
+never initialised again. That's what makes updating safe. **Where it isn't installed, the setup
+always starts a new shop.** A data folder an earlier install left behind is packed into an archive
+and removed before anything is copied, so it's never picked back up. Windows' list of apps says
+which case it is. Either way the setup first closes the dashboard if it's open, since Windows won't
+let a running program's files be replaced.
 
-## Uninstalling
+## Uninstalling (since 2026-10-28)
 
-Uninstalling removes the programs and the services, but keeps the data folder, the settings and the
-backups, and says where they are. Deleting a shop's data takes a deliberate second step: a separate
-"remove all data" option that's off unless someone ticks it.
+Uninstalling leaves nothing loose behind, and never loses a shop:
+
+1. The dashboard is closed and the server stopped, so nothing changes while the shop is copied.
+   PostgreSQL keeps running.
+2. `archive-shop.ps1` packs the shop into one `.zip` in `C:\KVNsys Archives`, named after the shop
+   and the time: the whole database (`pg_dump`, read back in full like a nightly backup), the
+   nightly backups and the logs. The server's settings, its private key and the stored passwords
+   stay out; a new install makes its own. If the database can't be copied that way, the whole data
+   folder goes in as it is instead, with PostgreSQL stopped so its files are in one piece. The
+   archive is opened and counted before it counts.
+3. The programs, the services, the backup task and the firewall rule are removed.
+4. Only if the archive was made: everything in `C:\ProgramData\KVNsys`, and the dashboard's own
+   folder in AppData. If it couldn't be made, the data stays where it is and the uninstaller says so.
+
+Only Administrators and SYSTEM can open `C:\KVNsys Archives`, since an archive holds the whole shop.
+Putting an archive back into KVNsys isn't built yet; the database copy inside can be restored with
+PostgreSQL 18's `pg_restore`.
+
+The register app's uninstall removes its settings too: its server, the server it trusts and the
+server's password. An update keeps them.
+
+Before 2026-10-28, uninstalling kept the data folder, the settings and the backups where they were,
+and a new install picked them back up.
 
 ## What the part 1 test settled (2026-10-18)
 
@@ -251,6 +276,26 @@ The install script, run for real on the development PC next to its own PostgreSQ
   run time" to see the second run finish, and after a re-registration that time doesn't move. A
   separate probe started a task four times: four runs, one frozen time.
 - Not tried: a night with the PC off (the catch-up after startup), and a real restart.
+
+## What the archive test settled (2026-10-28)
+
+One run with administrator rights on the development PC, silent installs, 51 checks, all passed:
+
+- **A new install**, then **an update with the dashboard open:** the setup closed the dashboard,
+  kept the shop and made no archive. Before this, an open dashboard stopped an update with "Access
+  is denied" on its files.
+- **Uninstalling with the dashboard open** closed it and made one archive, named after the shop
+  (`KVNsys Archive Test <date> <time>.zip`, 15 KB): `database.dump`, the logs and the note, and no
+  settings, keys or passwords. PostgreSQL 18's `pg_restore` read the dump, `locations` table included.
+  Only Administrators and SYSTEM can open `C:\KVNsys Archives`. Nothing else was left: no services,
+  program folders, `C:\ProgramData\KVNsys`, app list entry, backup task or dashboard folder in AppData.
+- **Leftovers like the old uninstall left them** (a data folder with no install): the setup packed
+  them whole into an archive, removed them, and set up the new shop it was given.
+- **Uninstalling with PostgreSQL unable to start:** the database couldn't be copied, so the whole
+  data folder went into the archive (1,428 files, 7.5 MB), and then nothing was left.
+- **The register app:** an update kept its settings; uninstalling removed them and the app.
+- Not tried: an archive that can't be made (the data should stay, with a message), and the pages a
+  person sees, since the run was silent. The PC was left clean, the test archives in the Recycle Bin.
 
 ## Building the setup file
 
