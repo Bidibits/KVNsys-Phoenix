@@ -4,6 +4,19 @@ export { newId } from './shared/ids.js';
 export type { Lineage } from './shared/lineage.js';
 export { displayPesos, isCentavos, MaxCentavos, parsePesos, pesosText } from './shared/money.js';
 export { Refusal, type RefusalKind } from './shared/refusal.js';
+export {
+  ChangeSources,
+  changesOnCreate,
+  changesOnUpdate,
+  ChangeTypes,
+  HiddenColumns,
+  HiddenValue,
+  rightsText,
+  type AuditChange,
+  type AuditValues,
+  type ChangeSource,
+  type ChangeType,
+} from './shared/audit-trail.js';
 
 export {
   Accesses,

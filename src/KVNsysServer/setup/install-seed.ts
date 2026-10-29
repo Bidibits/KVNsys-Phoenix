@@ -95,7 +95,7 @@ export class InstallSeed {
         }
         const missing = role.accesses.filter((access) => !existing?.accesses.includes(access));
         for (const access of missing) {
-          await tx.addAccess({ id: newId(), roleId, access, description: AccessDescriptions[access] });
+          await tx.addAccess({ id: newId(), roleId, access, description: AccessDescriptions[access], lineage });
         }
         if (existing && missing.length > 0) report.created.push(`Role ${role.code}: added ${missing.join(', ')}.`);
         if (existing && missing.length === 0) report.unchanged.push(`Role ${role.code} is up to date.`);

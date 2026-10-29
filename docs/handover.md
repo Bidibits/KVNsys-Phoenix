@@ -107,6 +107,9 @@ Most of this is in the README and `decisions.md`; these are the ones that are ea
   `KVNsysCore/selling/days.ts`.
 - **Every save records who and at which register.** On the server, `lineageOf(person, register)` in
   `KVNsysServer/http/saving.ts`.
+- **Every save to a table people edit writes the audit log,** in its own transaction:
+  `recordCreated` / `recordChanged` in `KVNsysPostgres/audits/audit-log.ts`. A new save path that
+  skips it leaves changes with no history.
 - **The database is one baseline migration,** `src/KVNsysPostgres/prisma/migrations/20261017101440_baseline`,
   edited in place while no real shop has data. After changing `schema.prisma`, regenerate the half
   Prisma writes, keep the hand-written half (the CHECKs and the triggers that refuse changes),
@@ -143,7 +146,7 @@ each list and form from one description.
 |---|---|
 | **Rename Registers to Machines,** on screen and in the code | The screen, its tile, the messages ("this register"), and in the code the files, types and calls (`/api/registers`, `RegisterBook`, `ListedRegister` and the rest): about 120 files. "Register" as a verb stays (a PC registers itself, the `machines.register` right, `pg_ctl register`). Check every sense before replacing, as the Release-era rename of "till" had to. |
 | **The Machines list shows every column** | Today it shows code, name, computer name and status. The `machines` table also has the hardware id (`machine_uuid`), the shop, the description, and who changed it and when. |
-| **An audits screen,** to see each change by table, record and column | The `audits` table is built (one row per changed column: which table, which record, which column, before, after, who, which PC, which shop, when), but nothing writes to it yet and nothing shows it. Two parts: every save writes its changes, then a screen to look through them by table, record, column, person and date. |
+| **An audits screen,** to see each change by table, record and column | **Half done (2026-10-28): every save now writes its changes** (`schema.md`, "What the audit log records"). Left: a screen to look through them by table, record, column, person and date, with ids shown as names, and the right to see it. |
 | **The first account's username** | In `decisions.md`, "Open": the setup asks for it, or the setup makes the account and shows it. |
 
 ## Continuing with Claude Code

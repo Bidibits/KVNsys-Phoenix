@@ -482,7 +482,8 @@ model Barangay {
 
 /// SCHEMA-PLAN 11: who changed what. One row per column changed, so "every time anyone changed a
 /// price" is a query rather than a text search. Kept as written: the migration refuses to change or
-/// remove a row. Nothing writes here yet.
+/// remove a row. Every save to a table people edit writes here, in its own transaction
+/// (audits/audit-log.ts; docs/schema.md, "What the audit log records").
 model Audit {
   id                    String   @id @db.Uuid
   tableName             String   @map("table_name")

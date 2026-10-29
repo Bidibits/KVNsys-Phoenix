@@ -10,6 +10,7 @@ import {
   type CatalogList,
   type Lineage,
 } from '@kvnsys/core';
+import { auditValues, recordChanged, recordCreated } from '../audits/audit-log.js';
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -108,6 +109,7 @@ export class PrismaCatalogBook extends CatalogBook {
         },
         ...including(list),
       });
+      await recordCreated(tx, audited(list, row.id, lineage), auditValues(row));
       return toEntry(row);
     });
   }
@@ -131,6 +133,7 @@ export class PrismaCatalogBook extends CatalogBook {
         },
         ...including(list),
       });
+      await recordChanged(tx, audited(list, id, lineage), auditValues(existing), auditValues(row));
       return toEntry(row);
     });
   }
@@ -147,6 +150,9 @@ export class PrismaCatalogBook extends CatalogBook {
     }
   }
 }
+
+/** Every save to the lists is a person's, through the list's form. */
+const audited = (list: CatalogList, recordId: string, lineage: Lineage) => ({ table: Tables[list], recordId, lineage, source: 'Manual' as const });
 
 /** A code is one entry's in its list, ignoring capitals; the refusal names whose it is. */
 async function refuseTakenCode(tx: Prisma.TransactionClient, list: CatalogList, code: string, ownId: string | null) {

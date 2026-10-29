@@ -1,4 +1,5 @@
-import { SetupStore, type Lineage, type SetupTransaction } from '@kvnsys/core';
+import { rightsText, SetupStore, type Lineage, type SetupTransaction } from '@kvnsys/core';
+import { auditValues, recordChanged, recordCreated } from '../audits/audit-log.js';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 
 function created(lineage: Lineage) {
@@ -8,6 +9,9 @@ function created(lineage: Lineage) {
     createdAtLocation: lineage.locationId,
   };
 }
+
+/** Setting a shop up is KVNsys's doing, not a person's at a screen. */
+const audited = (table: string, recordId: string, lineage: Lineage) => ({ table, recordId, lineage, source: 'Automatic' as const });
 
 /** The seed's reads and writes, all in one database transaction. */
 export class PrismaSetupStore extends SetupStore {
@@ -37,7 +41,8 @@ class PrismaSetupTransaction implements SetupTransaction {
   }
 
   async createLocation(row: { id: string; code: string; name: string; lineage: Lineage }) {
-    await this.db.location.create({ data: { id: row.id, code: row.code, name: row.name, ...created(row.lineage) } });
+    const location = await this.db.location.create({ data: { id: row.id, code: row.code, name: row.name, ...created(row.lineage) } });
+    await recordCreated(this.db, audited('locations', location.id, row.lineage), auditValues(location));
   }
 
   async createMachine(row: {
@@ -49,8 +54,9 @@ class PrismaSetupTransaction implements SetupTransaction {
     locationId: string;
     lineage: Lineage;
   }) {
-    const { lineage, ...machine } = row;
-    await this.db.machine.create({ data: { ...machine, ...created(lineage) } });
+    const { lineage, ...details } = row;
+    const machine = await this.db.machine.create({ data: { ...details, ...created(lineage) } });
+    await recordCreated(this.db, audited('machines', machine.id, lineage), auditValues(machine));
   }
 
   async findRoleByCode(code: string) {
@@ -59,12 +65,18 @@ class PrismaSetupTransaction implements SetupTransaction {
   }
 
   async createRole(row: { id: string; code: string; name: string; level: number; lineage: Lineage }) {
-    const { lineage, ...role } = row;
-    await this.db.role.create({ data: { ...role, ...created(lineage) } });
+    const { lineage, ...details } = row;
+    const role = await this.db.role.create({ data: { ...details, ...created(lineage) } });
+    await recordCreated(this.db, audited('roles', role.id, lineage), auditValues(role));
   }
 
-  async addAccess(row: { id: string; roleId: string; access: string; description: string }) {
-    await this.db.access.create({ data: row });
+  /** Logged against the role, as the Roles screen's saves are: its rights before and after. */
+  async addAccess(row: { id: string; roleId: string; access: string; description: string; lineage: Lineage }) {
+    const { lineage, ...access } = row;
+    const rights = async () => (await this.db.access.findMany({ where: { roleId: row.roleId }, select: { access: true } })).map((a) => a.access);
+    const before = await rights();
+    await this.db.access.create({ data: access });
+    await recordChanged(this.db, audited('roles', row.roleId, lineage), { accesses: rightsText(before) }, { accesses: rightsText(await rights()) });
   }
 
   countUsers() {
@@ -80,7 +92,8 @@ class PrismaSetupTransaction implements SetupTransaction {
     roleId: string;
     lineage: Lineage;
   }) {
-    const { lineage, ...user } = row;
-    await this.db.user.create({ data: { ...user, ...created(lineage) } });
+    const { lineage, ...details } = row;
+    const user = await this.db.user.create({ data: { ...details, ...created(lineage) } });
+    await recordCreated(this.db, audited('users', user.id, lineage), auditValues(user));
   }
 }

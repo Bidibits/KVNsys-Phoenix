@@ -7,12 +7,14 @@ import {
   Refusal,
   RoleCatalog,
   roleCodeFor,
+  rightsText,
   roleRights,
   type Lineage,
   type Role,
   type RoleDetails,
   type RoleStatus,
 } from '@kvnsys/core';
+import { auditValues, recordChanged, recordCreated } from '../audits/audit-log.js';
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
 import { requireSomeoneWhoCanManageUsers } from './user-managers.js';
 
@@ -71,6 +73,7 @@ export class PrismaRoleCatalog extends RoleCatalog {
         },
         include: withRights,
       });
+      await recordCreated(tx, audited(row.id, lineage), roleValues(row));
       return toRole(row);
     });
   }
@@ -78,7 +81,7 @@ export class PrismaRoleCatalog extends RoleCatalog {
   async update(id: string, typed: RoleDetails, lineage: Lineage): Promise<Role> {
     const details = checkRoleDetails(typed);
     return this.db.$transaction(async (tx) => {
-      const existing = Uuid.test(id) ? await tx.role.findUnique({ where: { id }, select: { code: true } }) : null;
+      const existing = Uuid.test(id) ? await tx.role.findUnique({ where: { id }, include: withRights }) : null;
       if (!existing) throw new Refusal('not-found', NotFound);
       checkRoleChange(existing.code, details);
       await refuseNameTaken(tx, details.name, id);
@@ -102,7 +105,9 @@ export class PrismaRoleCatalog extends RoleCatalog {
         });
       }
       await requireSomeoneWhoCanManageUsers(tx);
-      return toRole(await tx.role.findUniqueOrThrow({ where: { id }, include: withRights }));
+      const row = await tx.role.findUniqueOrThrow({ where: { id }, include: withRights });
+      await recordChanged(tx, audited(id, lineage), roleValues(existing), roleValues(row));
+      return toRole(row);
     });
   }
 
@@ -112,6 +117,12 @@ export class PrismaRoleCatalog extends RoleCatalog {
     return rows.map((row) => row.id);
   }
 }
+
+/** Every save here is a person's, through the Roles screen. */
+const audited = (recordId: string, lineage: Lineage) => ({ table: 'roles', recordId, lineage, source: 'Manual' as const });
+
+/** A role's columns, and the rights its access rows give it, as the log keeps them. */
+const roleValues = (row: Row) => ({ ...auditValues(row), accesses: rightsText(row.accesses.map((a) => a.access)) });
 
 /** A role's name is its own, ignoring capitals: the refusal names the one that has it. */
 async function refuseNameTaken(tx: Prisma.TransactionClient, name: string, ownId: string | null) {

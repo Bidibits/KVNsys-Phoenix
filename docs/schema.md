@@ -17,7 +17,7 @@ written down on this page instead.
 | 7–8 | `roles`, `accesses` | 6–11 | ✅ Roles screen |
 | 9 | `users` | 6–11 | ✅ Users screen, sign-in |
 | 10 | `machines` | 6–11 | ✅ Registers screen; every register records itself at sign-in |
-| 11 | `audits` | 6–11 | Nothing writes here yet |
+| 11 | `audits` | 6–11 | ✅ Every save to a table people edit writes here (2026-10-28). No screen shows it yet |
 | 12–15 | `brands`, `manufacturers`, `suppliers`, `categories` | 12–17 The catalogue | One list screen and form panel for all four, and the product form picks from them (2026-10-25) |
 | 16 | `affiliations` | 12–17 | No screens yet |
 | 17 | `products` | 12–17 | ✅ Every field, on the product form, and the list shows the picture, category and brand; the till charges the promo and wholesale prices and leaves alone the stock of a product that tracks none (2026-10-25) |
@@ -40,7 +40,35 @@ written down on this page instead.
 | `receipt_items`: product, quantity, prices, price basis | **Also** `line_number`, `product_code`, `product_name` | Kept as sold, so renaming or repricing a product never changes a receipt already given |
 | `shifts` | **Also** `number` | Numbered per shop with no gaps, like receipts |
 | `inventory_logs.movement_type`: seven kinds | The database takes all seven; KVNsysCore records three so far | `to_supplier`, `transfer`, `from_customer` and `disposal` come with the features that make them |
-| `audits` | **Kept as written**: the database refuses to change or remove a row. `column_name` may be empty | An audit log anyone can edit isn't one. A change to a record as a whole, such as creating it, names no single column |
+| `audits` | **Kept as written**: the database refuses to change or remove a row. `column_name` may be empty | An audit log anyone can edit isn't one. Every row written so far names its column: creating a record writes one row per column it was given (Beta did the same), so a column's history starts with its first value |
+
+## What the audit log records (since 2026-10-28)
+
+Every save to a table people edit writes its changes into `audits`, **in the same transaction as the
+save**: a change is never kept without its record, and a refused save leaves none.
+`KVNsysPostgres/audits/audit-log.ts` writes the rows; the rules are KVNsysCore's
+(`shared/audit-trail.ts`).
+
+| Logged | How |
+|---|---|
+| `products`, `brands`, `manufacturers`, `suppliers`, `categories`, `users`, `roles` | Manual: a person, through a screen |
+| `machines` | Automatic when a PC records itself at sign-in or its Windows name changed; Manual from the list's Edit |
+| `locations`, `machines`, `roles`, `users` made when a shop is set up | Automatic, by nobody (`implemented_by_user` empty) |
+
+- **One row per column that changed.** A save that changed nothing writes nothing. Values are text:
+  money to the centavo (`1450.50`), true/false, ids as they are.
+- **Created** rows: one for each column a new record was given a value in.
+- **Decommissioned**: a status set to Inactive (switched off). Switching back on is Updated.
+- **Passwords**: `password_hash` is logged as `(hidden)`, before and after. The log says it changed,
+  never what it was.
+- **Pictures**: their size and a short fingerprint (`a picture, 41 KB (3f9a2c1b07de)`), never the picture.
+- **A role's rights** are logged against the role, as a column named `accesses` (the table that holds
+  them): the sorted list before and after. Taking a right away has no row of its own to log.
+- **Who, where, when** are the audit row's own `implemented_*` columns, so the record's `created_*`
+  and `updated_*` columns aren't logged as changes.
+- **Not logged here, because they're their own record**: the stock ledger (`inventory_logs`, and the
+  `inventory` totals it keeps), receipts and their lines and payments, and shifts.
+- **Nothing before 2026-10-28 was logged.** Changes made before then have no history.
 | `transfer_imports.from_location`, `sales_imports.location_id`, `consolidated_sales.location_id` | **Not foreign keys** | They name another site's shop, which this database may not hold. The same reasoning as the lineage columns |
 | `receipt_payments.payment_type` | Cash only, for now (a check in the migration) | Other ways to pay come later; the plan's gap 3 (a table of payment types) isn't decided |
 

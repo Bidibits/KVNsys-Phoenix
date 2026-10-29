@@ -15,6 +15,7 @@ import {
   type ProductSortingField,
   type ProductStatus,
 } from '@kvnsys/core';
+import { auditValues, pictureText, recordChanged, recordCreated } from '../audits/audit-log.js';
 import { Prisma, type PrismaClient, type Product as ProductRow } from '../generated/prisma/client.js';
 
 /** A row without its picture: lists and finds never carry it, only picture() does. */
@@ -110,6 +111,7 @@ export class PrismaProductCatalog extends ProductCatalog {
         },
         ...WithoutPicture,
       });
+      await recordCreated(tx, audited(row.id, lineage), { ...auditValues(row), image: picture === null ? null : pictureText(picture) });
       return fromRow(row, picture !== null);
     });
   }
@@ -118,8 +120,10 @@ export class PrismaProductCatalog extends ProductCatalog {
     const product = checkProduct(details);
     const image = pictureColumn(picture);
     return this.saving(async (tx) => {
-      const existing = await tx.product.findUnique({ where: { id }, select: { id: true } });
+      const existing = await tx.product.findUnique({ where: { id }, ...WithoutPicture });
       if (!existing) throw new Refusal('not-found', "That product isn't in the catalog any more.");
+      // The picture is read only when this save replaces or removes it; otherwise it isn't touched.
+      const pictureBefore = picture === undefined ? undefined : (await tx.product.findUnique({ where: { id }, select: { image: true } }))?.image ?? null;
       await refuseClashes(tx, product, id);
       await refuseGoneChoices(tx, product);
       const row = await tx.product.update({
@@ -134,6 +138,9 @@ export class PrismaProductCatalog extends ProductCatalog {
         },
         ...WithoutPicture,
       });
+      const pictures = (bytes: Uint8Array | null | undefined): Record<string, string | null> =>
+        bytes === undefined ? {} : { image: bytes === null ? null : pictureText(bytes) };
+      await recordChanged(tx, audited(id, lineage), { ...auditValues(existing), ...pictures(pictureBefore) }, { ...auditValues(row), ...pictures(picture) });
       if (picture !== undefined) return fromRow(row, picture !== null);
       return (await withPictures(tx, [row]))[0]!;
     });
@@ -183,6 +190,9 @@ export class PrismaProductCatalog extends ProductCatalog {
     }
   }
 }
+
+/** Every product save is a person's, through the product form. */
+const audited = (recordId: string, lineage: Lineage) => ({ table: 'products', recordId, lineage, source: 'Manual' as const });
 
 /** The rows as products, each saying whether it has a picture: one question for them all, no picture read. */
 async function withPictures(db: Prisma.TransactionClient | PrismaClient, rows: ProductRowWithoutPicture[]): Promise<Product[]> {

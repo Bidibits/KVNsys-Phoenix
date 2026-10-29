@@ -10,6 +10,7 @@ import {
   type Lineage,
   type RoleChoice,
 } from '@kvnsys/core';
+import { auditValues, recordChanged, recordCreated } from '../audits/audit-log.js';
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
 import { requireSomeoneWhoCanManageUsers } from './user-managers.js';
 
@@ -75,6 +76,7 @@ export class PrismaUserAccounts extends UserAccounts {
         include: withRole,
       });
       await requireSomeoneWhoCanManageUsers(tx);
+      await recordCreated(tx, audited(row.id, lineage), auditValues(row));
       return toAccount(row);
     });
   }
@@ -82,19 +84,26 @@ export class PrismaUserAccounts extends UserAccounts {
   async update(id: string, typed: AccountDetails, lineage: Lineage): Promise<Account> {
     const details = checkAccountDetails(typed);
     return this.saving(async (tx) => {
-      if (!Uuid.test(id) || !(await tx.user.findUnique({ where: { id }, select: { id: true } }))) throw new Refusal('not-found', NotFound);
+      const existing = Uuid.test(id) ? await tx.user.findUnique({ where: { id } }) : null;
+      if (!existing) throw new Refusal('not-found', NotFound);
       await refuseTaken(tx, details.username, id);
       await requireRole(tx, details.roleId);
       const row = await tx.user.update({ where: { id }, data: { ...details, ...updated(lineage) }, include: withRole });
       await requireSomeoneWhoCanManageUsers(tx);
+      await recordChanged(tx, audited(id, lineage), auditValues(existing), auditValues(row));
       return toAccount(row);
     });
   }
 
   async setPassword(id: string, passwordHash: string, lineage: Lineage): Promise<void> {
     if (!Uuid.test(id)) throw new Refusal('not-found', NotFound);
-    const { count } = await this.db.user.updateMany({ where: { id }, data: { passwordHash, ...updated(lineage) } });
-    if (count === 0) throw new Refusal('not-found', NotFound);
+    await this.db.$transaction(async (tx) => {
+      const existing = await tx.user.findUnique({ where: { id } });
+      if (!existing) throw new Refusal('not-found', NotFound);
+      const row = await tx.user.update({ where: { id }, data: { passwordHash, ...updated(lineage) } });
+      // The log says the password changed, never what either one was (HiddenColumns).
+      await recordChanged(tx, audited(id, lineage), auditValues(existing), auditValues(row));
+    });
   }
 
   /** One transaction per save; the unique index on usernames has the last word if two saves race. */
@@ -109,6 +118,9 @@ export class PrismaUserAccounts extends UserAccounts {
     }
   }
 }
+
+/** Every save here is a person's, through the Users screen. */
+const audited = (recordId: string, lineage: Lineage) => ({ table: 'users', recordId, lineage, source: 'Manual' as const });
 
 function updated(lineage: Lineage) {
   return {

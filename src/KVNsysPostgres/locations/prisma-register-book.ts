@@ -10,6 +10,7 @@ import {
   type RegisterDetails,
   type RegisterStatus,
 } from '@kvnsys/core';
+import { auditValues, recordChanged, recordCreated, type AuditedSave } from '../audits/audit-log.js';
 import type { Machine, PrismaClient } from '../generated/prisma/client.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -37,6 +38,9 @@ const updated = (lineage: Lineage) => ({
   updatedAtDate: new Date(),
 });
 
+/** A PC recording itself, or its new Windows name, is KVNsys's doing; a change on the Registers screen is a person's. */
+const audited = (recordId: string, lineage: Lineage, source: AuditedSave['source']): AuditedSave => ({ table: 'machines', recordId, lineage, source });
+
 /** Registers, kept in PostgreSQL's machines table, beside the server PC the seed recorded. */
 export class PrismaRegisterBook extends RegisterBook {
   constructor(private readonly db: PrismaClient) {
@@ -48,7 +52,11 @@ export class PrismaRegisterBook extends RegisterBook {
     if (known) {
       if (known.machineName === pc.computerName) return toRegister(known);
       // Renamed in Windows since: still the same PC, and the list shows its name now.
-      return toRegister(await this.db.machine.update({ where: { id: known.id }, data: { machineName: pc.computerName, ...updated(lineage) } }));
+      return this.db.$transaction(async (tx) => {
+        const row = await tx.machine.update({ where: { id: known.id }, data: { machineName: pc.computerName, ...updated(lineage) } });
+        await recordChanged(tx, audited(known.id, lineage, 'Automatic'), auditValues(known), auditValues(row));
+        return toRegister(row);
+      });
     }
     if (!Uuid.test(locationId)) throw new Refusal('not-found', "That shop isn't known here.");
 
@@ -76,6 +84,7 @@ export class PrismaRegisterBook extends RegisterBook {
           createdAtLocation: lineage.locationId,
         },
       });
+      await recordCreated(tx, audited(row.id, lineage, 'Automatic'), auditValues(row));
       return toRegister(row);
     });
   }
@@ -99,6 +108,12 @@ export class PrismaRegisterBook extends RegisterBook {
     if (current.isServer && details.status !== 'Active') {
       throw new Refusal('invalid', 'The server PC stays switched on: switching it off would lock its own screen out. Only its name can change.');
     }
-    return toRegister(await this.db.machine.update({ where: { id }, data: { name: details.name, status: details.status, ...updated(lineage) } }));
+    return this.db.$transaction(async (tx) => {
+      const before = await tx.machine.findUnique({ where: { id } });
+      if (!before) throw new Refusal('not-found', NotThere);
+      const row = await tx.machine.update({ where: { id }, data: { name: details.name, status: details.status, ...updated(lineage) } });
+      await recordChanged(tx, audited(id, lineage, 'Manual'), auditValues(before), auditValues(row));
+      return toRegister(row);
+    });
   }
 }

@@ -20,7 +20,7 @@ export interface SetupTransaction {
   }): Promise<void>;
   findRoleByCode(code: string): Promise<{ id: string; accesses: string[] } | null>;
   createRole(row: { id: string; code: string; name: string; level: number; lineage: Lineage }): Promise<void>;
-  addAccess(row: { id: string; roleId: string; access: string; description: string }): Promise<void>;
+  addAccess(row: { id: string; roleId: string; access: string; description: string; lineage: Lineage }): Promise<void>;
   countUsers(): Promise<number>;
   createUser(row: {
     id: string;
