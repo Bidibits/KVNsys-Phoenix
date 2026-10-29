@@ -29,3 +29,6 @@ export const ShiftsOperation = Symbol('ShiftsOperation');
 
 /** The catalogue's four lists and the rights check, or null when there's no database. */
 export const CatalogOperation = Symbol('CatalogOperation');
+
+/** The audit log and the rights check, or null when there's no database. */
+export const AuditsOperation = Symbol('AuditsOperation');

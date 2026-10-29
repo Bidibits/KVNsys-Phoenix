@@ -23,8 +23,9 @@ import { z } from 'zod';
  *     receipt line says which price it was charged at.
  * 17: the server password: hello says whether the server has one, a register checks it at
  *     /api/join, and every sign-in carries it.
+ * 18: the audit log: the newest changes, by table, record, person and day, with names in place of ids.
  */
-export const ProtocolVersion = 17;
+export const ProtocolVersion = 18;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

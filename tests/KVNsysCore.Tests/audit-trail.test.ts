@@ -1,5 +1,39 @@
-import { changesOnCreate, changesOnUpdate, HiddenValue, rightsText } from '@kvnsys/core';
+import { ByKVNsys, changesOnCreate, changesOnUpdate, checkAuditFilter, columnLabel, HiddenValue, rightsText, shownValue } from '@kvnsys/core';
 import { describe, expect, it } from 'vitest';
+
+describe('reading the audit log back', () => {
+  it('takes empty filters as "any", and checks the rest', () => {
+    expect(checkAuditFilter({})).toEqual({ table: null, recordId: null, person: null, from: null, to: null });
+    expect(checkAuditFilter({ table: ' products ', person: ByKVNsys })).toMatchObject({ table: 'products', person: ByKVNsys });
+    expect(() => checkAuditFilter({ table: 'receipts' })).toThrow('The audit log has no table called "receipts".');
+    expect(() => checkAuditFilter({ record: 'not-an-id' })).toThrow("That record isn't one the audit log knows.");
+    expect(() => checkAuditFilter({ person: 'admin' })).toThrow("That person isn't one the audit log knows.");
+  });
+
+  it("reads days by the shop's clock, the last day included", () => {
+    const filter = checkAuditFilter({ from: '2026-10-28', to: '2026-10-28' });
+    expect(filter.from?.toISOString()).toBe('2026-10-27T16:00:00.000Z');
+    expect(filter.to?.toISOString()).toBe('2026-10-28T16:00:00.000Z');
+    expect(() => checkAuditFilter({ from: '2026-10-29', to: '2026-10-28' })).toThrow('The first day comes after the last one. Swap them round.');
+  });
+
+  it('names columns the way the forms do', () => {
+    expect(columnLabel('retail_price')).toBe('Price');
+    expect(columnLabel('category_id')).toBe('Category');
+    expect(columnLabel('first_name')).toBe('First name');
+    expect(columnLabel(null)).toBe('The whole record');
+  });
+
+  it("shows another record's name in place of its id, when it's there, and true or false in words", () => {
+    const names = new Map([['0199c7a0-0000-7000-8000-000000000009', 'Appliances']]);
+    expect(shownValue('category_id', '0199c7a0-0000-7000-8000-000000000009', names)).toBe('Appliances');
+    expect(shownValue('category_id', '0199c7a0-0000-7000-8000-00000000000a', names)).toBe('0199c7a0-0000-7000-8000-00000000000a');
+    expect(shownValue('tracks_stock', 'false', names)).toBe('No');
+    // Only the yes/no columns: a product called "true" keeps its name.
+    expect(shownValue('name', 'true', names)).toBe('true');
+    expect(shownValue('name', null, names)).toBeNull();
+  });
+});
 
 describe('what a save writes into the audit log', () => {
   it('logs a new record as one Created row per column that has a value, in order', () => {

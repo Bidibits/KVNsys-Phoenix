@@ -1,4 +1,6 @@
 import type {
+  AuditFilterForm,
+  AuditListResult,
   CatalogEntryForm,
   CatalogEntryFormResult,
   CatalogEntryResult,
@@ -149,6 +151,8 @@ export interface KvnsysBridge {
   listRegisters(): Promise<RegisterListResult>;
   /** Renames a register, or switches it off or on, as typed and picked. */
   saveRegister(id: string, form: { name: string; status: string }): Promise<RegisterResult>;
+  /** The newest changes in the audit log that match, if the signed-in person may see it. Empty parts mean any. */
+  listAudits(filter: AuditFilterForm): Promise<AuditListResult>;
   /** The signed-in person's open shift, with its figures so far, or none. */
   currentShift(): Promise<CurrentShiftResult>;
   /** Starts a shift with the cash counted into the drawer, as typed. */
@@ -193,6 +197,7 @@ export const DaySalesChannel = 'kvnsys:day-sales';
 export const ReceiptChannel = 'kvnsys:receipt';
 export const ListRegistersChannel = 'kvnsys:list-registers';
 export const SaveRegisterChannel = 'kvnsys:save-register';
+export const ListAuditsChannel = 'kvnsys:list-audits';
 export const CurrentShiftChannel = 'kvnsys:current-shift';
 export const OpenShiftChannel = 'kvnsys:open-shift';
 export const CloseShiftChannel = 'kvnsys:close-shift';

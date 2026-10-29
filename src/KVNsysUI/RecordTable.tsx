@@ -14,6 +14,11 @@ export interface Column<Row> {
    * its box. Other columns stay on one line.
    */
   wrap?: boolean;
+  /**
+   * The column's width, such as "9rem", for a table where columns that may hold long text would
+   * otherwise take the room the short ones need. The columns without one share what's left.
+   */
+  width?: string;
 }
 
 /**
@@ -57,7 +62,7 @@ export function RecordTable<Row>({
         <TableHeader className="sticky top-0 z-10 bg-secondary shadow-[0_1px_0_var(--border)]">
           <TableRow className="border-0 hover:bg-transparent">
             {columns.map((column) => (
-              <TableHead key={column.heading} className={cn(cell, 'font-semibold', alignment(column))}>
+              <TableHead key={column.heading} className={cn(cell, 'font-semibold', alignment(column))} style={column.width ? { width: column.width } : undefined}>
                 {column.hiddenHeading ? <span className="sr-only">{column.heading}</span> : column.heading}
               </TableHead>
             ))}

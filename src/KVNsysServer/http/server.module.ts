@@ -1,6 +1,7 @@
 import { type DynamicModule, Inject, Injectable, Module, type OnModuleDestroy } from '@nestjs/common';
 import type { PcIdentity } from '@kvnsys/core';
 import {
+  PrismaAuditLog,
   PrismaCatalogBook,
   PrismaProductCatalog,
   PrismaRegisterBook,
@@ -18,6 +19,7 @@ import { ScryptPasswordHasher } from '../identity/scrypt-password-hasher.js';
 import { Sessions } from '../identity/sessions.js';
 import { SignIn } from '../identity/sign-in.js';
 import { ServerPassword } from '../security/server-password.js';
+import { AuditsController, type AuditsOperationParts } from './audits.controller.js';
 import { CatalogController, type CatalogOperationParts } from './catalog.controller.js';
 import { HelloController } from './hello.controller.js';
 import { JoinController } from './join.controller.js';
@@ -30,6 +32,7 @@ import { SalesController, type SalesOperationParts } from './sales.controller.js
 import { ShiftsController, type ShiftsOperationParts } from './shifts.controller.js';
 import { StockController, type StockOperationParts } from './stock.controller.js';
 import {
+  AuditsOperation,
   CatalogOperation,
   DatabaseClient,
   ProductsOperation,
@@ -65,7 +68,7 @@ export class ServerModule {
   static withDatabase(client: PrismaClient | null, server: PcIdentity, serverPassword: ServerPassword): DynamicModule {
     return {
       module: ServerModule,
-      controllers: [HelloController, JoinController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, RegistersController, ShiftsController, CatalogController],
+      controllers: [HelloController, JoinController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, RegistersController, ShiftsController, CatalogController, AuditsController],
       providers: [
         { provide: DatabaseClient, useValue: { client } satisfies Database },
         DatabaseLifecycle,
@@ -101,6 +104,15 @@ export class ServerModule {
           useFactory: ({ client: db }: Database, sessions: Sessions) => ({
             catalog: db
               ? ({ book: new PrismaCatalogBook(db), authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)) } satisfies CatalogOperationParts)
+              : null,
+          }),
+        },
+        {
+          provide: AuditsOperation,
+          inject: [DatabaseClient, Sessions],
+          useFactory: ({ client: db }: Database, sessions: Sessions) => ({
+            audits: db
+              ? ({ log: new PrismaAuditLog(db), authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)) } satisfies AuditsOperationParts)
               : null,
           }),
         },

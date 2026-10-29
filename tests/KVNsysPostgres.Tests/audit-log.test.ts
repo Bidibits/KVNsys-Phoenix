@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { ProductDefaults } from '@kvnsys/core';
 import {
   createPrismaClient,
+  PrismaAuditLog,
   PrismaCatalogBook,
   PrismaProductCatalog,
   PrismaRegisterBook,
@@ -158,6 +159,70 @@ describeWithDatabase('the audit log, written by every save', () => {
       ['machine_name', 'OLD-NAME', 'NEW-NAME', 'Updated', 'Automatic'],
       ['name', 'New register (OLD-NAME)', 'Counter 1', 'Updated', 'Manual'],
     ]);
+  });
+
+  it('reads the log back newest first, with names in place of ids, and narrows it by table, record, person and day', async () => {
+    const shop = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Kenlyn' } })).id;
+    const admin = randomUUID();
+    await db.role.create({ data: { id: admin, code: 'ADMIN', name: 'Administrator', level: 100 } });
+    const accounts = new PrismaUserAccounts(db);
+    const person = { username: 'ana', firstName: 'Ana', middleName: null, lastName: 'Cruz', roleId: admin, status: 'Active' as const };
+    const anaId = (await accounts.create(person, 'scrypt$x', ana)).id;
+    const counter = await new PrismaRegisterBook(db).recognise({ hardwareId: 'pc-1', computerName: 'COUNTER' }, shop, ana);
+    const byAna = { userId: anaId, machineId: counter.id, locationId: shop };
+
+    const book = new PrismaCatalogBook(db);
+    const appliances = await book.create('categories', entry('CAT-APP', 'Appliances'), byAna);
+    const catalog = new PrismaProductCatalog(db);
+    const fan = await catalog.create({ ...rice, code: 'PRD-0100', barcode: null, name: 'Stand fan' }, byAna);
+    await catalog.update(fan.id, { ...rice, code: 'PRD-0100', barcode: null, name: 'Stand fan', categoryId: appliances.id }, byAna);
+
+    const log = new PrismaAuditLog(db);
+    const all = await log.search({ table: null, recordId: null, person: null, from: null, to: null });
+    expect(all.more).toBe(false);
+    expect(all.entries[0]).toMatchObject({
+      table: 'products',
+      tableLabel: 'Products',
+      recordName: 'Stand fan (PRD-0100)',
+      column: 'category_id',
+      columnLabel: 'Category',
+      before: null,
+      after: 'Appliances',
+      changeType: 'Updated',
+      source: 'Manual',
+      userName: 'Ana Cruz (ana)',
+      machineName: 'New register (COUNTER)',
+      shopName: 'Kenlyn',
+    });
+    const times = all.entries.map((e) => e.at);
+    expect([...times].sort().reverse()).toEqual(times);
+    expect(all.people).toEqual([{ id: anaId, name: 'Ana Cruz (ana)' }]);
+    // The PC recorded itself with Ana's sign-in, but Ana's own account was made by someone this test never made.
+    expect(all.byKVNsys).toBe(false);
+
+    const products = await log.search({ table: 'products', recordId: null, person: null, from: null, to: null });
+    expect(new Set(products.entries.map((e) => e.table))).toEqual(new Set(['products']));
+    const theFan = await log.search({ table: null, recordId: fan.id, person: null, from: null, to: null });
+    expect(theFan.entries.every((e) => e.recordId === fan.id)).toBe(true);
+    expect(theFan.entries.length).toBeGreaterThan(1);
+    const anaOnly = await log.search({ table: null, recordId: null, person: anaId, from: null, to: null });
+    expect(anaOnly.entries.length).toBeGreaterThan(0);
+    expect(anaOnly.entries.every((e) => e.userId === anaId)).toBe(true);
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    expect((await log.search({ table: null, recordId: null, person: null, from: tomorrow, to: null })).entries).toEqual([]);
+    expect((await log.search({ table: null, recordId: null, person: 'kvnsys', from: null, to: null })).entries).toEqual([]);
+  });
+
+  it('says when more changes match than it sends', async () => {
+    const recordId = randomUUID();
+    await db.audit.createMany({
+      data: Array.from({ length: 501 }, (_, n) => ({ id: randomUUID(), tableName: 'brands', recordId, columnName: 'name', valueAfter: `Name ${n}`, changeType: 'Updated', changeSource: 'Manual' })),
+    });
+    const page = await new PrismaAuditLog(db).search({ table: null, recordId: null, person: null, from: null, to: null });
+    expect(page.entries).toHaveLength(500);
+    expect(page.more).toBe(true);
+    expect(page.byKVNsys).toBe(true);
+    expect(page.entries[0]!.recordName).toBeNull();
   });
 
   it("logs setting a shop up as Automatic, by nobody, including the Administrator role's rights", async () => {

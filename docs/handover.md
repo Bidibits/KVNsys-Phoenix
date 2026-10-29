@@ -146,7 +146,7 @@ each list and form from one description.
 |---|---|
 | **Rename Registers to Machines,** on screen and in the code | The screen, its tile, the messages ("this register"), and in the code the files, types and calls (`/api/registers`, `RegisterBook`, `ListedRegister` and the rest): about 120 files. "Register" as a verb stays (a PC registers itself, the `machines.register` right, `pg_ctl register`). Check every sense before replacing, as the Release-era rename of "till" had to. |
 | **The Machines list shows every column** | Today it shows code, name, computer name and status. The `machines` table also has the hardware id (`machine_uuid`), the shop, the description, and who changed it and when. |
-| **An audits screen,** to see each change by table, record and column | **Half done (2026-10-28): every save now writes its changes** (`schema.md`, "What the audit log records"). Left: a screen to look through them by table, record, column, person and date, with ids shown as names, and the right to see it. |
+| ~~**An audits screen,** to see each change by table, record and column~~ | **Done.** Every save writes its changes (2026-10-28) and the Audit log screen shows them (2026-10-29): `schema.md`, "What the audit log records". |
 | **The first account's username** | In `decisions.md`, "Open": the setup asks for it, or the setup makes the account and shows it. |
 
 ## Continuing with Claude Code

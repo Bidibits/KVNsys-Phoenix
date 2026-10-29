@@ -17,7 +17,7 @@ written down on this page instead.
 | 7–8 | `roles`, `accesses` | 6–11 | ✅ Roles screen |
 | 9 | `users` | 6–11 | ✅ Users screen, sign-in |
 | 10 | `machines` | 6–11 | ✅ Registers screen; every register records itself at sign-in |
-| 11 | `audits` | 6–11 | ✅ Every save to a table people edit writes here (2026-10-28). No screen shows it yet |
+| 11 | `audits` | 6–11 | ✅ Every save to a table people edit writes here (2026-10-28), and the Audit log screen shows it (2026-10-29) |
 | 12–15 | `brands`, `manufacturers`, `suppliers`, `categories` | 12–17 The catalogue | One list screen and form panel for all four, and the product form picks from them (2026-10-25) |
 | 16 | `affiliations` | 12–17 | No screens yet |
 | 17 | `products` | 12–17 | ✅ Every field, on the product form, and the list shows the picture, category and brand; the till charges the promo and wholesale prices and leaves alone the stock of a product that tracks none (2026-10-25) |
@@ -69,6 +69,14 @@ save**: a change is never kept without its record, and a refused save leaves non
 - **Not logged here, because they're their own record**: the stock ledger (`inventory_logs`, and the
   `inventory` totals it keeps), receipts and their lines and payments, and shifts.
 - **Nothing before 2026-10-28 was logged.** Changes made before then have no history.
+
+**Reading it back (since 2026-10-29):** the Audit log tile (right `audits.view`; the Administrator
+has it) shows the newest 500 changes that match, newest save first, each save's columns in its
+table's order. It narrows by table, person (or KVNsys itself), and days by the shop's clock; a
+record's name shows only that record's history. Names stand in for ids: the record, the person, the
+PC, the shop, and a column holding another record's id (a product's category, a user's role). A
+record no longer there shows as such. `GET /api/audits` (protocol 18); Core `audits/audit-log-book.ts`,
+Postgres `audits/prisma-audit-log.ts`.
 | `transfer_imports.from_location`, `sales_imports.location_id`, `consolidated_sales.location_id` | **Not foreign keys** | They name another site's shop, which this database may not hold. The same reasoning as the lineage columns |
 | `receipt_payments.payment_type` | Cash only, for now (a check in the migration) | Other ways to pay come later; the plan's gap 3 (a table of payment types) isn't decided |
 

@@ -17,6 +17,23 @@ export {
   type ChangeSource,
   type ChangeType,
 } from './shared/audit-trail.js';
+export {
+  AuditedTableNames,
+  AuditedTables,
+  AuditLimit,
+  AuditLogBook,
+  AuditReferences,
+  ByKVNsys,
+  checkAuditFilter,
+  columnLabel,
+  shownValue,
+  tableLabel,
+  type AuditedTable,
+  type AuditEntry,
+  type AuditFilter,
+  type AuditPage,
+  type AuditPerson,
+} from './audits/audit-log-book.js';
 
 export {
   Accesses,

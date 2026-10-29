@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   changeRegister,
+  listAudits,
+  type AuditListResult,
   closeShift,
   connectToServer,
   joinServer,
@@ -84,6 +86,7 @@ import {
   OpenShiftChannel,
   ListRegistersChannel,
   SaveRegisterChannel,
+  ListAuditsChannel,
   DaySalesChannel,
   ReceiptChannel,
   CountStockChannel,
@@ -595,6 +598,14 @@ ipcMain.handle(SaveRegisterChannel, async (_event, id: unknown, typed: unknown):
   const status = asText((typed as Record<string, unknown>).status);
   if (name === undefined || status === undefined) return NotAForm;
   return withPass((address, pass, options) => changeRegister(address, pass, registerId, { name, status }, options));
+});
+
+ipcMain.handle(ListAuditsChannel, async (_event, typed: unknown): Promise<AuditListResult> => {
+  if (typeof typed !== 'object' || typed === null) return NotAForm;
+  const part = (name: string) => asText((typed as Record<string, unknown>)[name]);
+  const filter = { table: part('table'), record: part('record'), person: part('person'), from: part('from'), to: part('to') };
+  if (Object.values(filter).some((value) => value === undefined)) return NotAForm;
+  return withPass((address, pass, options) => listAudits(address, pass, filter as Record<keyof typeof filter, string>, options));
 });
 
 ipcMain.handle(CurrentShiftChannel, (): Promise<CurrentShiftResult> => withPass(currentShift));

@@ -91,3 +91,4 @@ export {
   ShiftReply,
   ShiftsPath,
 } from './shifts.js';
+export { AuditEntryOnWire, AuditListReply, AuditsPath, auditsPath, type AuditQuery } from './audits.js';

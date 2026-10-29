@@ -82,6 +82,7 @@ export {
   type UserResult,
 } from './identity/users.js';
 export { changeRegister, listRegisters, type ListedRegister, type RegisterListResult, type RegisterResult } from './identity/registers.js';
+export { listAudits, type AuditFilterForm, type AuditLine, type AuditListResult } from './audits/audit-log.js';
 export {
   listRoles,
   loadRoleForm,

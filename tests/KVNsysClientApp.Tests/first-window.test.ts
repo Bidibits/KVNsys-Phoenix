@@ -80,6 +80,7 @@ describe('the first window, driven like a person would', () => {
       'currentShift',
       'daySales',
       'findStockItem',
+      'listAudits',
       'listCatalog',
       'listProducts',
       'listRegisters',
