@@ -20,7 +20,8 @@ test settled".
 
 1. Copy `KVNsys Server Setup.exe` to the branch's server PC and double-click it.
 2. Windows asks once for administrator rights. A Windows service can't be installed without them.
-3. On a new install, one page asks the shop's name and an administrator's password.
+3. On a new install, one page asks the shop's name and an administrator's username and password
+   (the username box starts as `admin`; added 2026-10-30).
 4. The setup installs PostgreSQL, KVNsys Server and the nightly backup, and starts them. Both run as
    Windows services from then on, so there's no window to open.
    *(Changed 2026-10-27: the setup now also installs the server's dashboard, with a desktop icon, and
@@ -209,7 +210,8 @@ The install script, run for real on the development PC next to its own PostgreSQ
 
 ## What the part 3 test settled (2026-10-18)
 
-- **A silent install** (`/ShopName` and `/AdminPassword` standing in for the page, firewall option
+- **A silent install** (`/ShopName` and `/AdminPassword` standing in for the page, and since
+  2026-10-30 `/AdminUsername`, `admin` without it; firewall option
   off) worked:
   - `KVNsys Server.exe --set-up` made the database and the shop.
   - Both services run automatically, under `NT SERVICE\kvnsys-postgresql` and `NT SERVICE\kvnsys-server`.

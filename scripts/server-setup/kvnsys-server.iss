@@ -105,6 +105,8 @@ const
   { Windows' record of this install, under the AppId above. }
   UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{FE1FED73-BEAD-48D2-AC69-831D052DCC53}_is1';
   DashboardProgram = 'KVNsys Server Dashboard.exe';
+  { What the administrator's username box starts with. Whoever installs may type another. }
+  DefaultAdminUsername = 'admin';
 
 var
   ShopPage: TInputQueryWizardPage;
@@ -184,16 +186,19 @@ begin
   { Installed means updating: the shop is kept. Not installed means a new shop, always. }
   HasLeftovers := (not RegKeyExists(HKLM64, UninstallKey)) and DirExists(DataFolder);
   IsNewShop := HasLeftovers or not FileExists(DataFolder + '\PostgreSQL\18\data\PG_VERSION');
-  About := 'The administrator signs in on a register as "admin" with this password. Keep it somewhere safe: ' +
-    'there''s no other administrator to reset it.';
+  About := 'This makes the first account, the administrator, who can do everything and adds everyone else. ' +
+    'Sign in with this username and password on a register. Write them down and keep them somewhere safe: ' +
+    'there''s no other administrator to reset the password.';
   if HasLeftovers then
     About := 'KVNsys Server was on this PC before. What it left behind will be packed into one archive in ' +
       ArchiveFolder + ', and this install starts a new shop.' + #13#10#13#10 + About;
   ShopPage := CreateInputQueryPage(wpSelectTasks, 'The shop',
-    'This new install needs two answers, just this once.', About);
+    'This new install needs three answers, just this once.', About);
   ShopPage.Add('The shop''s name:', False);
-  ShopPage.Add('A password for the administrator (at least 8 characters):', True);
-  ShopPage.Add('Type it again:', True);
+  ShopPage.Add('The administrator''s username (letters, numbers, dots, dashes or underscores):', False);
+  ShopPage.Add('The administrator''s password (at least 8 characters):', True);
+  ShopPage.Add('Type the password again:', True);
+  ShopPage.Values[1] := DefaultAdminUsername;
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
@@ -201,15 +206,46 @@ begin
   Result := (PageID = ShopPage.ID) and not IsNewShop;
 end;
 
-{ A silent install shows no pages, so it's given these as /ShopName="..." /AdminPassword="...". }
+{ A silent install shows no pages, so it's given these as /ShopName="..." /AdminUsername="..."
+  /AdminPassword="...". Without /AdminUsername it's admin, as the page's box starts. }
 function ShopName: String;
 begin
   if WizardSilent then Result := Trim(ExpandConstant('{param:ShopName}')) else Result := Trim(ShopPage.Values[0]);
 end;
 
+function AdminUsername: String;
+begin
+  if WizardSilent then
+    Result := Trim(ExpandConstant('{param:AdminUsername|' + DefaultAdminUsername + '}'))
+  else
+    Result := Trim(ShopPage.Values[1]);
+  { Kept in lowercase, as KVNsys keeps every username. }
+  Result := Lowercase(Result);
+end;
+
 function AdminPassword: String;
 begin
-  if WizardSilent then Result := ExpandConstant('{param:AdminPassword}') else Result := ShopPage.Values[1];
+  if WizardSilent then Result := ExpandConstant('{param:AdminPassword}') else Result := ShopPage.Values[2];
+end;
+
+{ The rule KVNsys holds every username to (usernameProblem in KVNsysCore), so a username KVNsys
+  Server would refuse is caught here, on this page, before anything is installed. }
+function UsernameProblem(const Username: String): String;
+var
+  I: Integer;
+begin
+  Result := '';
+  if Username = '' then
+    Result := 'Type a username for the administrator. admin is fine.'
+  else if Length(Username) > 40 then
+    Result := 'A username can be at most 40 characters.'
+  else
+    for I := 1 to Length(Username) do
+      if Pos(Copy(Username, I, 1), 'abcdefghijklmnopqrstuvwxyz0123456789._-') = 0 then
+      begin
+        Result := 'A username is letters, numbers, dots, dashes or underscores, with no spaces.';
+        Exit;
+      end;
 end;
 
 { Checks what will actually be used. A silent install still passes through every page, so it's
@@ -222,9 +258,11 @@ begin
   if CurPageID <> ShopPage.ID then Exit;
   if ShopName = '' then
     Problem := 'Type the shop''s name, the way people know it.'
+  else if UsernameProblem(AdminUsername) <> '' then
+    Problem := UsernameProblem(AdminUsername)
   else if Length(AdminPassword) < 8 then
     Problem := 'A password needs at least 8 characters.'
-  else if (not WizardSilent) and (ShopPage.Values[1] <> ShopPage.Values[2]) then
+  else if (not WizardSilent) and (ShopPage.Values[2] <> ShopPage.Values[3]) then
     Problem := 'Those two passwords didn''t match. Once more.';
   if Problem <> '' then
   begin
@@ -344,10 +382,12 @@ begin
   if IsNewShop then
   begin
     SetEnvironmentVariable('KVNSYS_LOCATION_NAME', ShopName);
+    SetEnvironmentVariable('KVNSYS_ADMIN_USERNAME', AdminUsername);
     SetEnvironmentVariable('KVNSYS_ADMIN_PASSWORD', AdminPassword);
   end;
   Code := Run(ExpandConstant('{cmd}'), '/c ""' + ExpandConstant('{app}\KVNsys Server.exe') + '" --set-up > "' + SetUpLog + '" 2>&1"');
   SetEnvironmentVariable('KVNSYS_LOCATION_NAME', '');
+  SetEnvironmentVariable('KVNSYS_ADMIN_USERNAME', '');
   SetEnvironmentVariable('KVNSYS_ADMIN_PASSWORD', '');
   if Code <> 0 then
   begin

@@ -26,7 +26,8 @@ import { adoptEarlierServerData, loadServerSettings } from './setup/server-setti
 
 // `KVNsys Server.exe --set-up` is what the server's setup file runs once, with administrator rights.
 // It makes and sets up the database. On a new install it takes the shop's name and the administrator's
-// password from KVNSYS_LOCATION_NAME and KVNSYS_ADMIN_PASSWORD, which the setup's own page fills in.
+// username and password from KVNSYS_LOCATION_NAME, KVNSYS_ADMIN_USERNAME and KVNSYS_ADMIN_PASSWORD,
+// which the setup's own page fills in.
 // Then it stops without serving: the Windows service does the serving.
 const setUpOnly = process.argv.includes('--set-up');
 
@@ -110,7 +111,7 @@ async function main(): Promise<void> {
       } catch (error) {
         if (!(error instanceof NoAnswer)) throw error;
         return stop(
-          'KVNsys Server needs two answers the first time it starts, but nothing can be typed here. ' +
+          'KVNsys Server needs three answers the first time it starts, but nothing can be typed here. ' +
             'Start it from its icon, and answer in its window.',
         );
       } finally {

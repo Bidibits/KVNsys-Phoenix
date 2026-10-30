@@ -48,6 +48,18 @@ export function normalizeUsername(typed: string): string {
   return typed.trim().toLowerCase();
 }
 
+/**
+ * Why a username can't be used, in words a person can act on, or null if it can. It's judged as it
+ * will be kept, in lowercase, so "Ana" is fine. Whether someone already has it, only the store can say.
+ */
+export function usernameProblem(typed: string): string | null {
+  const username = normalizeUsername(typed);
+  if (!username) return 'An account needs a username.';
+  if (!/^[a-z0-9._-]+$/.test(username)) return 'A username is letters, numbers, dots, dashes or underscores, with no spaces.';
+  if (username.length > AccountLimits.username) return `A username can be at most ${AccountLimits.username} characters.`;
+  return null;
+}
+
 /** The account as a form holds it: every field text, as typed. The two password boxes are for a new account. */
 export interface UserForm {
   username: string;
@@ -107,11 +119,8 @@ export function readUserForm(form: UserForm, isNew: boolean): { details: Account
  */
 export function checkAccountDetails(details: AccountDetails): AccountDetails {
   const username = normalizeUsername(details.username);
-  if (!username) refuse('An account needs a username.');
-  if (!/^[a-z0-9._-]+$/.test(username)) {
-    refuse('A username is letters, numbers, dots, dashes or underscores, with no spaces.');
-  }
-  if (username.length > AccountLimits.username) refuse(`A username can be at most ${AccountLimits.username} characters.`);
+  const problem = usernameProblem(username);
+  if (problem) refuse(problem);
   const firstName = details.firstName.trim();
   const middleName = details.middleName?.trim() || null;
   const lastName = details.lastName.trim();

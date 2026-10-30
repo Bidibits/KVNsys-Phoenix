@@ -29,6 +29,6 @@ export { Authorizer, lacksRight, type Authorization } from './identity/authorize
 export { InstallSeed, type SeedInput, type SeedReport } from './setup/install-seed.js';
 export { readPcIdentity } from './setup/server-identity.js';
 export { adoptEarlierServerData, loadServerSettings, serverSettingsFile } from './setup/server-settings.js';
-export { answersFrom, FirstAdminUsername, FirstShopCode, setUpFirstShop } from './setup/first-shop.js';
+export { answersFrom, DefaultAdminUsername, FirstShopCode, setUpFirstShop } from './setup/first-shop.js';
 export { NoAnswer, type Questions } from './setup/questions.js';
 export { consoleQuestions } from './setup/console-questions.js';

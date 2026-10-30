@@ -73,6 +73,7 @@ export {
   normalizeUsername,
   readNewPassword,
   readUserForm,
+  usernameProblem,
   userFormFor,
   UserAccounts,
   type Account,

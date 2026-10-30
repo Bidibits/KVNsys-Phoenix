@@ -3,11 +3,13 @@ import {
   AdminRoleCode,
   DefaultRoles,
   newId,
+  normalizeUsername,
   PasswordHasher,
   passwordProblem,
   Refusal,
   serverMachineCode,
   SetupStore,
+  usernameProblem,
   type Lineage,
   type PcIdentity,
 } from '@kvnsys/core';
@@ -111,16 +113,20 @@ export class InstallSeed {
           'This database has no users yet. Set KVNSYS_ADMIN_PASSWORD so the first administrator can be created.',
         );
       }
+      // Held to the rule every account is, or sign-in, which matches usernames in lowercase, could never find it.
+      const usernameIssue = usernameProblem(input.adminUsername);
+      if (usernameIssue) throw new Refusal('invalid', `KVNSYS_ADMIN_USERNAME: ${usernameIssue}`);
+      const adminUsername = normalizeUsername(input.adminUsername);
       await tx.createUser({
         id: newId(),
-        username: input.adminUsername,
+        username: adminUsername,
         firstName: 'System',
         lastName: 'Administrator',
         passwordHash: adminHash,
         roleId: roleIds.get(AdminRoleCode)!,
         lineage,
       });
-      report.created.push(`Administrator "${input.adminUsername}".`);
+      report.created.push(`Administrator "${adminUsername}".`);
       return report;
     });
   }

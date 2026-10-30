@@ -2,7 +2,7 @@ import { PassThrough } from 'node:stream';
 import {
   answersFrom,
   consoleQuestions,
-  FirstAdminUsername,
+  DefaultAdminUsername,
   FirstShopCode,
   NoAnswer,
   setUpFirstShop,
@@ -34,35 +34,48 @@ function recordingSeed() {
 }
 
 describe('setUpFirstShop', () => {
-  it("asks for the shop's name and a password, then sets them up", async () => {
+  it("asks for the shop's name and the first administrator's username and password, then sets them up", async () => {
     const { seed, runs } = recordingSeed();
-    const questions = answering('  Kenly Lucena ', 'a-good-password', 'a-good-password');
-    await setUpFirstShop(seed, questions, server, () => {});
+    const said: string[] = [];
+    const questions = answering('  Kenly Lucena ', ' Kenly ', 'a-good-password', 'a-good-password');
+    await setUpFirstShop(seed, questions, server, (line) => said.push(line));
     expect(runs).toEqual([
       {
         locationCode: FirstShopCode,
         locationName: 'Kenly Lucena',
-        adminUsername: FirstAdminUsername,
+        adminUsername: 'kenly',
         adminPassword: 'a-good-password',
         server,
       },
     ]);
-    expect(questions.asked).toHaveLength(3);
+    expect(questions.asked).toHaveLength(4);
+    // The password question and the last line name the username as it will be typed at sign-in.
+    expect(questions.asked[2]).toContain('"kenly"');
+    expect(said).toContain('Set up Kenly Lucena. On a register, sign in as "kenly" with that password.');
   });
 
-  it('asks again for a missing name, a short password, and a password typed differently the second time', async () => {
+  it('offers admin as the username, and says so, when none is typed', async () => {
+    const { seed, runs } = recordingSeed();
+    const questions = answering('Kenly Lucena', '', 'a-good-password', 'a-good-password');
+    await setUpFirstShop(seed, questions, server, () => {});
+    expect(questions.asked[1]).toContain(`"${DefaultAdminUsername}"`);
+    expect(runs[0]).toMatchObject({ adminUsername: DefaultAdminUsername });
+  });
+
+  it('asks again for a missing name, a username with a space, a short password, and a password typed differently the second time', async () => {
     const { seed, runs } = recordingSeed();
     const said: string[] = [];
     await setUpFirstShop(
       seed,
-      answering('', 'Kenly Lucena', 'short', 'a-good-password', 'a-good-pasword', 'a-good-password', 'a-good-password'),
+      answering('', 'Kenly Lucena', 'kenly lucena', 'kenly', 'short', 'a-good-password', 'a-good-pasword', 'a-good-password', 'a-good-password'),
       server,
       (line) => said.push(line),
     );
-    expect(runs[0]).toMatchObject({ locationName: 'Kenly Lucena', adminPassword: 'a-good-password' });
+    expect(runs[0]).toMatchObject({ locationName: 'Kenly Lucena', adminUsername: 'kenly', adminPassword: 'a-good-password' });
     expect(said).toEqual(
       expect.arrayContaining([
         "Type the shop's name, the way people know it.",
+        'A username is letters, numbers, dots, dashes or underscores, with no spaces.',
         'A password needs at least 8 characters.',
         "Those didn't match. Once more.",
       ]),
@@ -71,7 +84,7 @@ describe('setUpFirstShop', () => {
 
   it('sets up nothing when the answers run out', async () => {
     const { seed, runs } = recordingSeed();
-    await expect(setUpFirstShop(seed, answering('Kenly Lucena'), server, () => {})).rejects.toBeInstanceOf(NoAnswer);
+    await expect(setUpFirstShop(seed, answering('Kenly Lucena', 'kenly'), server, () => {})).rejects.toBeInstanceOf(NoAnswer);
     expect(runs).toEqual([]);
   });
 });
@@ -90,21 +103,28 @@ describe('consoleQuestions, reading answers from a pipe', () => {
 });
 
 describe('answersFrom, for the setup file to give the answers ahead of time', () => {
-  it("answers with the shop's name and the password it's given", async () => {
-    const answers = answersFrom({ KVNSYS_LOCATION_NAME: ' Kenly Lucena ', KVNSYS_ADMIN_PASSWORD: 'a-good-password' });
+  const given = { KVNSYS_LOCATION_NAME: ' Kenly Lucena ', KVNSYS_ADMIN_USERNAME: ' Kenly ', KVNSYS_ADMIN_PASSWORD: 'a-good-password' };
+
+  it("answers with the shop's name, the username and the password it's given", async () => {
+    const answers = answersFrom(given);
     if (!answers.ok) throw new Error(answers.message);
     const { seed, runs } = recordingSeed();
     await setUpFirstShop(seed, answers.questions, server, () => {});
-    expect(runs[0]).toMatchObject({ locationName: 'Kenly Lucena', adminPassword: 'a-good-password', adminUsername: FirstAdminUsername });
+    expect(runs[0]).toMatchObject({ locationName: 'Kenly Lucena', adminUsername: 'kenly', adminPassword: 'a-good-password' });
   });
 
   it('says what is missing instead of setting anything up', () => {
-    expect(answersFrom({ KVNSYS_ADMIN_PASSWORD: 'a-good-password' })).toMatchObject({ ok: false, message: expect.stringMatching(/KVNSYS_LOCATION_NAME/) });
-    expect(answersFrom({ KVNSYS_LOCATION_NAME: 'Kenly Lucena' })).toMatchObject({ ok: false, message: expect.stringMatching(/KVNSYS_ADMIN_PASSWORD/) });
+    for (const missing of ['KVNSYS_LOCATION_NAME', 'KVNSYS_ADMIN_USERNAME', 'KVNSYS_ADMIN_PASSWORD'] as const) {
+      expect(answersFrom({ ...given, [missing]: '' })).toMatchObject({ ok: false, message: expect.stringContaining(missing) });
+    }
   });
 
-  it('turns down a password too short to be allowed, with the rule', () => {
-    expect(answersFrom({ KVNSYS_LOCATION_NAME: 'Kenly Lucena', KVNSYS_ADMIN_PASSWORD: 'short' })).toEqual({
+  it('turns down a username or a password the rules would refuse, with the rule', () => {
+    expect(answersFrom({ ...given, KVNSYS_ADMIN_USERNAME: 'kenly lucena' })).toEqual({
+      ok: false,
+      message: 'KVNSYS_ADMIN_USERNAME: A username is letters, numbers, dots, dashes or underscores, with no spaces.',
+    });
+    expect(answersFrom({ ...given, KVNSYS_ADMIN_PASSWORD: 'short' })).toEqual({
       ok: false,
       message: 'KVNSYS_ADMIN_PASSWORD: A password needs at least 8 characters.',
     });

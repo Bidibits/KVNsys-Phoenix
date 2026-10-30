@@ -3,6 +3,7 @@
 import { Refusal } from '@kvnsys/core';
 import { createPrismaClient, PrismaSetupStore } from '@kvnsys/postgres';
 import { ScryptPasswordHasher } from '../identity/scrypt-password-hasher.js';
+import { DefaultAdminUsername } from './first-shop.js';
 import { InstallSeed } from './install-seed.js';
 import { readPcIdentity } from './server-identity.js';
 
@@ -17,7 +18,7 @@ try {
   const report = await new InstallSeed(new PrismaSetupStore(db), new ScryptPasswordHasher()).run({
     locationCode: process.env.KVNSYS_LOCATION_CODE?.trim() || 'HQ',
     locationName: process.env.KVNSYS_LOCATION_NAME?.trim() || 'Head Office',
-    adminUsername: 'admin',
+    adminUsername: process.env.KVNSYS_ADMIN_USERNAME?.trim() || DefaultAdminUsername,
     adminPassword: process.env.KVNSYS_ADMIN_PASSWORD || undefined,
     server: readPcIdentity(),
   });

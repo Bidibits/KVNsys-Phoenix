@@ -39,7 +39,7 @@ and everything a user sees, is called KVNsys.
   never see it and it's never written to disk. Signing out hands it back and the server cancels
   it. Restarting the server ends every session, and registers sign in again.
 - **The server sets up a new install by itself.** Given an empty database, or one that doesn't exist yet, it creates what's missing and
-  asks once for the shop's name and the first administrator's password. No pnpm needed.
+  asks once for the shop's name and the first administrator's username and password. No pnpm needed.
 - **Every connection is HTTPS, and the app knows its server.** The server makes its own security
   certificate the first time it starts, and keeps it. The app trusts the first certificate it meets
   at an address, and from then on refuses any other there. So a different machine answering at the
@@ -322,7 +322,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm test` | Runs every test project (after `pnpm build`) |
 | `pnpm db:deploy` | Creates or updates the tables in the database named in `.env` |
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
-| `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's password; any other database must already be KVNsys's, or it refuses to start. |
+| `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's username and password; any other database must already be KVNsys's, or it refuses to start. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
 | `pnpm start:dashboard` | Opens the server's dashboard on this PC, looking at the installed KVNsys Server service. Started like this it has no administrator rights, so Windows refuses to turn the server on or off; the installed dashboard asks for them. |
 | `pnpm package` | Builds everything, then makes the programs in `out/`: `KVNsys POS & Inventory` (the app), `KVNsys Server` (one `KVNsys Server.exe`) and `KVNsys Server Dashboard` (the server's dashboard), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register, and `KVNsys Server Setup.exe` for the server PC, which carries the server and its dashboard. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
@@ -342,7 +342,7 @@ Double-click **KVNsys POS & Inventory** for the app.
 
 **For the server PC:** copy `out\KVNsys Server Setup.exe` to it and double-click it. Windows asks
 once for administrator rights, because services need them. On a new install, one page asks for the
-shop's name and an administrator's password. Then it installs:
+shop's name and the administrator's username (it starts as `admin`) and password. Then it installs:
 - Microsoft's Visual C++ runtime, if the PC lacks it
 - its own PostgreSQL (port 5433, this PC only, passwords nobody sees)
 - KVNsys Server, and its dashboard, with a **KVNsys Server** icon on the desktop
@@ -396,8 +396,8 @@ of the server's setup file. See [`docs/server-setup-plan.md`](docs/server-setup-
 **A new install sets itself up.** Point the server at a PostgreSQL database and start it. If the
 database doesn't exist yet, the server creates it, as long as its PostgreSQL account is allowed
 to create databases (PostgreSQL's own `postgres` account is). On an empty database, it then
-creates its tables and asks two questions, just this once: the shop's name, and a password
-for the first administrator, `admin` (typed twice, shown as stars). No pnpm is needed. A database
+creates its tables and asks three questions, just this once: the shop's name, and a username
+(Enter for `admin`) and password for the first administrator (typed twice, shown as stars). No pnpm is needed. A database
 that already holds someone else's tables is refused, never written into.
 
 The database tests make their own throwaway database and drop it afterwards, so they never touch

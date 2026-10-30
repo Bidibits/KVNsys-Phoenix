@@ -106,6 +106,13 @@ describe('InstallSeed', () => {
     await expect(setup().seed.run({ ...input, adminPassword: 'short' })).rejects.toThrow(/at least 8/);
   });
 
+  it('keeps the administrator username in lowercase, and refuses one sign-in could never match', async () => {
+    const { store, seed } = setup();
+    await seed.run({ ...input, adminUsername: ' Kenly ' });
+    expect(store.rows.find((r) => r.table === 'users')).toMatchObject({ username: 'kenly' });
+    await expect(setup().seed.run({ ...input, adminUsername: 'kenly lucena' })).rejects.toThrow(/KVNSYS_ADMIN_USERNAME: .*no spaces/);
+  });
+
   it('stores the administrator password hashed, never as typed', async () => {
     const { store, seed } = setup();
     await seed.run(input);

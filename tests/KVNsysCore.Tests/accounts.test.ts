@@ -4,6 +4,7 @@ import {
   normalizeUsername,
   readNewPassword,
   readUserForm,
+  usernameProblem,
   userFormFor,
   type Account,
   type AccountDetails,
@@ -32,6 +33,13 @@ describe('an account', () => {
     expect(refusalOf(() => checkAccountDetails({ ...ana, username: 'añá' }))?.message).toMatch(/letters, numbers/);
     expect(refusalOf(() => checkAccountDetails({ ...ana, username: 'a'.repeat(41) }))?.message).toMatch(/at most 40/);
     expect(checkAccountDetails({ ...ana, username: 'ana_cruz-2.0' }).username).toBe('ana_cruz-2.0');
+  });
+
+  it('says why a username can be used or not, judged in lowercase as it will be kept', () => {
+    expect(usernameProblem(' Kenly ')).toBeNull();
+    expect(usernameProblem('')).toBe('An account needs a username.');
+    expect(usernameProblem('kenly lucena')).toMatch(/no spaces/);
+    expect(usernameProblem('a'.repeat(41))).toMatch(/at most 40/);
   });
 
   it('needs a first and a last name, a role, and one of the two statuses', () => {

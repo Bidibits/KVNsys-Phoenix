@@ -4,7 +4,7 @@ import { expect, it } from 'vitest';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 describeWithDatabase('a first start on an empty database, against a real database', () => {
-  it('sets the database up, asks once, and the chosen password then signs in', async () => {
+  it('sets the database up, asks once, and the chosen username and password then sign in', async () => {
     const database = await createThrowawayDatabase({ migrate: false });
     const db = createPrismaClient(database.url);
     try {
@@ -13,7 +13,7 @@ describeWithDatabase('a first start on an empty database, against a real databas
       const seed = new InstallSeed(new PrismaSetupStore(db), hasher);
       expect(await seed.firstAdministratorNeeded()).toBe(true);
 
-      const answers = ['Kenly Lucena', 'a-good-password', 'a-good-password'];
+      const answers = ['Kenly Lucena', 'Kenly', 'a-good-password', 'a-good-password'];
       const next = async () => answers.shift()!;
       const questions: Questions = { ask: next, askSecret: next };
       await setUpFirstShop(seed, questions, { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' }, () => {});
@@ -21,10 +21,12 @@ describeWithDatabase('a first start on an empty database, against a real databas
       // Asked once: from now on there's someone who can sign in.
       expect(await seed.firstAdministratorNeeded()).toBe(false);
       expect(await db.location.findMany({ select: { code: true, name: true } })).toEqual([{ code: 'HQ', name: 'Kenly Lucena' }]);
-      expect(await new SignIn(new PrismaUserDirectory(db), hasher).run('admin', 'a-good-password')).toMatchObject({
+      // Typed with a capital, kept in lowercase, and found however it's typed at sign-in.
+      expect(await new SignIn(new PrismaUserDirectory(db), hasher).run('KENLY', 'a-good-password')).toMatchObject({
         ok: true,
-        user: { username: 'admin', roleCode: 'ADMIN' },
+        user: { username: 'kenly', roleCode: 'ADMIN' },
       });
+      expect(await new SignIn(new PrismaUserDirectory(db), hasher).run('admin', 'a-good-password')).toMatchObject({ ok: false });
     } finally {
       await db.$disconnect();
       await database.drop();
