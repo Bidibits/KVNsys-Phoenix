@@ -1,15 +1,20 @@
-import type { AccessName, Account, SignedInUser, UserListResult } from '@kvnsys/client';
-import { Button, Notice, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
+import type { AccessName, Account, Listed, SignedInUser, UserListResult } from '@kvnsys/client';
+import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { UserFormPanel } from './UserFormPanel';
 
 const ManageRight: AccessName = 'users.manage';
 
-const Columns: Column<Account>[] = [
-  { heading: 'Name', cell: (account) => account.displayName },
-  { heading: 'Username', cell: (account) => account.username },
-  { heading: 'Role', cell: (account) => account.roleName },
-  { heading: 'Status', cell: (account) => <StatusLabel status={account.status} /> },
+/** Every column of the users table but the password, then its history, as Beta's grids showed a table. */
+const Columns: Column<Listed<Account>>[] = [
+  { heading: 'Username', width: '10rem', cell: (account) => account.username, sortBy: (account) => account.username },
+  { heading: 'First name', width: '10rem', cell: (account) => account.firstName, sortBy: (account) => account.firstName },
+  { heading: 'Middle name', width: '9rem', cell: (account) => <TextOrDash text={account.middleName} />, sortBy: (account) => account.middleName },
+  { heading: 'Last name', width: '10rem', cell: (account) => account.lastName, sortBy: (account) => account.lastName },
+  { heading: 'Role', width: '11rem', cell: (account) => account.roleName, sortBy: (account) => account.roleName },
+  { heading: 'Status', width: '8rem', cell: (account) => <StatusLabel status={account.status} />, sortBy: (account) => account.status },
+  { heading: 'Description', width: '16rem', cell: (account) => <TextOrDash text={account.description} />, sortBy: (account) => account.description },
+  ...historyColumns<Listed<Account>>((account) => account.history),
 ];
 
 /**
@@ -46,13 +51,15 @@ export function UsersScreen({ user, search, onSignInAgain }: { user: SignedInUse
     };
   }, [reloads]);
 
-  const columns: Column<Account>[] = mayManage
+  const columns: Column<Listed<Account>>[] = mayManage
     ? [
         ...Columns,
         {
           heading: 'Change',
           hiddenHeading: true,
           align: 'right',
+          width: '5.5rem',
+          pinned: true,
           cell: (account) => (
             <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Edit ${account.displayName}`} onClick={() => open(account.id)}>
               Edit
@@ -93,7 +100,15 @@ export function UsersScreen({ user, search, onSignInAgain }: { user: SignedInUse
           </Button>
         )}
       </div>
-      <RecordTable label="Users" columns={columns} rows={result.users} filter={search} searchText={(account) => [account.username, account.displayName, account.roleName].join(' ')} rowKey={(account) => account.id} />
+      <RecordTable
+        label="Users"
+        wide
+        columns={columns}
+        rows={result.users}
+        filter={search}
+        searchText={(account) => [account.username, account.displayName, account.roleName, account.description ?? ''].join(' ')}
+        rowKey={(account) => account.id}
+      />
       {editing && (
         <UserFormPanel
           id={editing.id}

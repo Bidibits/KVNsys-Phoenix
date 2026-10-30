@@ -10,12 +10,14 @@ import {
   Refusal,
   type FullProductDetails,
   type Lineage,
+  type Listed,
   type Product,
   type ProductDetails,
   type ProductSortingField,
   type ProductStatus,
 } from '@kvnsys/core';
 import { auditValues, pictureText, recordChanged, recordCreated } from '../audits/audit-log.js';
+import { listedWithHistory } from '../audits/record-history.js';
 import { Prisma, type PrismaClient, type Product as ProductRow } from '../generated/prisma/client.js';
 
 /** A row without its picture: lists and finds never carry it, only picture() does. */
@@ -164,9 +166,9 @@ export class PrismaProductCatalog extends ProductCatalog {
     return this.findOne(Prisma.sql`lower(barcode) = lower(${barcode.trim()})`);
   }
 
-  async list(): Promise<Product[]> {
+  async list(): Promise<Listed<Product>[]> {
     const rows = await this.db.product.findMany({ orderBy: [{ name: 'asc' }, { code: 'asc' }], ...WithoutPicture });
-    return withPictures(this.db, rows);
+    return listedWithHistory(this.db, rows, await withPictures(this.db, rows));
   }
 
   /** Capitals ignored, which saving keeps unambiguous: no two products share a code or barcode that way. */

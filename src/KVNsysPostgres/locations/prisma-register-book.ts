@@ -5,12 +5,14 @@ import {
   RegisterBook,
   registerCode,
   type Lineage,
+  type Listed,
   type PcIdentity,
   type Register,
   type RegisterDetails,
   type RegisterStatus,
 } from '@kvnsys/core';
 import { auditValues, recordChanged, recordCreated, type AuditedSave } from '../audits/audit-log.js';
+import { listedWithHistory } from '../audits/record-history.js';
 import type { Machine, PrismaClient } from '../generated/prisma/client.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -25,8 +27,10 @@ function toRegister(row: Machine): Register {
     code: row.code,
     name: row.name,
     computerName: row.machineName,
+    hardwareId: row.machineUuid,
     locationId: row.locationId,
     status: row.status as RegisterStatus,
+    description: row.description,
     isServer: isServerCode(row.code),
   };
 }
@@ -89,11 +93,13 @@ export class PrismaRegisterBook extends RegisterBook {
     });
   }
 
-  async list(locationId: string): Promise<Register[]> {
+  async list(locationId: string): Promise<Listed<Register>[]> {
     if (!Uuid.test(locationId)) return [];
-    const rows = await this.db.machine.findMany({ where: { locationId }, orderBy: { code: 'asc' } });
     // The server PC first, then the registers by code.
-    return rows.map(toRegister).sort((a, b) => Number(b.isServer) - Number(a.isServer));
+    const rows = (await this.db.machine.findMany({ where: { locationId }, orderBy: { code: 'asc' } })).sort(
+      (a, b) => Number(isServerCode(b.code)) - Number(isServerCode(a.code)),
+    );
+    return listedWithHistory(this.db, rows, rows.map(toRegister));
   }
 
   async get(id: string): Promise<Register | null> {

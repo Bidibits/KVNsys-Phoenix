@@ -9,8 +9,10 @@ import {
   type CatalogEntryStatus,
   type CatalogList,
   type Lineage,
+  type Listed,
 } from '@kvnsys/core';
 import { auditValues, recordChanged, recordCreated } from '../audits/audit-log.js';
+import { listedWithHistory, type LineageColumns } from '../audits/record-history.js';
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -24,7 +26,7 @@ const Tables: Record<CatalogList, string> = {
 };
 
 /** A row as the four tables share it; address is only on suppliers, parent_category_id only on categories. */
-interface Row {
+interface Row extends LineageColumns {
   id: string;
   code: string;
   name: string;
@@ -83,9 +85,9 @@ export class PrismaCatalogBook extends CatalogBook {
     super();
   }
 
-  async list(list: CatalogList): Promise<CatalogEntry[]> {
+  async list(list: CatalogList): Promise<Listed<CatalogEntry>[]> {
     const rows = await table(this.db, list).findMany({ orderBy: [{ name: 'asc' }, { code: 'asc' }], ...including(list) });
-    return rows.map(toEntry);
+    return listedWithHistory(this.db, rows, rows.map(toEntry));
   }
 
   async get(list: CatalogList, id: string): Promise<CatalogEntry | null> {

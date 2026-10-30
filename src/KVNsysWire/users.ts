@@ -1,5 +1,6 @@
 import { AccountStatuses } from '@kvnsys/core';
 import { z } from 'zod';
+import { listed } from './history.js';
 
 /**
  * The account calls. Every one needs a signed-in pass, and a role with the right: users.view to look,
@@ -39,13 +40,14 @@ export const AccountOnWire = AccountFields.extend({
   id: z.string(),
   displayName: z.string(),
   roleName: z.string(),
+  description: z.string().nullable(),
 });
 export type AccountOnWire = z.infer<typeof AccountOnWire>;
 
 export const UserReply = z.object({ user: AccountOnWire });
 export type UserReply = z.infer<typeof UserReply>;
 
-export const UserListReply = z.object({ users: z.array(AccountOnWire) });
+export const UserListReply = z.object({ users: z.array(listed(AccountOnWire)) });
 export type UserListReply = z.infer<typeof UserListReply>;
 
 export const RoleChoiceListReply = z.object({ roles: z.array(z.object({ id: z.string(), name: z.string(), status: z.string() })) });

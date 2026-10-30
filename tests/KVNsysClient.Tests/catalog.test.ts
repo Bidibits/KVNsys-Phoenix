@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { listCatalog, loadCatalogEntryForm, saveCatalogEntryForm, type CatalogEntryForm, type ServerPin, type SessionPass } from '@kvnsys/client';
 import { createServerCertificate, type ServerCertificate } from '@kvnsys/server';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { listed } from './listed.js';
 
 interface Received {
   method: string;
@@ -47,7 +48,7 @@ let server: Awaited<ReturnType<typeof fakeServer>> | undefined;
 const pinned = () => ({ pin: { fingerprint256: certificate.fingerprint256, certificate: certificate.cert } satisfies ServerPin });
 const byPath = (method: string, url: string): [number, unknown] => {
   if (url === `/api/catalog/categories/${fansId}`) return [200, { entry: fans }];
-  if (url === '/api/catalog/categories') return method === 'POST' ? [201, { entry: fans }] : [200, { entries: [appliances, fans] }];
+  if (url === '/api/catalog/categories') return method === 'POST' ? [201, { entry: fans }] : [200, { entries: [listed(appliances), listed(fans)] }];
   return [200, { entries: [] }];
 };
 
@@ -63,7 +64,8 @@ afterEach(async () => {
 describe("the catalogue's list calls", () => {
   it("ask each list's own path, and hand back what its entries have", async () => {
     server = await fakeServer(certificate, byPath);
-    expect(await listCatalog(server.address, pass, 'categories', pinned())).toMatchObject({ ok: true, entries: [appliances, fans], shape: { hasParent: true } });
+    // Each entry comes with who made it and who last changed it.
+    expect(await listCatalog(server.address, pass, 'categories', pinned())).toMatchObject({ ok: true, entries: [listed(appliances), listed(fans)], shape: { hasParent: true } });
     expect(await listCatalog(server.address, pass, 'suppliers', pinned())).toMatchObject({ ok: true, entries: [], shape: { hasAddress: true } });
     expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/catalog/categories', 'GET /api/catalog/suppliers']);
   });

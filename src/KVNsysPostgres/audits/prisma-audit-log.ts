@@ -1,5 +1,4 @@
 import {
-  accountDisplayName,
   AuditedTableNames,
   AuditLimit,
   AuditLogBook,
@@ -15,6 +14,7 @@ import {
   type ChangeType,
 } from '@kvnsys/core';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
+import { personLabel } from './record-history.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -106,7 +106,7 @@ export class PrismaAuditLog extends AuditLogBook {
       names.set(product.id, `${product.name} (${product.code})`);
     }
     for (const user of await this.db.user.findMany({ ...among('users'), select: { id: true, username: true, firstName: true, middleName: true, lastName: true } })) {
-      names.set(user.id, `${accountDisplayName(user)} (${user.username})`);
+      names.set(user.id, personLabel(user));
     }
     keep(await this.db.brand.findMany({ ...among('brands'), select: byName }));
     keep(await this.db.manufacturer.findMany({ ...among('manufacturers'), select: byName }));

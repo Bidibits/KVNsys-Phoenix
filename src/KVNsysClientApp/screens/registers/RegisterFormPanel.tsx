@@ -1,4 +1,4 @@
-import type { ListedRegister, RegisterResult, RegisterStatus } from '@kvnsys/client';
+import type { ListedRegister, RegisterResult, RegisterStatus, SentRegister } from '@kvnsys/client';
 import { Button, FormPanel, Notice, SelectField, TextField } from '@kvnsys/ui';
 import { useState } from 'react';
 
@@ -21,7 +21,7 @@ export function RegisterFormPanel({
 }: {
   register: ListedRegister;
   onClose: () => void;
-  onSaved: (register: ListedRegister) => void;
+  onSaved: (register: SentRegister) => void;
   onSignInAgain: () => void;
 }) {
   const [name, setName] = useState(register.name);

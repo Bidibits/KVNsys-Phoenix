@@ -1,5 +1,6 @@
 // KVNsysWire: the calls between client and server, and the shape of each.
 export { DefaultPort, HelloPath, ProtocolVersion, ServerHello } from './hello.js';
+export { listed, RecordHistoryOnWire } from './history.js';
 export {
   FindProductPath,
   ProblemReply,
@@ -52,7 +53,7 @@ export {
   StockPath,
 } from './stock.js';
 export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
-export { RegisterFields, RegisterListReply, RegisterOnWire, RegisterReply, registerPath, RegistersPath } from './registers.js';
+export { ListedRegisterOnWire, RegisterFields, RegisterListReply, RegisterOnWire, RegisterReply, registerPath, RegistersPath } from './registers.js';
 export {
   JoinPath,
   JoinReply,

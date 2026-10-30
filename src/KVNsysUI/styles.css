@@ -40,6 +40,8 @@
   --row-alt: #ececec; /* RowAlt, against white rows */
   --success: #dff3e7; /* the "it worked" notice; shadcn only has a red one */
   --success-foreground: #1d5e3a;
+  --warning: #fff0c2; /* Beta's amber for "Updated", calmer */
+  --warning-foreground: #5c4400;
   --danger-ink: #a8281a; /* red text on a light ground, dark enough to read */
 }
 
@@ -69,6 +71,8 @@
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-title-bar: var(--title-bar);
   --color-title-bar-foreground: var(--title-bar-foreground);
   --color-field: var(--field);

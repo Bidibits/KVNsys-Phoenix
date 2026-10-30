@@ -80,7 +80,7 @@ export class ProductsController {
   @Get()
   async list(@Headers('authorization') authorization: string | undefined): Promise<ProductListReply> {
     const { catalog } = await this.allow(authorization, Accesses.ProductsView);
-    return { products: (await catalog.list()).map(toWire) };
+    return { products: (await catalog.list()).map((product) => ({ ...toWire(product), history: product.history })) };
   }
 
   /** Declared before ":id", so "find" is never taken for an id. */

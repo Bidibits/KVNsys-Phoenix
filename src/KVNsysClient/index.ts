@@ -81,7 +81,7 @@ export {
   type UserListResult,
   type UserResult,
 } from './identity/users.js';
-export { changeRegister, listRegisters, type ListedRegister, type RegisterListResult, type RegisterResult } from './identity/registers.js';
+export { changeRegister, listRegisters, type ListedRegister, type RegisterListResult, type RegisterResult, type SentRegister } from './identity/registers.js';
 export { listAudits, type AuditFilterForm, type AuditLine, type AuditListResult } from './audits/audit-log.js';
 export {
   listRoles,
@@ -127,11 +127,13 @@ export type {
   PriceBasis,
   PricedLine,
   PricedSale,
+  RecordHistory,
   RegisterStatus,
   SaleProduct,
   StatutoryDiscount,
   DeliveryLineForm,
   HandMovement,
+  Listed,
   MovementType,
   Product,
   ProductDetails,

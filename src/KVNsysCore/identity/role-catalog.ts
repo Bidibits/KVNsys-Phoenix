@@ -1,4 +1,5 @@
 import type { Lineage } from '../shared/lineage.js';
+import type { Listed } from '../shared/record-history.js';
 import { Refusal } from '../shared/refusal.js';
 import { AllAccesses, RightGroups, type AccessName } from './accesses.js';
 import { AdminRoleCode, isFixedRole } from './roles.js';
@@ -20,6 +21,7 @@ export interface Role {
   userCount: number;
   /** The Administrator: every right, always switched on. Only its name can change. */
   fixed: boolean;
+  description: string | null;
 }
 
 /** What a manager decides for a role. */
@@ -130,7 +132,7 @@ export function rightsInWords(rights: readonly AccessName[]): string {
  */
 export abstract class RoleCatalog {
   /** The Administrator first, then the rest by name. */
-  abstract list(): Promise<Role[]>;
+  abstract list(): Promise<Listed<Role>[]>;
   abstract get(id: string): Promise<Role | null>;
   abstract create(details: RoleDetails, lineage: Lineage): Promise<Role>;
   abstract update(id: string, details: RoleDetails, lineage: Lineage): Promise<Role>;

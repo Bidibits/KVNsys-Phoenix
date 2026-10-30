@@ -1,4 +1,5 @@
 import type { Lineage } from '../shared/lineage.js';
+import type { Listed } from '../shared/record-history.js';
 import { Refusal } from '../shared/refusal.js';
 import type { PcIdentity } from './machines.js';
 
@@ -17,8 +18,11 @@ export interface Register {
   name: string;
   /** Windows' name for the PC, as it last said. */
   computerName: string | null;
+  /** The PC's hardware id (Windows' MachineGuid): how it's recognised after a rename. Null if it couldn't be read. */
+  hardwareId: string | null;
   locationId: string;
   status: RegisterStatus;
+  description: string | null;
   /** The server PC: always switched on, since switching it off would lock its own screen out. */
   isServer: boolean;
 }
@@ -60,7 +64,7 @@ export abstract class RegisterBook {
   /** The register this PC is at the shop, recorded now if it's new. Its computer name is kept up to date. */
   abstract recognise(pc: PcIdentity & { hardwareId: string }, locationId: string, lineage: Lineage): Promise<Register>;
   /** The shop's registers, the server PC first, then by code. */
-  abstract list(locationId: string): Promise<Register[]>;
+  abstract list(locationId: string): Promise<Listed<Register>[]>;
   abstract get(id: string): Promise<Register | null>;
   /** Refuses switching the server PC off. */
   abstract update(id: string, details: RegisterDetails, lineage: Lineage): Promise<Register>;

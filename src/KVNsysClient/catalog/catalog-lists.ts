@@ -8,12 +8,13 @@ import {
   type CatalogEntryStatus,
   type CatalogList,
   type CatalogListShape,
+  type Listed,
 } from '@kvnsys/core';
 import { CatalogEntryReply, CatalogListReply, catalogEntryPath, catalogPath, type CatalogEntryOnWire, type SessionPass } from '@kvnsys/wire';
 import { callServer, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
 /** A list's entries, and what its entries have (shape), so one screen can show any of the four. */
-export type CatalogListResult = { ok: true; entries: CatalogEntry[]; shape: CatalogListShape } | Refused;
+export type CatalogListResult = { ok: true; entries: Listed<CatalogEntry>[]; shape: CatalogListShape } | Refused;
 export type CatalogEntryResult = { ok: true; entry: CatalogEntry } | Refused;
 /** The form to fill in, what the list's entries have, and for a category, the categories it can sit inside. */
 export type CatalogEntryFormResult = { ok: true; form: CatalogEntryForm; shape: CatalogListShape; parents: CatalogEntry[] } | Refused;
@@ -23,7 +24,7 @@ const fromWire = (entry: CatalogEntryOnWire): CatalogEntry => ({ ...entry, statu
 /** Every entry in a list, by name. */
 export async function listCatalog(address: string, pass: SessionPass, list: CatalogList, options: CallOptions): Promise<CatalogListResult> {
   const answer = await callServer(address, pass, options, { path: catalogPath(list) }, CatalogListReply);
-  return answer.ok ? { ok: true, entries: answer.reply.entries.map(fromWire), shape: CatalogListShapes[list] } : answer;
+  return answer.ok ? { ok: true, entries: answer.reply.entries.map((entry) => ({ ...fromWire(entry), history: entry.history })), shape: CatalogListShapes[list] } : answer;
 }
 
 /**

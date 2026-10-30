@@ -72,9 +72,10 @@ and everything a user sees, is called KVNsys.
   A barcode scanner's Enter in the Barcode box moves on to Name instead of saving. The till
   uses the promo and wholesale prices and "takes it out of stock" (below).
 - **The products list shows where each product is sorted.** Beside the code, barcode and name: a
-  small picture, the category with those above it ("Appliances › Fans") and the brand, long ones
-  wrapping onto a second line. The search box finds a product by those too: "appliances" finds
-  every product under Appliances, fans included, and "hanabishi" every Hanabishi. Pictures are
+  small picture, the category with those above it ("Appliances › Fans"), the brand, the supplier
+  and the manufacturer, then every other field. The search box finds a product by those too:
+  "appliances" finds every product under Appliances, fans included, and "hanabishi" every
+  Hanabishi. Pictures are
   made small on the register and fetched only as their rows come into view, so a long list never
   pulls every picture over the network.
 - **The till charges promo and wholesale prices.** Each line is charged the cheapest price the
@@ -85,14 +86,20 @@ and everything a user sees, is called KVNsys.
   the better of its promo or wholesale price and 20% off the shelf price, not both: a stand-in
   until the owners decide (decisions.md, Open). A product that doesn't take itself out of stock,
   such as a service, sells without touching the stock.
-- **Users.** The Users tile lists every account: name, username, role and status. Someone whose
+- **Every list is a grid, like Beta's, and says who made each record and who last updated it.**
+  Products, the four catalogue lists, Users, Roles and Registers show every column of their table,
+  then Updated by, Updated machine, Updated shop, Updated at, Created by, Created machine, Created
+  shop and Created at. Columns keep their width; a value too long for its column is cut short and
+  shows whole when the pointer rests on it; the table scrolls sideways in its own box. Clicking a
+  heading sorts by it, again the other way, a third time back. The Edit buttons stay in view.
+- **Users.** The Users tile lists every account: username, names, role, status. Someone whose
   role may manage users gets Add user and Edit, in the same panel: names, username, role, Active
   or switched off, and a first password typed twice. A password is never shown; Edit has its own
   "Set new password", which signs that person out wherever they are. Switching an account off
   signs it out at once too. Usernames ignore capitals ("Ana" is ana). No change may leave nobody
   able to manage users, so nobody can lock the shop out, themselves included.
-- **Roles.** The Roles tile lists every role with its rights in a few words and how many accounts
-  have it. Someone whose role may change roles gets Add role and Edit: a name, Active or switched
+- **Roles.** The Roles tile lists every role with its code, its rights in a few words and how many
+  accounts have it. Someone whose role may change roles gets Add role and Edit: a name, Active or switched
   off, and a tick box per right, grouped by area (Registers, Products, Users, Roles). Ticking
   "change" ticks "see" with it. A change counts at once; switching a role off signs out everyone
   who has it. The Administrator always holds every right, including any a later version adds, and
@@ -148,7 +155,8 @@ and everything a user sees, is called KVNsys.
   it (by its Windows machine id, so renaming the PC doesn't matter), as "New register (its
   computer name)". The title bar then shows the register's name beside who's signed in, every
   save (products, stock, sales, users, roles) records which register it was made at, and a
-  receipt names its register. A Registers tile lists them, the server PC first; a manager names
+  receipt names its register. A Registers tile lists them, the server PC first, with each one's
+  hardware id and shop; a manager names
   them, or switches one off, which signs out whoever is at it and stops anyone signing in there.
 - **Shifts.** Before the first sale, a cashier starts a shift with the cash counted into the drawer;
   every sale then goes into it, and none can be rung without one. End shift (with no sale in

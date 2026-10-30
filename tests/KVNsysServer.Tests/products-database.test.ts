@@ -120,7 +120,11 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
     expect(added.product).toEqual({ ...rice, id: expect.stringMatching(/^[0-9a-f-]{36}$/), hasPicture: false });
 
     const cashier = as('cashier');
-    expect(await listProducts(address, cashier.pass, cashier.options)).toEqual({ ok: true, products: [added.product] });
+    // The list says who added it, and that nobody has changed it since.
+    expect(await listProducts(address, cashier.pass, cashier.options)).toEqual({
+      ok: true,
+      products: [{ ...added.product, history: expect.objectContaining({ createdBy: 'System Administrator (admin)', updatedAt: null, updatedBy: null }) }],
+    });
     expect(await findProduct(address, cashier.pass, { code: 'prd-0042' }, cashier.options)).toEqual({ ok: true, product: added.product });
     expect(await findProduct(address, cashier.pass, { barcode: '4800016641503' }, cashier.options)).toEqual({ ok: true, product: added.product });
     expect(await getProduct(address, cashier.pass, added.product.id, cashier.options)).toEqual({ ok: true, product: added.product });

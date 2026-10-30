@@ -8,9 +8,11 @@ import {
   type AccountDetails,
   type AccountStatus,
   type Lineage,
+  type Listed,
   type RoleChoice,
 } from '@kvnsys/core';
 import { auditValues, recordChanged, recordCreated } from '../audits/audit-log.js';
+import { listedWithHistory } from '../audits/record-history.js';
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
 import { requireSomeoneWhoCanManageUsers } from './user-managers.js';
 
@@ -30,6 +32,7 @@ function toAccount(row: Row): Account {
     roleId: row.roleId,
     roleName: row.role.name,
     status: row.status as AccountStatus,
+    description: row.description,
   };
 }
 
@@ -44,9 +47,9 @@ export class PrismaUserAccounts extends UserAccounts {
     super();
   }
 
-  async list(): Promise<Account[]> {
+  async list(): Promise<Listed<Account>[]> {
     const rows = await this.db.user.findMany({ include: withRole, orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }, { username: 'asc' }] });
-    return rows.map(toAccount);
+    return listedWithHistory(this.db, rows, rows.map(toAccount));
   }
 
   async get(id: string): Promise<Account | null> {

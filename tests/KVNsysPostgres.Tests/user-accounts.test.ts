@@ -55,6 +55,7 @@ describeWithDatabase('accounts in PostgreSQL', () => {
       roleId: cashierRole,
       roleName: 'Cashier',
       status: 'Active',
+      description: null,
     });
     // By last name: Cruz before Tester.
     expect((await accounts.list()).map((a) => a.username)).toEqual(['ana', 'admin']);

@@ -1,5 +1,6 @@
 import { CatalogEntryStatuses, CatalogLists } from '@kvnsys/core';
 import { z } from 'zod';
+import { listed } from './history.js';
 
 /**
  * The catalogue's own lists: suppliers, brands, manufacturers and categories. Each has the same
@@ -40,5 +41,5 @@ export type CatalogEntryOnWire = z.infer<typeof CatalogEntryOnWire>;
 export const CatalogEntryReply = z.object({ entry: CatalogEntryOnWire });
 export type CatalogEntryReply = z.infer<typeof CatalogEntryReply>;
 
-export const CatalogListReply = z.object({ entries: z.array(CatalogEntryOnWire) });
+export const CatalogListReply = z.object({ entries: z.array(listed(CatalogEntryOnWire)) });
 export type CatalogListReply = z.infer<typeof CatalogListReply>;

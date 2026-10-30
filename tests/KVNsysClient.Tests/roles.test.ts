@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { listRoles, loadRoleForm, saveRoleForm, type RoleForm, type ServerPin, type SessionPass } from '@kvnsys/client';
 import { createServerCertificate, type ServerCertificate } from '@kvnsys/server';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { listed } from './listed.js';
 
 interface Received {
   method: string;
@@ -37,7 +38,7 @@ async function fakeServer(certificate: ServerCertificate, answer: (method: strin
 
 const pass: SessionPass = { token: 'the-pass-the-pass-the-pass-the-pass-the-pas', expiresAt: '2026-10-19T20:00:00.000Z' };
 const id = '0199c7a0-0000-7000-8000-000000000002';
-const cashier = { id, code: 'CASHIER', name: 'Cashier', status: 'Active', rights: ['products.view', 'users.view'], userCount: 3, fixed: false };
+const cashier = { id, code: 'CASHIER', name: 'Cashier', status: 'Active', rights: ['products.view', 'users.view'], userCount: 3, fixed: false, description: null };
 const typed: RoleForm = { name: ' Cashier ', status: 'Active', rights: ['products.manage'] };
 
 let certificate: ServerCertificate;
@@ -45,7 +46,7 @@ let server: Awaited<ReturnType<typeof fakeServer>> | undefined;
 const pinned = () => ({ pin: { fingerprint256: certificate.fingerprint256, certificate: certificate.cert } satisfies ServerPin });
 const byPath = (method: string, url: string): [number, unknown] => {
   if (url.startsWith('/api/roles/')) return [200, { role: cashier }];
-  return method === 'POST' ? [201, { role: cashier }] : [200, { roles: [cashier] }];
+  return method === 'POST' ? [201, { role: cashier }] : [200, { roles: [listed(cashier)] }];
 };
 
 beforeAll(async () => {
@@ -60,7 +61,7 @@ afterEach(async () => {
 describe('the role calls', () => {
   it('list every role, with its rights in words', async () => {
     server = await fakeServer(certificate, byPath);
-    expect(await listRoles(server.address, pass, pinned())).toEqual({ ok: true, roles: [{ ...cashier, rightsInWords: 'See products, See users' }] });
+    expect(await listRoles(server.address, pass, pinned())).toEqual({ ok: true, roles: [{ ...listed(cashier), rightsInWords: 'See products, See users' }] });
   });
 
   it('start a new role blank, without asking the server, with a tick box for every right', async () => {

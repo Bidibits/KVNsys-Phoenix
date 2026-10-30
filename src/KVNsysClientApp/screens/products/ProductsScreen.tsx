@@ -1,30 +1,77 @@
 import type { AccessName, ProductRow, ProductRowsResult, SignedInUser } from '@kvnsys/client';
-import { Button, Notice, Pesos, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, Notice, Pesos, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { ProductFormPanel } from './ProductFormPanel';
 import { ProductThumbnail } from './ProductThumbnail';
 
 const ManageRight: AccessName = 'products.manage';
 
-/** The columns; the picture's depends on which time the list was asked for, so a changed picture shows. */
-const columnsFor = (generation: number): Column<ProductRow>[] => [
+/** An amount, or a dash for none. */
+const PesosOrDash = ({ centavos }: { centavos: number | null }) => (centavos === null ? <TextOrDash text={null} /> : <Pesos centavos={centavos} />);
+
+/**
+ * Every column of the products table, then its history, as Beta's grids showed a table. The
+ * picture's column depends on which time the list was asked for, so a changed picture shows. The
+ * cost is shown only to someone who may change products: they see it on the form anyway.
+ */
+const columnsFor = (generation: number, showCost: boolean): Column<ProductRow>[] => [
   {
     heading: 'Picture',
     hiddenHeading: true,
+    width: '4.5rem',
     cell: (product) => <ProductThumbnail id={product.id} name={product.name} hasPicture={product.hasPicture} generation={generation} />,
   },
-  { heading: 'Code', cell: (product) => product.code },
-  { heading: 'Barcode', cell: (product) => product.barcode ?? '' },
-  { heading: 'Name', cell: (product) => product.name, wrap: true },
-  { heading: 'Category', cell: (product) => product.categoryPath ?? '', wrap: true },
-  { heading: 'Brand', cell: (product) => product.brandName ?? '', wrap: true },
-  { heading: 'Price', cell: (product) => <Pesos centavos={product.retailPrice} />, align: 'right' },
-  { heading: 'Status', cell: (product) => <StatusLabel status={product.status} /> },
+  { heading: 'Code', width: '8rem', cell: (product) => product.code, sortBy: (product) => product.code },
+  { heading: 'Barcode', width: '10rem', cell: (product) => <TextOrDash text={product.barcode} />, sortBy: (product) => product.barcode },
+  { heading: 'Name', width: '16rem', cell: (product) => product.name, sortBy: (product) => product.name },
+  { heading: 'Category', width: '14rem', cell: (product) => <TextOrDash text={product.categoryPath} />, sortBy: (product) => product.categoryPath },
+  { heading: 'Brand', width: '10rem', cell: (product) => <TextOrDash text={product.brandName} />, sortBy: (product) => product.brandName },
+  { heading: 'Supplier', width: '11rem', cell: (product) => <TextOrDash text={product.supplierName} />, sortBy: (product) => product.supplierName },
+  { heading: 'Manufacturer', width: '11rem', cell: (product) => <TextOrDash text={product.manufacturerName} />, sortBy: (product) => product.manufacturerName },
+  { heading: 'Unit', width: '6rem', cell: (product) => <TextOrDash text={product.unitOfMeasure} />, sortBy: (product) => product.unitOfMeasure },
+  { heading: 'Price', width: '8rem', align: 'right', cell: (product) => <Pesos centavos={product.retailPrice} />, sortBy: (product) => product.retailPrice },
+  { heading: 'Promo price', width: '8.5rem', align: 'right', cell: (product) => <PesosOrDash centavos={product.promoPrice} />, sortBy: (product) => product.promoPrice },
+  {
+    heading: 'Wholesale price',
+    width: '9.5rem',
+    align: 'right',
+    cell: (product) => <PesosOrDash centavos={product.wholesalePrice} />,
+    sortBy: (product) => product.wholesalePrice,
+  },
+  {
+    heading: 'Wholesale from',
+    width: '9rem',
+    align: 'right',
+    cell: (product) => (product.wholesaleQuantity === null ? <TextOrDash text={null} /> : `${product.wholesaleQuantity} pcs`),
+    sortBy: (product) => product.wholesaleQuantity,
+  },
+  ...(showCost
+    ? [{ heading: 'Cost', width: '8rem', align: 'right' as const, cell: (product: ProductRow) => <Pesos centavos={product.costPrice} />, sortBy: (product: ProductRow) => product.costPrice }]
+    : []),
+  { heading: 'Tracks stock', width: '8rem', cell: (product) => (product.tracksStock ? 'Yes' : 'No'), sortBy: (product) => (product.tracksStock ? 'Yes' : 'No') },
+  {
+    heading: 'Warranty',
+    width: '8rem',
+    cell: (product) => (product.hasWarranty ? `${product.warrantyMonths} ${product.warrantyMonths === 1 ? 'month' : 'months'}` : 'None'),
+    sortBy: (product) => (product.hasWarranty ? product.warrantyMonths : 0),
+  },
+  { heading: 'Status', width: '8rem', cell: (product) => <StatusLabel status={product.status} />, sortBy: (product) => product.status },
+  { heading: 'Description', width: '18rem', cell: (product) => <TextOrDash text={product.description} />, sortBy: (product) => product.description },
+  ...historyColumns<ProductRow>((product) => product.history),
 ];
 
 /** What the search box finds a product by: what the list shows of it, its category path included, so "Appliances" finds the fans too. */
 const searchText = (product: ProductRow) =>
-  [product.code, product.barcode ?? '', product.name, product.categoryPath ?? '', product.brandName ?? ''].join(' ');
+  [
+    product.code,
+    product.barcode ?? '',
+    product.name,
+    product.categoryPath ?? '',
+    product.brandName ?? '',
+    product.supplierName ?? '',
+    product.manufacturerName ?? '',
+    product.description ?? '',
+  ].join(' ');
 
 /**
  * Every product, with its picture, category and brand. Someone whose role may manage products also
@@ -63,11 +110,13 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
 
   const columns: Column<ProductRow>[] = mayManage
     ? [
-        ...columnsFor(reloads),
+        ...columnsFor(reloads, true),
         {
           heading: 'Change',
           hiddenHeading: true,
           align: 'right',
+          width: '5.5rem',
+          pinned: true,
           cell: (product) => (
             <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Edit ${product.name}`} onClick={() => open(product.id)}>
               Edit
@@ -75,7 +124,7 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
           ),
         },
       ]
-    : columnsFor(reloads);
+    : columnsFor(reloads, false);
 
   if (!result) {
     return (
@@ -109,7 +158,7 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
         )}
       </div>
       {/* Fits its rows; once there are more than the window holds, it shrinks to fit and scrolls. */}
-      {count > 0 && <RecordTable label="Products" columns={columns} rows={result.products} filter={search} searchText={searchText} rowKey={(product) => product.id} />}
+      {count > 0 && <RecordTable label="Products" wide columns={columns} rows={result.products} filter={search} searchText={searchText} rowKey={(product) => product.id} />}
       {editing && (
         <ProductFormPanel
           id={editing.id}

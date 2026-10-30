@@ -225,10 +225,10 @@ Key:
 | Feature | Phoenix |
 |---|---|
 | One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · ✅ the register's name, Back and Forward, and the search box (2026-10-24) |
-| A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18), the form panel from the right (2026-10-19), and a simple search box over every list (2026-10-24) · 🟢 building them from one description · ⏭ Advance Search |
+| A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18), the form panel from the right (2026-10-19), and a simple search box over every list (2026-10-24) · ✅ every column and who made and last updated each record, in a grid like Beta's: columns keep their width and scroll sideways, a heading sorts (2026-10-30) · 🟢 building them from one description · ⏭ Advance Search |
 | Pop-up notices and themed dialogs | ✅ "Saved …" pops up and goes on its own; a themed dialog asks before throwing work away (2026-10-24) |
 | Light theme (Standard) | ✅ (2026-10-18) · ⏭ dark theme |
-| Per-person table settings (columns, stripes, sort) | ⏭ |
+| Per-person table settings (columns, stripes, sort) | ⏭ (a heading sorts since 2026-10-30, but nothing is kept between visits yet) |
 | Forms in their own window (Ctrl+click) | ⏭ |
 
 ### Also before January, though not a Capstone screen

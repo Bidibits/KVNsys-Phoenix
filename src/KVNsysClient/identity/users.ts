@@ -5,6 +5,7 @@ import {
   userFormFor,
   type Account,
   type AccountStatus,
+  type Listed,
   type RoleChoice,
   type UserForm,
 } from '@kvnsys/core';
@@ -22,7 +23,7 @@ import {
 } from '@kvnsys/wire';
 import { callServer, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
-export type UserListResult = { ok: true; users: Account[] } | Refused;
+export type UserListResult = { ok: true; users: Listed<Account>[] } | Refused;
 export type UserResult = { ok: true; user: Account } | Refused;
 /** The form to fill in, and the roles it can offer. */
 export type UserFormResult = { ok: true; form: UserForm; roles: RoleChoice[] } | Refused;
@@ -33,7 +34,7 @@ const fromWire = (user: AccountOnWire): Account => ({ ...user, status: user.stat
 /** Every account, by name. */
 export async function listUsers(address: string, pass: SessionPass, options: CallOptions): Promise<UserListResult> {
   const answer = await callServer(address, pass, options, { path: UsersPath }, UserListReply);
-  return answer.ok ? { ok: true, users: answer.reply.users.map(fromWire) } : answer;
+  return answer.ok ? { ok: true, users: answer.reply.users.map((user) => ({ ...fromWire(user), history: user.history })) } : answer;
 }
 
 /**

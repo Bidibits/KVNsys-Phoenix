@@ -2,6 +2,7 @@
 // and no screens (the guard enforces it).
 export { newId } from './shared/ids.js';
 export type { Lineage } from './shared/lineage.js';
+export { NotOnThisServer, type Listed, type RecordHistory } from './shared/record-history.js';
 export { displayPesos, isCentavos, MaxCentavos, parsePesos, pesosText } from './shared/money.js';
 export { Refusal, type RefusalKind } from './shared/refusal.js';
 export {

@@ -1,5 +1,6 @@
 import { RoleStatuses } from '@kvnsys/core';
 import { z } from 'zod';
+import { listed } from './history.js';
 
 /**
  * The role calls. Every one needs a signed-in pass, and a role with the right: roles.view to look,
@@ -30,11 +31,12 @@ export const RoleOnWire = RoleFields.extend({
   code: z.string(),
   userCount: z.number().int().nonnegative(),
   fixed: z.boolean(),
+  description: z.string().nullable(),
 });
 export type RoleOnWire = z.infer<typeof RoleOnWire>;
 
 export const RoleReply = z.object({ role: RoleOnWire });
 export type RoleReply = z.infer<typeof RoleReply>;
 
-export const RoleListReply = z.object({ roles: z.array(RoleOnWire) });
+export const RoleListReply = z.object({ roles: z.array(listed(RoleOnWire)) });
 export type RoleListReply = z.infer<typeof RoleListReply>;

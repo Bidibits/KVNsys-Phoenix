@@ -168,7 +168,7 @@ describeWithDatabase('the product catalog in PostgreSQL', () => {
     const saved = await catalog.create(fan, hq);
     expect(saved).toEqual({ ...fan, id: saved.id, hasPicture: false });
     expect(await catalog.get(saved.id)).toEqual(saved);
-    expect(await catalog.list()).toEqual([saved]);
+    expect(await catalog.list()).toEqual([{ ...saved, history: expect.objectContaining({ updatedAt: null }) }]);
     const stored = await db.$queryRaw<{ cost: string; promo: string; wholesale: string }[]>`
       SELECT cost_price::text AS cost, promo_price::text AS promo, wholesale_price::text AS wholesale FROM products`;
     expect(stored).toEqual([{ cost: '1450.29', promo: '1699.29', wholesale: '1599.29' }]);

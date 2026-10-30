@@ -10,11 +10,13 @@ import {
   rightsText,
   roleRights,
   type Lineage,
+  type Listed,
   type Role,
   type RoleDetails,
   type RoleStatus,
 } from '@kvnsys/core';
 import { auditValues, recordChanged, recordCreated } from '../audits/audit-log.js';
+import { listedWithHistory } from '../audits/record-history.js';
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
 import { requireSomeoneWhoCanManageUsers } from './user-managers.js';
 
@@ -33,6 +35,7 @@ function toRole(row: Row): Role {
     rights: roleRights(row.code, row.accesses.map((a) => a.access)),
     userCount: row._count.users,
     fixed: isFixedRole(row.code),
+    description: row.description,
   };
 }
 
@@ -45,9 +48,9 @@ export class PrismaRoleCatalog extends RoleCatalog {
     super();
   }
 
-  async list(): Promise<Role[]> {
+  async list(): Promise<Listed<Role>[]> {
     const rows = await this.db.role.findMany({ include: withRights, orderBy: [{ level: 'desc' }, { name: 'asc' }] });
-    return rows.map(toRole);
+    return listedWithHistory(this.db, rows, rows.map(toRole));
   }
 
   async get(id: string): Promise<Role | null> {

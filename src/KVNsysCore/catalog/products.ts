@@ -1,4 +1,5 @@
 import type { Lineage } from '../shared/lineage.js';
+import type { Listed } from '../shared/record-history.js';
 import { displayPesos, isCentavos } from '../shared/money.js';
 import { Refusal } from '../shared/refusal.js';
 
@@ -236,5 +237,5 @@ export abstract class ProductCatalog {
   abstract findByCode(code: string): Promise<Product | null>;
   abstract findByBarcode(barcode: string): Promise<Product | null>;
   /** Every product, by name. */
-  abstract list(): Promise<Product[]>;
+  abstract list(): Promise<Listed<Product>[]>;
 }

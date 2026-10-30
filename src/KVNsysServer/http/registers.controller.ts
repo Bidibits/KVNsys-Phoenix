@@ -42,7 +42,7 @@ export class RegistersController {
   @Get()
   async list(@Headers('authorization') authorization: string | undefined): Promise<RegisterListReply> {
     const { parts, shop } = await this.allow(authorization, Accesses.MachinesView);
-    return { registers: (await parts.registers.list(shop.id)).map(toWire) };
+    return { registers: (await parts.registers.list(shop.id)).map((register) => ({ ...toWire(register), history: register.history, shopName: shop.name })) };
   }
 
   @Put(':id')

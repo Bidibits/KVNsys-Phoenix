@@ -6,6 +6,7 @@ import {
   rightsInWords,
   roleFormFor,
   type AccessName,
+  type Listed,
   type Role,
   type RoleForm,
   type RoleStatus,
@@ -14,7 +15,7 @@ import { RoleListReply, RoleReply, RolesPath, rolePath, type RoleOnWire, type Se
 import { callServer, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
 /** A role as the roles list shows it, with its rights put in a few words. */
-export type ListedRole = Role & { rightsInWords: string };
+export type ListedRole = Listed<Role> & { rightsInWords: string };
 
 /** One tick box on the role form. */
 export interface RightBox {
@@ -49,7 +50,13 @@ const boxes = (): RightBoxGroup[] =>
 export async function listRoles(address: string, pass: SessionPass, options: CallOptions): Promise<RoleListResult> {
   const answer = await callServer(address, pass, options, { path: RolesPath }, RoleListReply);
   if (!answer.ok) return answer;
-  return { ok: true, roles: answer.reply.roles.map(fromWire).map((role) => ({ ...role, rightsInWords: rightsInWords(role.rights) })) };
+  return {
+    ok: true,
+    roles: answer.reply.roles.map((wire) => {
+      const role = fromWire(wire);
+      return { ...role, history: wire.history, rightsInWords: rightsInWords(role.rights) };
+    }),
+  };
 }
 
 /** The form to fill in: blank for a new role (id null), or the role as the server has it now. */

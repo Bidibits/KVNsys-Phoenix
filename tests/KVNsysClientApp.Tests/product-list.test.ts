@@ -6,6 +6,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
+import { headingsOf, HistoryHeadings } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -100,7 +101,7 @@ describeWithDatabase("the Products list's pictures, categories and brands, in th
     expect(rows.slice(0, 3)).toEqual([
       ['Desk fan', 'Appliances › Fans', 'Old brand'],
       [LongName, 'Appliances › Fans', 'Hanabishi'],
-      ['Sack of rice 25kg', '', ''],
+      ['Sack of rice 25kg', '—', '—'],
     ]);
   });
 
@@ -130,11 +131,42 @@ describeWithDatabase("the Products list's pictures, categories and brands, in th
     });
   });
 
-  it('keeps the table inside its box: a long name and a category path wrap, nothing scrolls sideways', async () => {
+  it('shows every column like a Beta grid: each keeps its width, a long name is cut short and shown whole when pointed at, and only the table scrolls sideways', async () => {
+    // Every column of the products table, then its history; this administrator may change products, so Cost and Edit too.
+    expect(await headingsOf(table())).toEqual([
+      'Picture',
+      'Code',
+      'Barcode',
+      'Name',
+      'Category',
+      'Brand',
+      'Supplier',
+      'Manufacturer',
+      'Unit',
+      'Price',
+      'Promo price',
+      'Wholesale price',
+      'Wholesale from',
+      'Cost',
+      'Tracks stock',
+      'Warranty',
+      'Status',
+      'Description',
+      ...HistoryHeadings,
+      'Change',
+    ]);
+    const name = table().getByRole('cell', { name: LongName, exact: true });
+    expect(await name.evaluate((cell) => cell.scrollWidth > cell.clientWidth)).toBe(true);
+    await name.hover();
+    expect(await name.getAttribute('title')).toBe(LongName);
     const sideways = await table().evaluate((element) => element.parentElement!.scrollWidth - element.parentElement!.clientWidth);
-    expect(sideways).toBe(0);
+    expect(sideways).toBeGreaterThan(0);
     const page = await window.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     expect(page).toBe(0);
+    // The Edit buttons stay at the box's right-hand edge however far it's scrolled.
+    const box = (await table().locator('xpath=..').boundingBox())!;
+    const edit = (await table().getByRole('button', { name: `Edit ${LongName}` }).boundingBox())!;
+    expect(edit.x + edit.width).toBeLessThanOrEqual(box.x + box.width);
   });
 
   it('finds products by their category, those above it included, and by their brand', async () => {

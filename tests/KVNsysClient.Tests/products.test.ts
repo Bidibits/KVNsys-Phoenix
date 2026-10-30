@@ -18,6 +18,7 @@ import {
 } from '@kvnsys/client';
 import { createServerCertificate, type ServerCertificate } from '@kvnsys/server';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { history, listed } from './listed.js';
 
 interface Received {
   method: string;
@@ -120,8 +121,8 @@ describe('the product calls', () => {
   });
 
   it('list, get, and find by code or barcode, with the value made safe for an address', async () => {
-    server = await fakeServer(certificate, 200, { products: [{ ...riceOnWire, id }] });
-    expect(await listProducts(server.address, pass, pinned())).toEqual({ ok: true, products: [{ ...rice, id, hasPicture: false }] });
+    server = await fakeServer(certificate, 200, { products: [listed({ ...riceOnWire, id })] });
+    expect(await listProducts(server.address, pass, pinned())).toEqual({ ok: true, products: [{ ...rice, id, hasPicture: false, history }] });
     await server.close();
 
     server = await fakeServer(certificate, 200, { product: { ...riceOnWire, id } });
@@ -213,8 +214,8 @@ describe('the product form', () => {
   const hanabishi = entry(21, 'Hanabishi');
   /** The four lists, the product and its picture, each at its own path. */
   const byPath = (product: unknown, picture: string | null) => (url: string): [number, unknown] => {
-    if (url === '/api/catalog/categories') return [200, { entries: [appliances, fans, oldCategory] }];
-    if (url === '/api/catalog/brands') return [200, { entries: [hanabishi] }];
+    if (url === '/api/catalog/categories') return [200, { entries: [listed(appliances), listed(fans), listed(oldCategory)] }];
+    if (url === '/api/catalog/brands') return [200, { entries: [listed(hanabishi)] }];
     if (url.startsWith('/api/catalog/')) return [200, { entries: [] }];
     if (url.endsWith('/picture')) return [200, { picture }];
     return [200, { product }];
@@ -308,27 +309,46 @@ describe('the products list', () => {
   const appliances = category(11, 'Appliances');
   const fans = category(12, 'Fans', appliances.id);
   const oldBrand = { ...category(21, 'Old brand'), status: 'Inactive' };
+  const trading = category(31, 'Lucena Trading');
+  const maker = category(41, 'Hanabishi Corp');
   const products = [
-    { ...riceOnWire, id, categoryId: fans.id, brandId: oldBrand.id, hasPicture: true },
-    { ...riceOnWire, id: '0199c7a0-0000-7000-8000-000000000002', code: 'PRD-0007', barcode: null, name: 'Sardines' },
+    listed({ ...riceOnWire, id, categoryId: fans.id, brandId: oldBrand.id, supplierId: trading.id, manufacturerId: maker.id, hasPicture: true }),
+    listed({ ...riceOnWire, id: '0199c7a0-0000-7000-8000-000000000002', code: 'PRD-0007', barcode: null, name: 'Sardines' }),
   ];
   const byPath = (brands: [number, unknown]) => (url: string): [number, unknown] => {
-    if (url === '/api/catalog/categories') return [200, { entries: [appliances, fans] }];
+    if (url === '/api/catalog/categories') return [200, { entries: [listed(appliances), listed(fans)] }];
     if (url === '/api/catalog/brands') return brands;
+    if (url === '/api/catalog/suppliers') return [200, { entries: [listed(trading)] }];
+    if (url === '/api/catalog/manufacturers') return [200, { entries: [listed(maker)] }];
     return [200, { products }];
   };
 
-  it("names each product's category with those above it, and its brand, switched off or not", async () => {
-    server = await fakeServer(certificate, 200, null, byPath([200, { entries: [oldBrand] }]));
-    const listed = await listProductRows(server.address, pass, pinned());
-    expect(listed).toMatchObject({
+  it("names each product's category with those above it, its brand, supplier and manufacturer, switched off or not, and keeps its history", async () => {
+    server = await fakeServer(certificate, 200, null, byPath([200, { entries: [listed(oldBrand)] }]));
+    const rows = await listProductRows(server.address, pass, pinned());
+    expect(rows).toMatchObject({
       ok: true,
       products: [
-        { code: 'PRD-0042', categoryPath: 'Appliances › Fans', brandName: 'Old brand', hasPicture: true, retailPrice: 145050 },
-        { code: 'PRD-0007', categoryPath: null, brandName: null, hasPicture: false },
+        {
+          code: 'PRD-0042',
+          categoryPath: 'Appliances › Fans',
+          brandName: 'Old brand',
+          supplierName: 'Lucena Trading',
+          manufacturerName: 'Hanabishi Corp',
+          hasPicture: true,
+          retailPrice: 145050,
+          history,
+        },
+        { code: 'PRD-0007', categoryPath: null, brandName: null, supplierName: null, manufacturerName: null, hasPicture: false, history },
       ],
     });
-    expect(server.received.map((r) => r.url).sort()).toEqual(['/api/catalog/brands', '/api/catalog/categories', '/api/products']);
+    expect(server.received.map((r) => r.url).sort()).toEqual([
+      '/api/catalog/brands',
+      '/api/catalog/categories',
+      '/api/catalog/manufacturers',
+      '/api/catalog/suppliers',
+      '/api/products',
+    ]);
   });
 
   it("says why when the brands can't be read, rather than showing products without them", async () => {

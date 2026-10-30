@@ -1,23 +1,30 @@
 import type { AccessName, ListedRegister, RegisterListResult, SignedInUser } from '@kvnsys/client';
-import { Button, Notice, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { RegisterFormPanel } from './RegisterFormPanel';
 
 const ManageRight: AccessName = 'machines.manage';
 
+/** Every column of the machines table, then its history, as Beta's grids showed a table. */
 const Columns: Column<ListedRegister>[] = [
-  { heading: 'Code', cell: (register) => register.code },
+  { heading: 'Code', width: '7rem', cell: (register) => register.code, sortBy: (register) => register.code },
   {
     heading: 'Name',
+    width: '17rem',
     cell: (register) => (
-      <span>
+      <>
         {register.name}
         {register.isServer && <span className="ml-2 text-[13px] text-muted-foreground">the server PC</span>}
-      </span>
+      </>
     ),
+    sortBy: (register) => register.name,
   },
-  { heading: 'Computer name', cell: (register) => register.computerName ?? '' },
-  { heading: 'Status', cell: (register) => <StatusLabel status={register.status} /> },
+  { heading: 'Computer name', width: '11rem', cell: (register) => <TextOrDash text={register.computerName} />, sortBy: (register) => register.computerName },
+  { heading: 'Hardware id', width: '21rem', cell: (register) => <TextOrDash text={register.hardwareId} />, sortBy: (register) => register.hardwareId },
+  { heading: 'Shop', width: '10rem', cell: (register) => register.shopName, sortBy: (register) => register.shopName },
+  { heading: 'Status', width: '8rem', cell: (register) => <StatusLabel status={register.status} />, sortBy: (register) => register.status },
+  { heading: 'Description', width: '16rem', cell: (register) => <TextOrDash text={register.description} />, sortBy: (register) => register.description },
+  ...historyColumns<ListedRegister>((register) => register.history),
 ];
 
 /**
@@ -56,6 +63,8 @@ export function RegistersScreen({ user, search, onSignInAgain }: { user: SignedI
           heading: 'Change',
           hiddenHeading: true,
           align: 'right',
+          width: '5.5rem',
+          pinned: true,
           cell: (register) => (
             <Button
               type="button"
@@ -97,7 +106,15 @@ export function RegistersScreen({ user, search, onSignInAgain }: { user: SignedI
   return (
     <div className="flex h-full flex-col gap-3">
       <p className="text-[15px] text-muted-foreground">A PC is added here by itself the first time someone signs in at it.</p>
-      <RecordTable label="Registers" columns={columns} rows={result.registers} filter={search} searchText={(register) => [register.code, register.name, register.computerName ?? ''].join(' ')} rowKey={(register) => register.id} />
+      <RecordTable
+        label="Registers"
+        wide
+        columns={columns}
+        rows={result.registers}
+        filter={search}
+        searchText={(register) => [register.code, register.name, register.computerName ?? '', register.hardwareId ?? '', register.description ?? ''].join(' ')}
+        rowKey={(register) => register.id}
+      />
       {editing && (
         <RegisterFormPanel
           register={editing}

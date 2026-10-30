@@ -5,6 +5,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
+import { cellsUnder } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
@@ -65,11 +66,16 @@ describeWithDatabase('managing user accounts from the real app', () => {
   const usersTile = () => window.getByRole('button', { name: /^Users/ });
   const panel = (title: string) => window.getByRole('dialog', { name: title });
   const field = (form: ReturnType<typeof panel>, label: string) => form.getByLabel(label, { exact: true });
-  const rowsShown = () =>
-    window
-      .getByRole('table', { name: 'Users' })
-      .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(0, 4).map((cell) => cell.textContent)));
+  const table = () => window.getByRole('table', { name: 'Users' });
+  /** Each row as [name, username, role, status]: the name from its first, middle and last columns. */
+  const rowsShown = async () =>
+    (await cellsUnder(table(), ['First name', 'Middle name', 'Last name', 'Username', 'Role', 'Status'])).map(([first, middle, last, ...rest]) => [
+      [first, middle === '—' ? null : middle, last].filter(Boolean).join(' '),
+      ...rest,
+    ]);
+  /** Who made each account and who last changed it, by username. */
+  const historyShown = async () =>
+    Object.fromEntries((await cellsUnder(table(), ['Username', 'Created by', 'Updated by'])).map(([username, ...who]) => [username, who]));
 
   it('shows an administrator the Users tile, and a new install has only them', async () => {
     await signIn('admin', AdminPassword);
@@ -91,6 +97,8 @@ describeWithDatabase('managing user accounts from the real app', () => {
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Ana Cruz.').waitFor();
     expect(await rowsShown()).toContainEqual(['Ana Cruz', 'ana', 'Cashier', 'Active']);
+    // Made by the administrator, and not changed since; the administrator was made by KVNsys itself.
+    expect(await historyShown()).toEqual({ ana: ['System Administrator (admin)', '—'], admin: ['KVNsys itself', '—'] });
   });
 
   it('refuses mismatched passwords in the panel, and saves nothing', async () => {
@@ -148,5 +156,6 @@ describeWithDatabase('managing user accounts from the real app', () => {
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Ana Cruz.').waitFor();
     expect(await rowsShown()).toContainEqual(['Ana Cruz', 'ana', 'Cashier', 'Inactive']);
+    expect((await historyShown()).ana).toEqual(['System Administrator (admin)', 'System Administrator (admin)']);
   });
 });

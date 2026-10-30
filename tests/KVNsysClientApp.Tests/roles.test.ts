@@ -5,6 +5,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
+import { cellsUnder } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
@@ -60,11 +61,7 @@ describeWithDatabase('making roles from the real app', () => {
   const rolesTile = () => window.getByRole('button', { name: /^Roles/ });
   const panel = (title: string) => window.getByRole('dialog', { name: title });
   const box = (form: ReturnType<typeof panel>, label: string) => form.getByRole('checkbox', { name: label, exact: true });
-  const rowsShown = () =>
-    window
-      .getByRole('table', { name: 'Roles' })
-      .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(0, 4).map((cell) => cell.textContent)));
+  const rowsShown = () => cellsUnder(window.getByRole('table', { name: 'Roles' }), ['Name', 'Rights', 'Accounts', 'Status']);
 
   it('shows an administrator the Roles tile, and a new install has only the Administrator, with every right', async () => {
     await signIn('admin', AdminPassword);

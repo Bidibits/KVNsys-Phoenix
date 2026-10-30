@@ -76,6 +76,18 @@ describeWithDatabase('roles over HTTPS, through the client engine, against a rea
           rightsInWords: 'Every right',
           userCount: 1,
           fixed: true,
+          description: null,
+          // Made by KVNsys itself when the shop was set up, on the server PC; never changed.
+          history: {
+            createdAt: expect.stringMatching(/^\d{4}-\d\d-\d\dT/),
+            createdBy: null,
+            createdMachine: 'Server',
+            createdShop: 'Head Office',
+            updatedAt: null,
+            updatedBy: null,
+            updatedMachine: null,
+            updatedShop: null,
+          },
         },
       ],
     });

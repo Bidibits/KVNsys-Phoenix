@@ -1,5 +1,5 @@
-import type { AccessName, CatalogEntry, CatalogList, CatalogListResult, SignedInUser } from '@kvnsys/client';
-import { Button, Notice, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
+import type { AccessName, CatalogEntry, CatalogList, CatalogListResult, Listed, SignedInUser } from '@kvnsys/client';
+import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { CatalogEntryFormPanel } from './CatalogEntryFormPanel';
 
@@ -66,19 +66,29 @@ export function CatalogListScreen({
   }
 
   const { shape, entries } = result;
-  const columns: Column<CatalogEntry>[] = [
-    { heading: 'Code', cell: (entry) => entry.code },
-    { heading: 'Name', cell: (entry) => entry.name },
-    ...(shape.hasAddress ? [{ heading: 'Address', cell: (entry: CatalogEntry) => entry.address ?? '' }] : []),
-    ...(shape.hasParent ? [{ heading: 'Inside', cell: (entry: CatalogEntry) => entry.parentName ?? '' }] : []),
-    { heading: 'Status', cell: (entry) => <StatusLabel status={entry.status} /> },
+  // Every column of the list's table, then its history, as Beta's grids showed a table.
+  type Entry = Listed<CatalogEntry>;
+  const columns: Column<Entry>[] = [
+    { heading: 'Code', width: '9rem', cell: (entry) => entry.code, sortBy: (entry) => entry.code },
+    { heading: 'Name', width: '14rem', cell: (entry) => entry.name, sortBy: (entry) => entry.name },
+    ...(shape.hasAddress
+      ? [{ heading: 'Address', width: '18rem', cell: (entry: Entry) => <TextOrDash text={entry.address} />, sortBy: (entry: Entry) => entry.address }]
+      : []),
+    ...(shape.hasParent
+      ? [{ heading: 'Inside', width: '14rem', cell: (entry: Entry) => <TextOrDash text={entry.parentName} />, sortBy: (entry: Entry) => entry.parentName }]
+      : []),
+    { heading: 'Status', width: '8rem', cell: (entry) => <StatusLabel status={entry.status} />, sortBy: (entry) => entry.status },
+    { heading: 'Description', width: '18rem', cell: (entry) => <TextOrDash text={entry.description} />, sortBy: (entry) => entry.description },
+    ...historyColumns<Entry>((entry) => entry.history),
     ...(mayManage
       ? [
           {
             heading: 'Change',
             hiddenHeading: true,
             align: 'right' as const,
-            cell: (entry: CatalogEntry) => (
+            width: '5.5rem',
+            pinned: true,
+            cell: (entry: Entry) => (
               <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Edit ${entry.name}`} onClick={() => setEditing({ id: entry.id })}>
                 Edit
               </Button>
@@ -102,11 +112,14 @@ export function CatalogListScreen({
       </div>
       {count > 0 && (
         <RecordTable
+          // A new list starts in its own order, not sorted the way the last one was.
+          key={list}
           label={shape.title}
+          wide
           columns={columns}
           rows={entries}
           filter={search}
-          searchText={(entry) => [entry.code, entry.name, entry.address ?? '', entry.parentName ?? ''].join(' ')}
+          searchText={(entry) => [entry.code, entry.name, entry.address ?? '', entry.parentName ?? '', entry.description ?? ''].join(' ')}
           rowKey={(entry) => entry.id}
         />
       )}

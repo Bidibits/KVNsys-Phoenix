@@ -57,6 +57,7 @@ describeWithDatabase('roles in PostgreSQL', () => {
       rights: ['products.view', 'products.manage'],
       userCount: 0,
       fixed: false,
+      description: null,
     });
     expect((await db.role.findUniqueOrThrow({ where: { id: cashier.id } })).createdByUser).toBe(adminId);
     await roles.create({ name: 'Bodega', status: 'Active', rights: [] }, someone);

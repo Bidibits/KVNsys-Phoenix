@@ -1,12 +1,15 @@
-import type { Register, RegisterDetails } from '@kvnsys/core';
+import type { Listed, Register, RegisterDetails } from '@kvnsys/core';
 import { RegisterListReply, RegisterReply, registerPath, RegistersPath, type SessionPass } from '@kvnsys/wire';
 import { callServer as call, type CallOptions, type Refused } from '../connection/server-call.js';
 
-/** A register as the Registers screen shows it. */
-export type ListedRegister = Omit<Register, 'locationId'>;
+/** A register as the server sends it. */
+export type SentRegister = Omit<Register, 'locationId'>;
+
+/** A register as the Registers screen lists it: with the name of its shop, and its history. */
+export type ListedRegister = Omit<Listed<Register>, 'locationId'> & { shopName: string };
 
 export type RegisterListResult = { ok: true; registers: ListedRegister[] } | Refused;
-export type RegisterResult = { ok: true; register: ListedRegister } | Refused;
+export type RegisterResult = { ok: true; register: SentRegister } | Refused;
 
 /** The shop's registers, the server PC first. */
 export async function listRegisters(address: string, pass: SessionPass, options: CallOptions): Promise<RegisterListResult> {

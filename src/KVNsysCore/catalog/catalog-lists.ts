@@ -1,4 +1,5 @@
 import type { Lineage } from '../shared/lineage.js';
+import type { Listed } from '../shared/record-history.js';
 import { Refusal } from '../shared/refusal.js';
 
 /**
@@ -158,7 +159,7 @@ export function categoryPaths(categories: Pick<CatalogEntry, 'id' | 'name' | 'pa
  */
 export abstract class CatalogBook {
   /** Every entry in the list, by name. */
-  abstract list(list: CatalogList): Promise<CatalogEntry[]>;
+  abstract list(list: CatalogList): Promise<Listed<CatalogEntry>[]>;
   abstract get(list: CatalogList, id: string): Promise<CatalogEntry | null>;
   abstract create(list: CatalogList, details: CatalogEntryDetails, lineage: Lineage): Promise<CatalogEntry>;
   abstract update(list: CatalogList, id: string, details: CatalogEntryDetails, lineage: Lineage): Promise<CatalogEntry>;

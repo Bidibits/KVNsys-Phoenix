@@ -24,8 +24,11 @@ import { z } from 'zod';
  * 17: the server password: hello says whether the server has one, a register checks it at
  *     /api/join, and every sign-in carries it.
  * 18: the audit log: the newest changes, by table, record, person and day, with names in place of ids.
+ * 19: every list sends each record's history (who made it and who last changed it: when, on which
+ *     machine, at which shop); registers carry their hardware id and description, accounts and
+ *     roles their description, and the register list each one's shop.
  */
-export const ProtocolVersion = 18;
+export const ProtocolVersion = 19;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

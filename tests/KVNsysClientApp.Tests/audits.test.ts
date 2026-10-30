@@ -6,10 +6,12 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
+import { headingsOf } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
-const fan = { ...ProductDefaults, code: 'PRD-0100', barcode: null, name: 'Stand fan', retailPrice: 189900, status: 'Active' as const, description: null };
+const Described = 'Three speeds, a timer, and a remote that also turns the swing on and off';
+const fan = { ...ProductDefaults, code: 'PRD-0100', barcode: null, name: 'Stand fan', retailPrice: 189900, status: 'Active' as const, description: Described };
 
 /** Set KVNSYS_SCREENSHOTS to a folder to keep a picture of each step, for a person to look at. */
 async function picture(window: Page, name: string) {
@@ -69,30 +71,59 @@ describeWithDatabase('the audit log in the real app', () => {
   });
 
   const table = () => window.getByRole('table', { name: 'Audit log' });
-  /** Each row's Who, Record, Changed, Before and After, as shown. */
+  /** Each row as shown, but for when: By, Machine, Shop, Table, Record, Column, Change, Source, Before, After. */
   const rowsShown = () =>
     table()
       .locator('tbody tr')
       .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(1).map((cell) => cell.textContent ?? '')));
+  const RecordAt = 4;
 
-  it('opens from Home and shows the newest change first, with names, not ids', async () => {
+  it('opens from Home and shows the newest change first: who, on which machine, at which shop, then what changed', async () => {
     await window.getByRole('button', { name: /^Audit log/ }).click();
     await table().waitFor();
     await picture(window, 'audit-log');
+    expect(await headingsOf(table())).toEqual(['At', 'By', 'Machine', 'Shop', 'Table', 'Record', 'Column', 'Change', 'Source', 'Before', 'After']);
     const rows = await rowsShown();
     // This PC recorded itself when the administrator signed in, so that's the newest.
-    expect(rows[0]![1]).toMatch(/^MachinesNew register/);
+    expect(rows[0]!.slice(3, 5)).toEqual(['Machines', expect.stringMatching(/^New register/)]);
     // The product's last save, its columns in the form's order; setting the shop up was KVNsys's.
-    expect(rows.filter((row) => row[1] === 'ProductsStand fan (PRD-0100)').slice(0, 2)).toEqual([
-      ['System Administrator (admin)at Server', 'ProductsStand fan (PRD-0100)', 'Category', '—', 'Appliances'],
-      ['System Administrator (admin)at Server', 'ProductsStand fan (PRD-0100)', 'Price', '1899.00', '1799.00'],
+    expect(rows.filter((row) => row[RecordAt] === 'Stand fan (PRD-0100)').slice(0, 2)).toEqual([
+      ['System Administrator (admin)', 'Server', 'Kenlyn', 'Products', 'Stand fan (PRD-0100)', 'Category', 'Updated', 'Manual', '—', 'Appliances'],
+      ['System Administrator (admin)', 'Server', 'Kenlyn', 'Products', 'Stand fan (PRD-0100)', 'Price', 'Updated', 'Manual', '1899.00', '1799.00'],
     ]);
-    expect(rows).toContainEqual(['KVNsys itselfat Server', 'ShopsKenlyn', 'Namenew', '—', 'Kenlyn']);
-    // Every column fits the window: a long value with no spaces (this PC's hardware id) once pushed After out of sight.
-    expect(await table().locator('xpath=..').evaluate((box) => box.scrollWidth <= box.clientWidth)).toBe(true);
+    expect(rows).toContainEqual(['KVNsys itself', 'Server', 'Kenlyn', 'Shops', 'Kenlyn', 'Name', 'Created', 'Automatic', '—', 'Kenlyn']);
   });
 
-  /** Waits for the list asked for to arrive with every row's cell `column` (0 is When) starting with `text`. */
+  it('keeps every column its width, like a Beta grid: a long value is cut short, shown whole when pointed at, and the log scrolls sideways', async () => {
+    const after = table().getByRole('cell', { name: Described, exact: true });
+    expect(await after.evaluate((cell) => cell.scrollWidth > cell.clientWidth)).toBe(true);
+    await after.hover();
+    expect(await after.getAttribute('title')).toBe(Described);
+    // As wide as After was set, however long what's in it.
+    expect(await after.evaluate((cell) => cell.offsetWidth / parseFloat(getComputedStyle(document.documentElement).fontSize))).toBe(16);
+    expect(await table().locator('xpath=..').evaluate((box) => box.scrollWidth > box.clientWidth)).toBe(true);
+    expect(await window.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+  });
+
+  it('sorts by a heading when it is clicked, the other way when clicked again, and back to newest first the third time', async () => {
+    const tables = async () => (await rowsShown()).map((row) => row[3]!);
+    const newestFirst = await rowsShown();
+    const heading = () => table().locator('th', { hasText: 'Table' });
+    await heading().getByRole('button').click();
+    expect(await heading().getAttribute('aria-sort')).toBe('ascending');
+    const ascending = await tables();
+    expect(ascending).toEqual([...ascending].sort((a, b) => a.localeCompare(b)));
+    expect(new Set(ascending).size).toBeGreaterThan(2);
+    await heading().getByRole('button').click();
+    expect(await heading().getAttribute('aria-sort')).toBe('descending');
+    expect(await tables()).toEqual([...ascending].sort((a, b) => b.localeCompare(a)));
+    await picture(window, 'audit-log-sorted');
+    await heading().getByRole('button').click();
+    expect(await heading().getAttribute('aria-sort')).toBe('none');
+    expect(await rowsShown()).toEqual(newestFirst);
+  });
+
+  /** Waits for the list asked for to arrive with every row's cell `column` (0 is At) starting with `text`. */
   const rowsBecome = (column: number, text: string) =>
     window.waitForFunction(
       ([at, start]) => {
@@ -105,11 +136,11 @@ describeWithDatabase('the audit log in the real app', () => {
   it("follows one record's history from its name, and goes back to everything", async () => {
     await table().getByRole('button', { name: 'Stand fan (PRD-0100)' }).first().click();
     await window.getByText('Only the changes to').waitFor();
-    await rowsBecome(2, 'ProductsStand fan (PRD-0100)');
+    await rowsBecome(RecordAt + 1, 'Stand fan (PRD-0100)');
     await picture(window, 'audit-log-one-record');
     const rows = await rowsShown();
-    expect(rows.every((row) => row[1] === 'ProductsStand fan (PRD-0100)')).toBe(true);
-    expect(rows.map((row) => row[2])).toContain('Codenew');
+    expect(rows.every((row) => row[RecordAt] === 'Stand fan (PRD-0100)')).toBe(true);
+    expect(rows.filter((row) => row[6] === 'Created').map((row) => row[5])).toContain('Code');
     await window.getByRole('button', { name: 'Show every record' }).click();
     await window.getByText('Only the changes to').waitFor({ state: 'detached' });
     await table().getByRole('button', { name: 'Kenlyn' }).first().waitFor();
@@ -117,8 +148,8 @@ describeWithDatabase('the audit log in the real app', () => {
 
   it('narrows the log by what and by who', async () => {
     await window.getByLabel('What').selectOption('categories');
-    await rowsBecome(2, 'Categories');
-    expect((await rowsShown()).every((row) => row[1]!.startsWith('Categories'))).toBe(true);
+    await rowsBecome(4, 'Categories');
+    expect((await rowsShown()).every((row) => row[3] === 'Categories')).toBe(true);
     await window.getByLabel('What').selectOption('');
     await window.getByLabel('Who').selectOption({ label: 'KVNsys itself' });
     await rowsBecome(1, 'KVNsys itself');

@@ -1,4 +1,5 @@
 import type { Lineage } from '../shared/lineage.js';
+import type { Listed } from '../shared/record-history.js';
 import { Refusal } from '../shared/refusal.js';
 import { passwordProblem } from './passwords.js';
 import { displayName } from './users.js';
@@ -19,6 +20,7 @@ export interface Account {
   roleId: string;
   roleName: string;
   status: AccountStatus;
+  description: string | null;
 }
 
 /** What a manager fills in for an account. The password is set apart, never with these. */
@@ -158,7 +160,7 @@ export function accountDisplayName(details: Pick<AccountDetails, 'firstName' | '
  * users.manage), so nobody can lock the shop out, themselves included.
  */
 export abstract class UserAccounts {
-  abstract list(): Promise<Account[]>;
+  abstract list(): Promise<Listed<Account>[]>;
   abstract get(id: string): Promise<Account | null>;
   abstract roles(): Promise<RoleChoice[]>;
   abstract create(details: AccountDetails, passwordHash: string, lineage: Lineage): Promise<Account>;

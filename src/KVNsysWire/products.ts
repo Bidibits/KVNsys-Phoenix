@@ -1,5 +1,6 @@
 import { ProductStatuses } from '@kvnsys/core';
 import { z } from 'zod';
+import { listed } from './history.js';
 
 /**
  * The product calls. Every one needs a signed-in pass ("Authorization: Bearer"), and a role with
@@ -78,7 +79,7 @@ export type ProductOnWire = z.infer<typeof ProductOnWire>;
 export const ProductReply = z.object({ product: ProductOnWire });
 export type ProductReply = z.infer<typeof ProductReply>;
 
-export const ProductListReply = z.object({ products: z.array(ProductOnWire) });
+export const ProductListReply = z.object({ products: z.array(listed(ProductOnWire)) });
 export type ProductListReply = z.infer<typeof ProductListReply>;
 
 /** A product's picture as base64 JPEG text, or null when it has none. */

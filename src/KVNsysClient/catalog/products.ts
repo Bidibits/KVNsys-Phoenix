@@ -1,4 +1,4 @@
-import { parsePesos, pesosText, ProductDefaults, type Product, type ProductDetails, type ProductStatus } from '@kvnsys/core';
+import { parsePesos, pesosText, ProductDefaults, type Listed, type Product, type ProductDetails, type ProductStatus } from '@kvnsys/core';
 import {
   FindProductPath,
   ProductListReply,
@@ -17,7 +17,7 @@ import { callServer as call, type Answer, type CallOptions, type CallProblem, ty
 export type ProductsProblem = CallProblem;
 
 export type ProductResult = { ok: true; product: Product } | { ok: false; reason: ProductsProblem; message: string };
-export type ProductListResult = { ok: true; products: Product[] } | { ok: false; reason: ProductsProblem; message: string };
+export type ProductListResult = { ok: true; products: Listed<Product>[] } | { ok: false; reason: ProductsProblem; message: string };
 /** A product's picture as base64 JPEG text, or null when it has none. */
 export type ProductPictureResult = { ok: true; picture: string | null } | Refused;
 
@@ -26,7 +26,7 @@ export type ProductCallOptions = CallOptions;
 /** Every product, by name. */
 export async function listProducts(address: string, pass: SessionPass, options: ProductCallOptions): Promise<ProductListResult> {
   const answer = await call(address, pass, options, { path: ProductsPath }, ProductListReply);
-  return answer.ok ? { ok: true, products: answer.reply.products.map(productFromWire) } : answer;
+  return answer.ok ? { ok: true, products: answer.reply.products.map((product) => ({ ...productFromWire(product), history: product.history })) } : answer;
 }
 
 /** One product by its code or its barcode. Capitals don't matter. */

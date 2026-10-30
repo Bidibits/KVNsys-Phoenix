@@ -5,6 +5,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
+import { headingsOf } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -108,9 +109,9 @@ describeWithDatabase('the window frame, Home and the products list, in the real 
     expect(await window.getByRole('heading', { name: 'Products' }).isVisible()).toBe(true);
     expect(await window.getByText('3 products').isVisible()).toBe(true);
     expect(await rowsShown()).toEqual([
-      ['PRD-0100', '', 'Cooking oil 1L', '₱98.00', 'Active'],
+      ['PRD-0100', '—', 'Cooking oil 1L', '₱98.00', 'Active'],
       ['PRD-0042', '4800016641503', 'Sack of rice 25kg', '₱1,450.50', 'Active'],
-      ['PRD-0007', '', 'Sardines 155g', '₱25.75', 'Inactive'],
+      ['PRD-0007', '—', 'Sardines 155g', '₱25.75', 'Inactive'],
     ]);
   });
 
@@ -158,6 +159,10 @@ describeWithDatabase('the window frame, Home and the products list, in the real 
     await productsTile().click();
     await table().waitFor();
     expect((await rowsShown()).length).toBe(43);
+    // What a product costs the shop isn't shown to someone who can't change products; who made each is.
+    const headings = await headingsOf(table());
+    expect(headings).not.toContain('Cost');
+    expect(headings).toContain('Created by');
     await window.getByRole('button', { name: 'Home' }).click();
   });
 

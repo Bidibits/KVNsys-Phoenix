@@ -5,6 +5,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
+import { cellsUnder, headingsOf, HistoryHeadings } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
@@ -70,11 +71,8 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
   const goHome = () => window.getByRole('button', { name: 'Home', exact: true }).click();
   const panel = (title: string) => window.getByRole('dialog', { name: title });
   const field = (form: ReturnType<typeof panel>, label: string) => form.getByLabel(label, { exact: true });
-  const rowsOf = (table: string) =>
-    window
-      .getByRole('table', { name: table })
-      .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].map((cell) => cell.textContent)));
+  /** Each row's own columns, by heading; the history columns are checked apart. */
+  const rowsOf = (table: string, headings: string[]) => cellsUnder(window.getByRole('table', { name: table }), headings);
 
   it('shows the four lists on Home, and an empty one says so', async () => {
     await signIn('admin', AdminPassword);
@@ -92,7 +90,12 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
     expect(await form.getByLabel('Inside', { exact: true }).count()).toBe(0);
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Asia Appliances.').waitFor();
-    expect(await rowsOf('Suppliers')).toEqual([['SUP-001', 'Asia Appliances', 'Quezon Ave., Lucena City', 'Active', 'Edit']]);
+    expect(await rowsOf('Suppliers', ['Code', 'Name', 'Address', 'Status', 'Description', 'Change'])).toEqual([
+      ['SUP-001', 'Asia Appliances', 'Quezon Ave., Lucena City', 'Active', '—', 'Edit'],
+    ]);
+    // Every column of the table, then who made it and who last changed it, as Beta's grids showed.
+    expect(await headingsOf(window.getByRole('table', { name: 'Suppliers' }))).toEqual(['Code', 'Name', 'Address', 'Status', 'Description', ...HistoryHeadings, 'Change']);
+    expect(await rowsOf('Suppliers', ['Updated by', 'Created by', 'Created shop'])).toEqual([['—', 'System Administrator (admin)', 'Head Office']]);
   });
 
   it('puts a category inside another, and the list says where each sits', async () => {
@@ -113,8 +116,8 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
     await field(form, 'Inside').selectOption({ label: 'Appliances' });
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Fans.').waitFor();
-    expect(await rowsOf('Categories')).toEqual([
-      ['CAT-APP', 'Appliances', '', 'Active', 'Edit'],
+    expect(await rowsOf('Categories', ['Code', 'Name', 'Inside', 'Status', 'Change'])).toEqual([
+      ['CAT-APP', 'Appliances', '—', 'Active', 'Edit'],
       ['CAT-FAN', 'Fans', 'Appliances', 'Active', 'Edit'],
     ]);
   });

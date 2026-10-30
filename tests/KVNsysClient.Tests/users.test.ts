@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { listUsers, loadUserForm, resetPassword, saveUserForm, type ServerPin, type SessionPass, type UserForm } from '@kvnsys/client';
 import { createServerCertificate, type ServerCertificate } from '@kvnsys/server';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { listed } from './listed.js';
 
 interface Received {
   method: string;
@@ -37,7 +38,7 @@ async function fakeServer(certificate: ServerCertificate, answer: (method: strin
 
 const pass: SessionPass = { token: 'the-pass-the-pass-the-pass-the-pass-the-pas', expiresAt: '2026-10-19T20:00:00.000Z' };
 const id = '0199c7a0-0000-7000-8000-000000000001';
-const ana = { id, username: 'ana', firstName: 'Ana', middleName: null, lastName: 'Cruz', displayName: 'Ana Cruz', roleId: 'role-cashier', roleName: 'Cashier', status: 'Active' };
+const ana = { id, username: 'ana', firstName: 'Ana', middleName: null, lastName: 'Cruz', displayName: 'Ana Cruz', roleId: 'role-cashier', roleName: 'Cashier', status: 'Active', description: null };
 const roles = [
   { id: 'role-old', name: 'Old role', status: 'Inactive' },
   { id: 'role-cashier', name: 'Cashier', status: 'Active' },
@@ -60,7 +61,7 @@ const byPath = (method: string, url: string): [number, unknown] => {
   if (url === '/api/role-choices') return [200, { roles }];
   if (url === `/api/users/${id}/password`) return [200, { passwordChanged: true }];
   if (url.startsWith('/api/users/')) return [200, { user: ana }];
-  return method === 'POST' ? [201, { user: ana }] : [200, { users: [ana] }];
+  return method === 'POST' ? [201, { user: ana }] : [200, { users: [listed(ana)] }];
 };
 
 beforeAll(async () => {
@@ -75,7 +76,7 @@ afterEach(async () => {
 describe('the account calls', () => {
   it('list every account', async () => {
     server = await fakeServer(certificate, byPath);
-    expect(await listUsers(server.address, pass, pinned())).toEqual({ ok: true, users: [ana] });
+    expect(await listUsers(server.address, pass, pinned())).toEqual({ ok: true, users: [listed(ana)] });
   });
 
   it('start a new account on the first active role, asking only for the roles', async () => {

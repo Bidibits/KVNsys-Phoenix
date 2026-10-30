@@ -1,5 +1,5 @@
 import type { AuditFilterForm, AuditLine, AuditListResult } from '@kvnsys/client';
-import { Button, Notice, RecordTable, ShopTime, type Column } from '@kvnsys/ui';
+import { Button, ByKVNsysItself, Notice, RecordTable, ShopTime, StatusLabel, TextOrDash, type Column } from '@kvnsys/ui';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 
 /** Stands for "nobody": the changes KVNsys made itself (the server's ByKVNsys). */
@@ -23,23 +23,11 @@ function Labelled({ label, children }: { label: string; children: (id: string) =
   );
 }
 
-/** Nothing there: a dash, so an empty value never reads as a missing cell. */
-function Value({ value }: { value: string | null }) {
-  // A long value with no spaces in it, such as an id, breaks anywhere rather than pushing the table wider than the window.
-  return value === null || value === '' ? <span className="text-muted-foreground">—</span> : <span className="[overflow-wrap:anywhere]">{value}</span>;
-}
-
-/** The two kinds of change worth seeing at a glance; an ordinary change needs no label. */
-function Kind({ entry }: { entry: AuditLine }) {
-  if (entry.changeType === 'Created') return <span className="ml-2 rounded border border-border px-1.5 text-[13px] text-muted-foreground">new</span>;
-  if (entry.changeType === 'Decommissioned') return <span className="ml-2 rounded border border-border bg-muted px-1.5 text-[13px] text-muted-foreground">switched off</span>;
-  return null;
-}
-
 /**
- * The audit log: every change saved, newest first, one row per column. Narrowed by table, by who
- * made it and by days; a record's name shows only that record's history. The title bar's search
- * box then filters the rows shown.
+ * The audit log: every change saved, newest first, one row per column, in a grid like Beta's Audits
+ * dashboard: when, by whom, on which machine, at which shop, then what changed. Narrowed by table,
+ * by who made it and by days; a record's name shows only that record's history. The title bar's
+ * search box then filters the rows shown, and each heading sorts them.
  */
 export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSignInAgain: () => void }) {
   const [filter, setFilter] = useState<AuditFilterForm>(Everything);
@@ -75,49 +63,31 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
   }
 
   const columns: Column<AuditLine>[] = [
-    { heading: 'When', wrap: true, width: '8.5rem', cell: (entry) => <ShopTime at={entry.at} /> },
-    {
-      heading: 'Who',
-      wrap: true,
-      width: '11rem',
-      cell: (entry) => (
-        <span>
-          {entry.userName ?? 'KVNsys itself'}
-          {entry.machineName && <span className="block text-[13px] text-muted-foreground">at {entry.machineName}</span>}
-        </span>
-      ),
-    },
+    { heading: 'At', width: '12rem', cell: (entry) => <ShopTime at={entry.at} />, sortBy: (entry) => entry.at },
+    { heading: 'By', width: '16rem', cell: (entry) => entry.userName ?? ByKVNsysItself, sortBy: (entry) => entry.userName ?? ByKVNsysItself },
+    { heading: 'Machine', width: '13rem', cell: (entry) => <TextOrDash text={entry.machineName} />, sortBy: (entry) => entry.machineName },
+    { heading: 'Shop', width: '10rem', cell: (entry) => <TextOrDash text={entry.shopName} />, sortBy: (entry) => entry.shopName },
+    { heading: 'Table', width: '9rem', cell: (entry) => entry.tableLabel, sortBy: (entry) => entry.tableLabel },
     {
       heading: 'Record',
-      wrap: true,
-      width: '13rem',
+      width: '15rem',
       cell: (entry) => (
-        <span>
-          <span className="block text-[13px] text-muted-foreground">{entry.tableLabel}</span>
-          <button
-            type="button"
-            className="text-left underline decoration-dotted underline-offset-2 hover:decoration-solid"
-            title="Show only this record's changes"
-            onClick={() => follow(entry)}
-          >
-            {entry.recordName ?? 'No longer there'}
-          </button>
-        </span>
+        <button
+          type="button"
+          className="max-w-full truncate text-left underline decoration-dotted underline-offset-2 hover:decoration-solid"
+          title="Show only this record's changes"
+          onClick={() => follow(entry)}
+        >
+          {entry.recordName ?? 'No longer there'}
+        </button>
       ),
+      sortBy: (entry) => entry.recordName,
     },
-    {
-      heading: 'Changed',
-      wrap: true,
-      width: '11rem',
-      cell: (entry) => (
-        <span className="font-semibold">
-          {entry.columnLabel}
-          <Kind entry={entry} />
-        </span>
-      ),
-    },
-    { heading: 'Before', wrap: true, cell: (entry) => <Value value={entry.before} /> },
-    { heading: 'After', wrap: true, cell: (entry) => <Value value={entry.after} /> },
+    { heading: 'Column', width: '12rem', cell: (entry) => <span className="font-semibold">{entry.columnLabel}</span>, sortBy: (entry) => entry.columnLabel },
+    { heading: 'Change', width: '10rem', cell: (entry) => <StatusLabel status={entry.changeType} />, sortBy: (entry) => entry.changeType },
+    { heading: 'Source', width: '8rem', cell: (entry) => entry.source, sortBy: (entry) => entry.source },
+    { heading: 'Before', width: '16rem', cell: (entry) => <TextOrDash text={entry.before} />, sortBy: (entry) => entry.before },
+    { heading: 'After', width: '16rem', cell: (entry) => <TextOrDash text={entry.after} />, sortBy: (entry) => entry.after },
   ];
 
   const tables = result?.ok ? result.tables : [];
@@ -212,12 +182,13 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
           )}
           <RecordTable
             label="Audit log"
+            wide
             columns={columns}
             rows={result.entries}
             rowKey={(entry) => entry.id}
             filter={search}
             searchText={(entry) =>
-              [entry.userName ?? 'KVNsys itself', entry.machineName ?? '', entry.tableLabel, entry.recordName ?? '', entry.columnLabel, entry.before ?? '', entry.after ?? ''].join(' ')
+              [entry.userName ?? ByKVNsysItself, entry.machineName ?? '', entry.shopName ?? '', entry.tableLabel, entry.recordName ?? '', entry.columnLabel, entry.before ?? '', entry.after ?? ''].join(' ')
             }
           />
         </>

@@ -96,7 +96,19 @@ describe('the product calls', () => {
 
   it('answer with a product, a list, or a reason', () => {
     expect(ProductReply.safeParse({ product: saved }).success).toBe(true);
-    expect(ProductListReply.safeParse({ products: [saved, saved] }).success).toBe(true);
+    // A list's rows each come with who made them and who last changed them.
+    const history = {
+      createdAt: '2026-10-30T02:00:00.000Z',
+      createdBy: 'System Administrator (admin)',
+      createdMachine: 'Server',
+      createdShop: 'Kenlyn',
+      updatedAt: null,
+      updatedBy: null,
+      updatedMachine: null,
+      updatedShop: null,
+    };
+    expect(ProductListReply.safeParse({ products: [{ ...saved, history }, { ...saved, history }] }).success).toBe(true);
+    expect(ProductListReply.safeParse({ products: [saved] }).success).toBe(false);
     expect(ProblemReply.safeParse({ message: 'No product has the code X.' }).success).toBe(true);
     expect(ProductReply.safeParse({ message: 'No product has the code X.' }).success).toBe(false);
   });

@@ -1,15 +1,19 @@
 import type { AccessName, ListedRole, Role, RoleListResult, SignedInUser } from '@kvnsys/client';
-import { Button, Notice, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { RoleFormPanel } from './RoleFormPanel';
 
 const ManageRight: AccessName = 'roles.manage';
 
+/** Every column of the roles table, the rights it holds and how many accounts have it, then its history, as Beta's grids showed a table. */
 const Columns: Column<ListedRole>[] = [
-  { heading: 'Name', cell: (role) => role.name },
-  { heading: 'Rights', cell: (role) => <span className="block max-w-[420px] py-2 leading-snug">{role.rightsInWords}</span> },
-  { heading: 'Accounts', align: 'right', cell: (role) => role.userCount },
-  { heading: 'Status', cell: (role) => <StatusLabel status={role.status} /> },
+  { heading: 'Code', width: '9rem', cell: (role) => role.code, sortBy: (role) => role.code },
+  { heading: 'Name', width: '12rem', cell: (role) => role.name, sortBy: (role) => role.name },
+  { heading: 'Rights', width: '26rem', cell: (role) => role.rightsInWords, sortBy: (role) => role.rightsInWords },
+  { heading: 'Accounts', width: '7rem', align: 'right', cell: (role) => role.userCount, sortBy: (role) => role.userCount },
+  { heading: 'Status', width: '8rem', cell: (role) => <StatusLabel status={role.status} />, sortBy: (role) => role.status },
+  { heading: 'Description', width: '16rem', cell: (role) => <TextOrDash text={role.description} />, sortBy: (role) => role.description },
+  ...historyColumns<ListedRole>((role) => role.history),
 ];
 
 /**
@@ -53,6 +57,8 @@ export function RolesScreen({ user, search, onSignInAgain }: { user: SignedInUse
           heading: 'Change',
           hiddenHeading: true,
           align: 'right',
+          width: '5.5rem',
+          pinned: true,
           cell: (role) => (
             <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Edit ${role.name}`} onClick={() => open(role.id)}>
               Edit
@@ -93,7 +99,15 @@ export function RolesScreen({ user, search, onSignInAgain }: { user: SignedInUse
           </Button>
         )}
       </div>
-      <RecordTable label="Roles" columns={columns} rows={result.roles} filter={search} searchText={(role) => role.name} rowKey={(role) => role.id} />
+      <RecordTable
+        label="Roles"
+        wide
+        columns={columns}
+        rows={result.roles}
+        filter={search}
+        searchText={(role) => [role.code, role.name, role.description ?? ''].join(' ')}
+        rowKey={(role) => role.id}
+      />
       {editing && (
         <RoleFormPanel
           id={editing.id}

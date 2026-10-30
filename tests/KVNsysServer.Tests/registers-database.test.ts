@@ -117,8 +117,21 @@ describeWithDatabase('registers over HTTPS, through the client engine, against a
       ['HQ-R01', false, 'COUNTER-PC'],
       ['HQ-R02', false, 'OFFICE-PC'],
     ]);
+    // Each with its hardware id and shop, and its history: the server PC set up by KVNsys itself on itself,
+    // each register recorded by whoever first signed in at it.
+    expect(listed.registers.map((r) => [r.code, r.hardwareId, r.shopName])).toEqual([
+      ['HQ-SRV', 'test-hardware-id', 'Head Office'],
+      ['HQ-R01', 'counter-pc-guid', 'Head Office'],
+      ['HQ-R02', 'back-office-guid', 'Head Office'],
+    ]);
+    expect(listed.registers[0]!.history).toMatchObject({ createdBy: null, createdMachine: 'Server', createdShop: 'Head Office', updatedAt: null });
+    expect(listed.registers[1]!.history).toMatchObject({ createdBy: expect.stringMatching(/ \(\w+\)$/), createdMachine: null, createdShop: 'Head Office' });
     const r01 = listed.registers[1]!;
     expect(await changeRegister(address, admin.session, r01.id, { name: ' Counter 1 ', status: 'Active' }, { pin })).toMatchObject({ ok: true, register: { name: 'Counter 1' } });
+    // Renamed by the administrator at the back office's PC.
+    const renamed = await listRegisters(address, admin.session, { pin });
+    if (!renamed.ok) throw new Error(renamed.message);
+    expect(renamed.registers[1]!.history).toMatchObject({ updatedBy: expect.stringMatching(/\(admin\)$/), updatedMachine: 'New register (OFFICE-PC)', updatedShop: 'Head Office' });
     const receipt = await db.receipt.findFirstOrThrow({ where: { settledAtMachine: r01.id } });
     expect(await getReceipt(address, (await signInAt('ana', counter)).session, receipt.id, { pin })).toMatchObject({ ok: true, register: 'Counter 1' });
     expect((await signInAt('ana', counter)).user.register).toEqual({ code: 'HQ-R01', name: 'Counter 1' });
