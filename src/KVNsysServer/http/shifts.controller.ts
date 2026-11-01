@@ -66,11 +66,11 @@ export class ShiftsController {
   @Post()
   @HttpCode(201)
   async open(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<ShiftReply> {
-    const { parts, shop, person, register } = await this.allow(authorization);
+    const { parts, shop, person, machine } = await this.allow(authorization);
     const fields = OpenShiftFields.safeParse(body);
     const openingCash = fields.success ? parsePesos(fields.data.openingCash) : null;
     if (openingCash === null) throw problem(400, "The cash in the drawer didn't arrive in a form the server understands.");
-    const lineage = { ...lineageOf(person, register), locationId: shop.id };
+    const lineage = { ...lineageOf(person, machine), locationId: shop.id };
     const shift = await saving(() => parts.shifts.open(person.id, shop.id, openingCash, lineage));
     return { shift: await shiftOnWire(shift, parts.accounts) };
   }
@@ -78,13 +78,13 @@ export class ShiftsController {
   @Post('current/close')
   @HttpCode(200)
   async close(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<ShiftReply> {
-    const { parts, shop, person, register } = await this.allow(authorization);
+    const { parts, shop, person, machine } = await this.allow(authorization);
     const fields = CloseShiftFields.safeParse(body);
     const countedCash = fields.success ? parsePesos(fields.data.countedCash) : null;
     if (!fields.success || countedCash === null) throw problem(400, "The cash counted didn't arrive in a form the server understands.");
     const current = await parts.shifts.current(person.id, shop.id);
     if (!current) throw problem(409, "You haven't a shift open to end.");
-    const lineage = { ...lineageOf(person, register), locationId: shop.id };
+    const lineage = { ...lineageOf(person, machine), locationId: shop.id };
     const shift = await saving(async () => parts.shifts.close(current.id, countedCash, checkShiftNote(fields.data.note), lineage));
     return { shift: await shiftOnWire(shift, parts.accounts) };
   }
@@ -97,6 +97,6 @@ export class ShiftsController {
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
     const shop = await parts.shops.serverShop(parts.server, serverMachineCode(FirstShopCode));
     if (!shop) throw problem(503, NoShop);
-    return { parts, shop, person: verdict.person, register: verdict.register };
+    return { parts, shop, person: verdict.person, machine: verdict.machine };
   }
 }

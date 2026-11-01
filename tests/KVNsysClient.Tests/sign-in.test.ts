@@ -46,7 +46,7 @@ describe('signIn', () => {
   });
 
   it('says who signed in when the server says yes, with the pass it hands back', async () => {
-    const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'], register: null };
+    const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'], machine: null };
     const session = { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' };
     server = await fakeServer(certificate, 200, { signedIn: true, user, session });
     expect(await signIn(server.address, credentials, { pin: pinOf(certificate) })).toEqual({ ok: true, user, session });
@@ -54,13 +54,13 @@ describe('signIn', () => {
   });
 
   it('tells the server which PC it is, when this PC could read its own id', async () => {
-    const user = { username: 'ana', displayName: 'Ana Cruz', roleCode: 'CASHIER', rights: ['sales.sell'], register: { code: 'HQ-R01', name: 'Counter 1' } };
+    const user = { username: 'ana', displayName: 'Ana Cruz', roleCode: 'CASHIER', rights: ['sales.sell'], machine: { code: 'HQ-M01', name: 'Counter 1' } };
     const session = { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' };
     server = await fakeServer(certificate, 200, { signedIn: true, user, session });
-    const register = { hardwareId: 'a1b2c3', computerName: 'COUNTER-PC' };
-    expect(await signIn(server.address, credentials, { pin: pinOf(certificate), register })).toEqual({ ok: true, user, session });
-    await signIn(server.address, credentials, { pin: pinOf(certificate), register: null });
-    expect(server.received.map((body) => JSON.parse(body))).toEqual([{ ...credentials, register }, credentials]);
+    const machine = { hardwareId: 'a1b2c3', computerName: 'COUNTER-PC' };
+    expect(await signIn(server.address, credentials, { pin: pinOf(certificate), machine })).toEqual({ ok: true, user, session });
+    await signIn(server.address, credentials, { pin: pinOf(certificate), machine: null });
+    expect(server.received.map((body) => JSON.parse(body))).toEqual([{ ...credentials, machine }, credentials]);
   });
 
   it("passes on the server's reason when it says no", async () => {
@@ -73,7 +73,7 @@ describe('signIn', () => {
   });
 
   it('carries the server password, for a server that has one, and leaves it out when there is none', async () => {
-    const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: [], register: null };
+    const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: [], machine: null };
     server = await fakeServer(certificate, 200, { signedIn: true, user, session: { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' } });
     await signIn(server.address, credentials, { pin: pinOf(certificate), serverPassword: 'shop-door-1234' });
     await signIn(server.address, credentials, { pin: pinOf(certificate), serverPassword: null });
@@ -89,14 +89,14 @@ describe('signIn', () => {
     });
   });
 
-  it('never sends a password to a server this register has not trusted yet', async () => {
-    server = await fakeServer(certificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x', rights: [], register: null } });
+  it('never sends a password to a server this machine has not trusted yet', async () => {
+    server = await fakeServer(certificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x', rights: [], machine: null } });
     expect(await signIn(server.address, credentials, { pin: null })).toMatchObject({ ok: false, reason: 'not-connected' });
     expect(server.received).toEqual([]);
   });
 
   it('never lets the password reach an impostor: it stops at the handshake', async () => {
-    server = await fakeServer(otherCertificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x', rights: [], register: null } });
+    server = await fakeServer(otherCertificate, 200, { signedIn: true, user: { username: 'x', displayName: 'x', roleCode: 'x', rights: [], machine: null } });
     const result = await signIn(server.address, credentials, { pin: pinOf(certificate) });
     expect(result).toMatchObject({ ok: false, reason: 'not-trusted' });
     expect(server.received).toEqual([]);

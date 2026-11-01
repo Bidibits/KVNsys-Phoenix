@@ -75,7 +75,7 @@ describeWithDatabase('signing in from the real app, against a real server and da
   it('fits a first connection plus a wrong password in the window, without scrolling', async () => {
     // Both notices are showing, and the first-trust one is the longest. A restyle once made this
     // scroll while every other test passed, because every message was still there.
-    expect(await window.getByText('This register now trusts this server').isVisible()).toBe(true);
+    expect(await window.getByText('This machine now trusts this server').isVisible()).toBe(true);
     expect(await window.getByRole('alert').isVisible()).toBe(true);
     const page = await window.evaluate(() => ({ height: document.documentElement.scrollHeight, window: innerHeight }));
     expect(page.height).toBeLessThanOrEqual(page.window);
@@ -84,9 +84,9 @@ describeWithDatabase('signing in from the real app, against a real server and da
   it('signs in with the right password, opens Home, and says who in the title bar', async () => {
     await signIn('admin', AdminPassword);
     await window.getByRole('navigation', { name: 'Areas' }).waitFor();
-    // At this PC, recorded as the shop's first register the first time anyone signs in at it.
-    expect(await window.getByLabel('Signed in').innerText()).toBe(`System Administrator\nadmin · ${`New register (${hostname()})`.slice(0, 60)}`);
-    // The server handed this register a pass, and is keeping exactly one.
+    // At this PC, recorded as the shop's first machine the first time anyone signs in at it.
+    expect(await window.getByLabel('Signed in').innerText()).toBe(`System Administrator\nadmin · ${`New machine (${hostname()})`.slice(0, 60)}`);
+    // The server handed this machine a pass, and is keeping exactly one.
     expect(server.get(Sessions).activeCount()).toBe(1);
   });
 
@@ -112,7 +112,7 @@ describeWithDatabase('signing in from the real app, against a real server and da
         displayName: 'System Administrator',
         roleCode: 'ADMIN',
         rights: expect.arrayContaining(['products.view']),
-        register: { code: 'HQ-R01', name: expect.stringMatching(/^New register \(/) },
+        machine: { code: 'HQ-M01', name: expect.stringMatching(/^New machine \(/) },
       },
     });
     expect(server.get(Sessions).activeCount()).toBe(1);

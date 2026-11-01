@@ -5,9 +5,9 @@ import type { ConnectReply } from '../../desktop/bridge.js';
 export type Connected = Extract<ConnectReply, { ok: true }>;
 
 /**
- * Which KVNsys Server this register should use. If this PC remembers one and `autoConnect` is on,
+ * Which KVNsys Server this machine should use. If this PC remembers one and `autoConnect` is on,
  * it connects straight away; otherwise it waits for an address. A server with a password asks for
- * it here, once: the register remembers it after that. `problem` arrives with the screen when it
+ * it here, once: the machine remembers it after that. `problem` arrives with the screen when it
  * was shown again because something changed, such as the server's password.
  */
 export function ConnectScreen({
@@ -65,7 +65,7 @@ export function ConnectScreen({
   }
 
   return (
-    <Panel title="KVNsys POS & Inventory" subtitle="Connect this register to the shop's KVNsys Server.">
+    <Panel title="KVNsys POS & Inventory" subtitle="Connect this machine to the shop's KVNsys Server.">
       <form onSubmit={connect} noValidate>
         <TextField
           label="Server address"

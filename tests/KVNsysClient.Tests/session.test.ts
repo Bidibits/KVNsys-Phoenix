@@ -32,7 +32,7 @@ async function fakeServer(certificate: ServerCertificate, status: number, reply:
 
 const pinOf = (c: ServerCertificate): ServerPin => ({ fingerprint256: c.fingerprint256, certificate: c.cert });
 const pass: SessionPass = { token: 'the-pass-the-pass-the-pass-the-pass-the-pas', expiresAt: '2026-10-18T20:00:00.000Z' };
-const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'], register: null };
+const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'], machine: null };
 const Ended = 'Your sign-in has ended. Sign in again.';
 
 let certificate: ServerCertificate;
@@ -79,13 +79,13 @@ describe('signOut', () => {
 });
 
 describe('a pass goes only where a password may', () => {
-  it('is never shown to a server this register has not trusted yet', async () => {
+  it('is never shown to a server this machine has not trusted yet', async () => {
     server = await fakeServer(certificate, 200, { signedOut: true });
     expect(await checkSession(server.address, pass, { pin: null })).toMatchObject({ ok: false, reason: 'not-connected' });
     expect(await signOut(server.address, pass, { pin: null })).toMatchObject({ ok: false, reason: 'not-connected' });
     // Underneath both, the request itself refuses, so no future caller can forget the rule.
     await expect(requestJson({ address: server.address, path: '/api/session', pass: pass.token, pin: null, timeoutMs: 2000 })).rejects.toThrow(
-      /only ever sent to a server this register has pinned/,
+      /only ever sent to a server this machine has pinned/,
     );
     expect(server.received).toEqual([]);
   });

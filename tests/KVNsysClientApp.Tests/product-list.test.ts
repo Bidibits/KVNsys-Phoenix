@@ -111,7 +111,7 @@ describeWithDatabase("the Products list's pictures, categories and brands, in th
     const box = (await fan.boundingBox())!;
     expect(Math.round(box.width)).toBeLessThanOrEqual(40);
     expect(await table().getByRole('img', { name: 'Picture of Desk fan' }).count()).toBe(0);
-    // Shrunk on this register before the screens get it: 80 pixels at most, from a 300-pixel picture.
+    // Shrunk on this machine before the screens get it: 80 pixels at most, from a 300-pixel picture.
     expect(await fan.evaluate((image: HTMLImageElement) => Math.max(image.naturalWidth, image.naturalHeight))).toBe(80);
   });
 

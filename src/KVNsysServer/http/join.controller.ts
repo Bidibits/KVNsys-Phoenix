@@ -7,8 +7,8 @@ export class JoinController {
   constructor(@Inject(ServerPassword) private readonly serverPassword: ServerPassword) {}
 
   /**
-   * Checks the server password a register typed: yes (200), or no (401) with the reason. A server
-   * without a password always says yes. Signing in checks it again, so this only spares a register
+   * Checks the server password a machine typed: yes (200), or no (401) with the reason. A server
+   * without a password always says yes. Signing in checks it again, so this only spares a machine
    * from finding out at its first sign-in.
    */
   @Post()

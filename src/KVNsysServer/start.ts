@@ -126,7 +126,7 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  // The server's identity for secure connections: made once, then kept, because registers pin it.
+  // The server's identity for secure connections: made once, then kept, because machines pin it.
   let certificate: Awaited<ReturnType<typeof loadOrCreateServerCertificate>>;
   try {
     certificate = await loadOrCreateServerCertificate(dataDir);
@@ -137,7 +137,7 @@ async function main(): Promise<void> {
 
   const app = await createServer({ databaseUrl, certificate, dataDir });
   try {
-    // 0.0.0.0, not localhost: the registers are other PCs on the shop's network.
+    // 0.0.0.0, not localhost: the machines are other PCs on the shop's network.
     await app.listen(port, '0.0.0.0');
   } catch (error) {
     await app.close();
@@ -159,7 +159,7 @@ async function main(): Promise<void> {
   for (const address of lanAddresses()) {
     console.log(`  Other PCs on this network can reach it at https://${address}:${port}`);
   }
-  console.log(`  Its certificate fingerprint, for checking a register's first connection:
+  console.log(`  Its certificate fingerprint, for checking a machine's first connection:
   ${certificate.fingerprint256}`);
   console.log('Press Ctrl+C, or close this window, to stop it.');
 }

@@ -135,7 +135,7 @@ model User {
   @@map("users")
 }
 
-/// A register, or the server PC itself. Every row in the system records which machine wrote it.
+/// A PC people sign in at, the server PC among them. Every row in the system records which machine wrote it.
 model Machine {
   id          String  @id @db.Uuid
   code        String  @unique
@@ -289,7 +289,7 @@ model InventoryLog {
 /// it. Numbered per shop with no gaps (number), and known by the shop's code and that number (code,
 /// HQ-000042). Never changed or deleted: the migration refuses both. Its three events, as the plan
 /// has them: settled_* is when it was paid, by whom, where (a receipt is recorded only once it's
-/// paid); opened_* stays empty until the register says when the sale began; voided_* and void_reason
+/// paid); opened_* stays empty until the machine says when the sale began; voided_* and void_reason
 /// wait for voiding.
 model Receipt {
   id                   String  @id @db.Uuid
@@ -384,7 +384,7 @@ model ReceiptPayment {
 
 /// One cashier's stretch at the till: SCHEMA-PLAN's shifts. Opened with the cash counted into the
 /// drawer, closed with the cash counted out. It belongs to a shop and a person, not a PC, so it can
-/// be opened at one register and closed at another; the event blocks say where each happened.
+/// be opened at one machine and closed at another; the event blocks say where each happened.
 /// expected_cash (the opening cash and the shift's cash sales) is worked out and kept at closing.
 /// Numbered per shop with no gaps. Never deleted, and never changed once closed (the migration).
 model Shift {
@@ -494,7 +494,7 @@ model Audit {
   valueAfter            String?  @map("value_after")
   /// Created, Updated or Decommissioned.
   changeType            String   @map("change_type")
-  /// Manual (a person, through a screen) or Automatic (setting up, a register recording itself).
+  /// Manual (a person, through a screen) or Automatic (setting up, a machine recording itself).
   changeSource          String   @map("change_source")
   implementedByUser     String?  @map("implemented_by_user") @db.Uuid
   implementedAtMachine  String?  @map("implemented_at_machine") @db.Uuid

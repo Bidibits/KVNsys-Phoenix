@@ -43,10 +43,10 @@ describeWithDatabase('the dashboard, with the server on and people connected', (
   let window: Page;
   const passes = new Map<string, string>();
 
-  /** Signs the administrator in at a register named `computerName`, as a register would. */
+  /** Signs the administrator in at a machine named `computerName`, as a machine would. */
   function signIn(computerName: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const body = JSON.stringify({ username: 'admin', password: AdminPassword, register: { hardwareId: `hw-${computerName}`, computerName } });
+      const body = JSON.stringify({ username: 'admin', password: AdminPassword, machine: { hardwareId: `hw-${computerName}`, computerName } });
       const req = request(`https://127.0.0.1:${port}/api/sign-in`, {
         method: 'POST',
         ca: certificate.cert,
@@ -116,26 +116,27 @@ describeWithDatabase('the dashboard, with the server on and people connected', (
     if (appDataDir) removeDir(appDataDir);
   });
 
-  it('says the server is on, where registers reach it, and its version', async () => {
+  it('says the server is on, where machines reach it, and its version', async () => {
     await expect.poll(() => power(window).textContent()).toBe('On');
     const addresses = await window.getByLabel('Address').allTextContents();
     expect(addresses).toEqual(lanAddresses().map((address) => `${address}:${port}`));
     expect(await window.getByText(`version ${ServerVersion}`).isVisible()).toBe(true);
   });
 
-  it("lists who's connected, at which register", async () => {
+  it("lists who's connected, at which machine", async () => {
     const table = window.getByRole('table', { name: 'Connected' });
     await table.waitFor();
     expect(await table.getByRole('row').count()).toBe(3);
+    await table.getByRole('columnheader', { name: 'Machine', exact: true }).waitFor();
     await table.getByRole('row', { name: /FRONT-PC/ }).waitFor();
     await table.getByRole('row', { name: /BACK-PC/ }).waitFor();
   });
 
-  it('disconnects one person after asking, and their register is told why', async () => {
+  it('disconnects one person after asking, and their machine is told why', async () => {
     const table = window.getByRole('table', { name: 'Connected' });
     await table.getByRole('row', { name: /FRONT-PC/ }).getByRole('button', { name: 'Disconnect' }).click();
     const asking = window.getByRole('alertdialog');
-    expect(await asking.textContent()).toContain('New register (FRONT-PC)');
+    expect(await asking.textContent()).toContain('New machine (FRONT-PC)');
     await asking.getByRole('button', { name: 'Disconnect' }).click();
     await window.getByText('System Administrator is disconnected.').waitFor();
     await expect.poll(() => table.getByRole('row').count()).toBe(2);
@@ -178,7 +179,7 @@ describeWithDatabase('the dashboard, with the server on and people connected', (
     await section.getByLabel('Server password').fill('shop-door-1234');
     await section.getByLabel('Type it again').fill('shop-door-1234');
     await section.getByRole('button', { name: 'Save' }).click();
-    await window.getByText('The server password is on. Registers ask for it the next time they connect.').waitFor();
+    await window.getByText('The server password is on. Machines ask for it the next time they connect.').waitFor();
     await expect.poll(() => section.textContent()).toContain('On.');
     expect(await server.get(ServerPassword).check('shop-door-1234')).toBeNull();
     // Never written anywhere as typed.
@@ -191,7 +192,7 @@ describeWithDatabase('the dashboard, with the server on and people connected', (
     await section.getByLabel('New server password').fill('new-door-5678');
     await section.getByLabel('Type it again').fill('new-door-5678');
     await section.getByRole('button', { name: 'Save' }).click();
-    await window.getByText('The server password is changed. Registers ask for the new one the next time they connect.').waitFor();
+    await window.getByText('The server password is changed. Machines ask for the new one the next time they connect.').waitFor();
     expect(await server.get(ServerPassword).check('new-door-5678')).toBeNull();
 
     await section.getByRole('button', { name: 'Turn it off' }).click();

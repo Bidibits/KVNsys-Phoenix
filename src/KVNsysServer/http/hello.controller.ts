@@ -8,7 +8,7 @@ export class HelloController {
   constructor(@Inject(ServerPassword) private readonly serverPassword: ServerPassword) {}
 
   /**
-   * Open to anyone on the network: it says what this is, and whether a register needs the server
+   * Open to anyone on the network: it says what this is, and whether a machine needs the server
    * password, and nothing about the shop's data.
    */
   @Get()

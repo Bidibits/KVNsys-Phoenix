@@ -200,7 +200,7 @@ export interface Receipt extends PricedSale {
   /** When it was saved, by the database's clock, as an ISO date and time. */
   createdAt: string;
   createdByUser: string | null;
-  /** The register it was rung up at, or null when it was at none. */
+  /** The machine it was rung up at, or null when it was at none. */
   machineId: string | null;
   /** The shift it was rung up in. */
   shiftId: string | null;

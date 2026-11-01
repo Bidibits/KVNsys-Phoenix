@@ -35,7 +35,7 @@ const ExactPesos = z.string().regex(/^\d+\.\d{2}$/);
 
 /**
  * A picture as base64 text: a JPEG of at most 256 KB, which is about 350,000 characters. The
- * register shrinks a picture before it's sent, so one this long is already a mistake.
+ * app shrinks a picture before it's sent, so one this long is already a mistake.
  */
 export const PictureText = z.string().max(400_000);
 
@@ -86,6 +86,6 @@ export type ProductListReply = z.infer<typeof ProductListReply>;
 export const ProductPictureReply = z.object({ picture: PictureText.nullable() });
 export type ProductPictureReply = z.infer<typeof ProductPictureReply>;
 
-/** Why a request was refused, in words it's safe to show at a register. */
+/** Why a request was refused, in words it's safe to show at a machine. */
 export const ProblemReply = z.object({ message: z.string() });
 export type ProblemReply = z.infer<typeof ProblemReply>;

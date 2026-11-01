@@ -14,7 +14,7 @@ import { createServer, createServerCertificate, ServerPassword, ServerVersion, t
 import { ProtocolVersion } from '@kvnsys/wire';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-/** The trust a register keeps, in memory: enough to watch what gets pinned. */
+/** The trust a machine keeps, in memory: enough to watch what gets pinned. */
 class MemoryTrust implements ServerTrust {
   pins = new Map<string, ServerPin>();
   pinFor(address: string) {
@@ -107,7 +107,7 @@ describe('connectToServer', () => {
       trust.remember(`https://${impostor.address}`, realPin); // this address was trusted to be the real server
       const result = await connectToServer(impostor.address, { trust });
       expect(result).toMatchObject({ ok: false, reason: 'not-trusted' });
-      expect(result.ok || result.message).toMatch(/isn't the one this register trusts/);
+      expect(result.ok || result.message).toMatch(/isn't the one this machine trusts/);
       expect(trust.pinFor(`https://${impostor.address}`)).toEqual(realPin); // and the real pin is kept
     } finally {
       await impostor.close();
@@ -206,11 +206,11 @@ describe('a server with a password', () => {
     await kvnsys?.close();
   });
 
-  it('says so when the register connects', async () => {
+  it('says so when the machine connects', async () => {
     expect(await connectToServer(address, { trust })).toMatchObject({ ok: true, server: { needsServerPassword: true } });
   });
 
-  it('lets the register join with the right password', async () => {
+  it('lets the machine join with the right password', async () => {
     expect(await joinServer(address, 'shop-door-1234', { pin: trust.pinFor(address) })).toEqual({ ok: true });
   });
 

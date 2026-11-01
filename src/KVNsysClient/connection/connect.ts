@@ -8,7 +8,7 @@ export interface ConnectedServer {
   address: string;
   version: string;
   protocol: number;
-  /** True the first time this register meets this server: its certificate has just been trusted. */
+  /** True the first time this machine meets this server: its certificate has just been trusted. */
   firstTrust: boolean;
   /** True when the server has a password: give it with joinServer, then at every sign-in. */
   needsServerPassword: boolean;
@@ -21,7 +21,7 @@ export type ConnectResult =
   | { ok: false; reason: ConnectProblem; message: string };
 
 /**
- * Which servers this register trusts. The engine decides when to trust (trust on first use, and
+ * Which servers this machine trusts. The engine decides when to trust (trust on first use, and
  * only once it's sure it's a KVNsys Server); the app decides where the pins are kept.
  */
 export interface ServerTrust {
@@ -92,7 +92,7 @@ export type JoinResult = { ok: true } | { ok: false; reason: JoinProblem; messag
 
 /**
  * Checks the server password with a server that has one. Like any password, it only ever goes to a
- * server this register has already pinned: connectToServer first.
+ * server this machine has already pinned: connectToServer first.
  */
 export async function joinServer(
   address: string,
@@ -103,7 +103,7 @@ export async function joinServer(
     return {
       ok: false,
       reason: 'not-connected',
-      message: "This register hasn't connected to that server securely yet, so it won't send a password there. Connect first.",
+      message: "This machine hasn't connected to that server securely yet, so it won't send a password there. Connect first.",
     };
   }
   if (!serverPassword) return { ok: false, reason: 'server-password', message: 'Type the server password.' };

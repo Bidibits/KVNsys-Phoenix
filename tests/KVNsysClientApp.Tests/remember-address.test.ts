@@ -27,7 +27,7 @@ describe('remembering the server, across real restarts of the app', () => {
   const trusted = () =>
     JSON.parse(readFileSync(join(dataDir, 'trusted-servers.json'), 'utf8')) as Record<string, { fingerprint256: string }>;
 
-  /** Opens the app, runs `steps` in its window, and closes it again, like a day at the register. */
+  /** Opens the app, runs `steps` in its window, and closes it again, like a day at the machine. */
   async function session(steps: (window: Page) => Promise<void>) {
     const app: ElectronApplication = await launchApp(dataDir);
     try {
@@ -110,7 +110,7 @@ describe('remembering the server, across real restarts of the app', () => {
       await session(async (window) => {
         const problem = window.getByRole('alert');
         await problem.waitFor();
-        expect(await problem.textContent()).toMatch(/isn't the one this register trusts/);
+        expect(await problem.textContent()).toMatch(/isn't the one this machine trusts/);
       });
     } finally {
       await impostor.close();

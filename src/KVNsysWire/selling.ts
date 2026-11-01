@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ShopOnWire } from './stock.js';
 
 /**
- * The selling calls. Every one needs a signed-in pass, and a role with sales.sell. The register
+ * The selling calls. Every one needs a signed-in pass, and a role with sales.sell. The app
  * keeps the cart while the cashier scans; the server records the sale whole, at payment, at its
  * own shop.
  *
@@ -16,7 +16,7 @@ import { ShopOnWire } from './stock.js';
  *   GET  /api/sales/<id>                              one receipt, as it was given
  *
  * The server prices the sale again from the catalog as it is now, and refuses (409) when that
- * isn't the total the register showed, so a customer is never charged what the cashier didn't
+ * isn't the total the machine showed, so a customer is never charged what the cashier didn't
  * see. A refusal is a ProblemReply (see products.ts): 400 a rule (short cash, a product that
  * can't be sold), 401 sign in again, 403 the role may not, 404 no such product, 409 a price
  * changed, 503 no database, or this PC was never set up as the server.
@@ -50,13 +50,13 @@ export const DiscountOnWire = z.object({
   customerName: z.string().max(500),
 });
 
-/** What a register sends to record a sale. KVNsysCore's rules are checked at the server. */
+/** What a machine sends to record a sale. KVNsysCore's rules are checked at the server. */
 export const SaleFields = z.object({
   lines: z.array(z.object({ productId: z.string().max(100), quantity: z.number() })).min(1).max(500),
   discount: DiscountOnWire.nullable(),
   /** The cash the customer gave. */
   tendered: PesosOnWire,
-  /** The total the register showed. The server refuses the sale if it now comes to anything else. */
+  /** The total the machine showed. The server refuses the sale if it now comes to anything else. */
   expectedTotal: PesosOnWire,
 });
 export type SaleFields = z.infer<typeof SaleFields>;
@@ -99,8 +99,8 @@ export const ReceiptReply = z.object({
   receipt: ReceiptOnWire,
   shop: ShopOnWire,
   cashier: z.string().nullable(),
-  /** The register it was rung up at, as the shop calls it now, or null when it was at none. */
-  register: z.string().nullable(),
+  /** The machine it was rung up at, as the shop calls it now, or null when it was at none. */
+  machine: z.string().nullable(),
 });
 export type ReceiptReply = z.infer<typeof ReceiptReply>;
 

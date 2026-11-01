@@ -14,7 +14,7 @@ export interface TillView {
 export type TillResult = { ok: true; till: TillView } | Refused;
 
 /**
- * The cart, kept on the register while the cashier scans (the README's "keeping the cart" is the
+ * The cart, kept on the machine while the cashier scans (the README's "keeping the cart" is the
  * client engine's). Every change is priced with KVNsysCore's rules before it's kept, so a product
  * that can't be sold never gets in, and what the screen shows is always what the server will charge.
  * A change that's refused leaves the sale as it was.

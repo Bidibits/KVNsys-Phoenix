@@ -1,10 +1,10 @@
 import { HttpException } from '@nestjs/common';
 import type { ProblemReply } from '@kvnsys/wire';
 
-/** What a register is told when the server was started without a database. */
+/** What a machine is told when the server was started without a database. */
 export const NoDatabase = "KVNsys Server isn't connected to its database. Check DATABASE_URL in its settings.";
 
-/** A refusal: the status says what kind, the message says why, in words it's safe to show at a register. */
+/** A refusal: the status says what kind, the message says why, in words it's safe to show at a machine. */
 export function problem(status: number, message: string): HttpException {
   return new HttpException({ message } satisfies ProblemReply, status);
 }

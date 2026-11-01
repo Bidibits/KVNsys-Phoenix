@@ -16,7 +16,7 @@ written down on this page instead.
 | 6 | `locations` | 6–11 | ✅ The shop, set up at install |
 | 7–8 | `roles`, `accesses` | 6–11 | ✅ Roles screen |
 | 9 | `users` | 6–11 | ✅ Users screen, sign-in |
-| 10 | `machines` | 6–11 | ✅ Registers screen; every register records itself at sign-in |
+| 10 | `machines` | 6–11 | ✅ Machines screen; every machine records itself at sign-in |
 | 11 | `audits` | 6–11 | ✅ Every save to a table people edit writes here (2026-10-28), and the Audit log screen shows it (2026-10-29) |
 | 12–15 | `brands`, `manufacturers`, `suppliers`, `categories` | 12–17 The catalogue | One list screen and form panel for all four, and the product form picks from them (2026-10-25) |
 | 16 | `affiliations` | 12–17 | No screens yet |
@@ -36,7 +36,7 @@ written down on this page instead.
 |---|---|---|
 | Quantities aren't given a type (Release's old database used decimals) | **Whole pieces everywhere**: stock, the ledger, receipt lines, delivery lines, HQ's totals | Nothing the shop sells goes by weight or length (decided 2026-10-20). Selling by the kilo would be a schema change |
 | `receipts`: id, code, shift, money, status, void reason, three events | **Also** `location_id`, `number`, and `discount_kind`, `discount_id_number`, `discount_customer_name` | Receipts are numbered per shop with no gaps (the plan's gap 1). The senior/PWD discount needs the ID number and the name on the receipt, by law |
-| `receipts` opened(4) · settled(4) · voided(4) | **settled is when it was paid; opened stays empty for now** | The register keeps the cart. The server hears of a sale only when it's paid, so paying is the moment a receipt is made. Opened gets filled if the register later says when the sale began |
+| `receipts` opened(4) · settled(4) · voided(4) | **settled is when it was paid; opened stays empty for now** | The machine keeps the cart. The server hears of a sale only when it's paid, so paying is the moment a receipt is made. Opened gets filled if the machine later says when the sale began |
 | `receipt_items`: product, quantity, prices, price basis | **Also** `line_number`, `product_code`, `product_name` | Kept as sold, so renaming or repricing a product never changes a receipt already given |
 | `shifts` | **Also** `number` | Numbered per shop with no gaps, like receipts |
 | `inventory_logs.movement_type`: seven kinds | The database takes all seven; KVNsysCore records three so far | `to_supplier`, `transfer`, `from_customer` and `disposal` come with the features that make them |

@@ -22,8 +22,8 @@ export const ConnectedPerson = z.object({
   id: z.string(),
   username: z.string(),
   displayName: z.string(),
-  /** The register they're at, as the shop calls it, or null when they signed in at none. */
-  register: z.object({ code: z.string(), name: z.string() }).nullable(),
+  /** The machine they're at, as the shop calls it, or null when they signed in at none. */
+  machine: z.object({ code: z.string(), name: z.string() }).nullable(),
   /** ISO date and time they signed in. */
   since: z.string(),
 });
@@ -33,7 +33,7 @@ export type ConnectedPerson = z.infer<typeof ConnectedPerson>;
 export const ServerStatus = z.object({
   version: z.string(),
   protocol: z.number().int(),
-  /** The port registers reach it on. */
+  /** The port machines reach it on. */
   port: z.number().int(),
   /** This PC's addresses on the shop's network. */
   addresses: z.array(z.string()),

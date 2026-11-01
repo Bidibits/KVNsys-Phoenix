@@ -4,14 +4,14 @@ import type { SignedInPerson } from './sign-in.js';
 /** How long a pass stays good: a long shift, with room to spare. After that, the person signs in again. */
 export const SessionHours = 12;
 
-/** What a register is told when its pass is unknown, cancelled or expired. */
+/** What a machine is told when its pass is unknown, cancelled or expired. */
 export const SignInEnded = 'Your sign-in has ended. Sign in again.';
 
-/** What a register is told when someone disconnected it from the server's dashboard. */
+/** What a machine is told when someone disconnected it from the server's dashboard. */
 export const DisconnectedAtServer = 'You were disconnected at the server. Sign in again.';
 
-/** The register a sign-in is at: the PC, its shop, and what the shop calls it. */
-export interface SessionRegister {
+/** The machine a sign-in is at: the PC, its shop, and what the shop calls it. */
+export interface SessionMachine {
   machineId: string;
   locationId: string;
   code: string;
@@ -22,8 +22,8 @@ export interface Session {
   /** Names the session on the server's dashboard. Not the pass, and no use as one. */
   id: string;
   user: SignedInPerson;
-  /** Null when the sign-in is at no register: a PC that couldn't read its own id. */
-  register: SessionRegister | null;
+  /** Null when the sign-in is at no machine: a PC that couldn't read its own id. */
+  machine: SessionMachine | null;
   startedAt: Date;
   expiresAt: Date;
 }
@@ -33,13 +33,13 @@ export interface Session {
  * pass; later requests show the pass; signing out cancels it.
  *
  * Only a hash of each pass is kept, so nothing read out of the server's memory can be used as a
- * pass. A restart ends every session, and the registers sign in again.
+ * pass. A restart ends every session, and the machines sign in again.
  */
 export class Sessions {
   private readonly byHash = new Map<string, Session>();
   /**
    * Passes ended from the server's dashboard, kept until they'd have expired anyway, so the
-   * register is told why instead of just "ended".
+   * machine is told why instead of just "ended".
    */
   private readonly disconnected = new Map<string, Date>();
 
@@ -47,12 +47,12 @@ export class Sessions {
   constructor(private readonly now: () => Date = () => new Date()) {}
 
   /** Starts a session for someone who has just signed in, and returns its pass. */
-  start(user: SignedInPerson, register: SessionRegister | null = null): { token: string; expiresAt: Date } {
+  start(user: SignedInPerson, machine: SessionMachine | null = null): { token: string; expiresAt: Date } {
     this.forgetExpired();
     const token = randomBytes(32).toString('base64url');
     const startedAt = this.now();
     const expiresAt = new Date(startedAt.getTime() + SessionHours * 60 * 60 * 1000);
-    this.byHash.set(hashOf(token), { id: randomBytes(12).toString('base64url'), user, register, startedAt, expiresAt });
+    this.byHash.set(hashOf(token), { id: randomBytes(12).toString('base64url'), user, machine, startedAt, expiresAt });
     return { token, expiresAt };
   }
 
@@ -63,7 +63,7 @@ export class Sessions {
   }
 
   /**
-   * Ends one sign-in from the server's dashboard. The register finds out at its next request, and
+   * Ends one sign-in from the server's dashboard. The machine finds out at its next request, and
    * is told it was disconnected. False when there was no such session, or it had already ended.
    */
   disconnect(id: string): boolean {
@@ -77,7 +77,7 @@ export class Sessions {
     return false;
   }
 
-  /** Why a pass no longer works, in words for the register. */
+  /** Why a pass no longer works, in words for the machine. */
   whyEnded(token: string): string {
     const until = this.disconnected.get(hashOf(token));
     return until && until > this.now() ? DisconnectedAtServer : SignInEnded;
@@ -101,7 +101,7 @@ export class Sessions {
   }
 
   /**
-   * Ends every pass one person holds, on every register: when their password is reset, or their
+   * Ends every pass one person holds, on every machine: when their password is reset, or their
    * account is switched off. Returns how many ended.
    */
   cancelFor(userId: string): number {
@@ -115,11 +115,11 @@ export class Sessions {
     return ended;
   }
 
-  /** Ends every pass signed in at one register: when it's switched off. Returns how many ended. */
-  cancelForRegister(machineId: string): number {
+  /** Ends every pass signed in at one machine: when it's switched off. Returns how many ended. */
+  cancelForMachine(machineId: string): number {
     let ended = 0;
     for (const [key, session] of this.byHash) {
-      if (session.register?.machineId === machineId) {
+      if (session.machine?.machineId === machineId) {
         this.byHash.delete(key);
         ended++;
       }

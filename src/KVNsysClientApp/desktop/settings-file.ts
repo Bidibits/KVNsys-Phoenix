@@ -3,10 +3,10 @@ import { dirname } from 'node:path';
 
 /** What the app remembers on this PC between runs. */
 export interface ClientSettings {
-  /** The KVNsys Server this register last connected to, such as "http://192.168.0.111:9000". */
+  /** The KVNsys Server this machine last connected to, such as "http://192.168.0.111:9000". */
   serverAddress?: string;
   /**
-   * That server's password, when it has one, so the register reconnects on its own. Never kept as
+   * That server's password, when it has one, so the machine reconnects on its own. Never kept as
    * typed: `sealed` is encrypted by Windows for this PC's account, and is useless copied elsewhere.
    */
   serverPassword?: { address: string; sealed: string };

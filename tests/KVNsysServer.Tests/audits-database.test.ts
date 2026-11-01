@@ -20,7 +20,7 @@ describeWithDatabase('the audit log over HTTPS, through the client engine, again
   let pin: ServerPin;
 
   async function signInAt(username: string) {
-    const result = await signIn(address, { username, password: Password }, { pin, register: counter });
+    const result = await signIn(address, { username, password: Password }, { pin, machine: counter });
     if (!result.ok) throw new Error(result.message);
     return result;
   }
@@ -60,7 +60,7 @@ describeWithDatabase('the audit log over HTTPS, through the client engine, again
 
     const log = await listAudits(address, admin.session, any, { pin });
     if (!log.ok) throw new Error(log.message);
-    expect(log.entries[0]).toMatchObject({ tableLabel: 'Products', recordName: 'Sardines 155g (PRD-0007)', userName: 'System Administrator (admin)', machineName: 'New register (COUNTER-PC)', shopName: 'Kenlyn' });
+    expect(log.entries[0]).toMatchObject({ tableLabel: 'Products', recordName: 'Sardines 155g (PRD-0007)', userName: 'System Administrator (admin)', machineName: 'New machine (COUNTER-PC)', shopName: 'Kenlyn' });
     expect(log.entries).toContainEqual(expect.objectContaining({ table: 'locations', columnLabel: 'Name', after: 'Kenlyn', source: 'Automatic', userName: null }));
     expect(log.byKVNsys).toBe(true);
     expect(log.people.map((p) => p.name)).toContain('System Administrator (admin)');

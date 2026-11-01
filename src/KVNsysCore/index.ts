@@ -84,19 +84,20 @@ export {
   type UserForm,
 } from './identity/accounts.js';
 
-export { serverMachineCode, type PcIdentity } from './locations/machines.js';
-export { ShopDirectory, type Shop } from './locations/shops.js';
 export {
-  checkRegisterDetails,
-  newRegisterName,
-  RegisterBook,
-  registerCode,
-  RegisterLimits,
-  RegisterStatuses,
-  type Register,
-  type RegisterDetails,
-  type RegisterStatus,
-} from './locations/registers.js';
+  checkMachineDetails,
+  newMachineName,
+  MachineBook,
+  machineCode,
+  MachineLimits,
+  MachineStatuses,
+  serverMachineCode,
+  type Machine,
+  type MachineDetails,
+  type MachineStatus,
+  type PcIdentity,
+} from './locations/machines.js';
+export { ShopDirectory, type Shop } from './locations/shops.js';
 
 export {
   checkProduct,

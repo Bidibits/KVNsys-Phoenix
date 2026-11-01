@@ -10,7 +10,7 @@ export const ShiftLimits = { note: 500 } as const;
 
 /**
  * One cashier's stretch at the till, from the cash counted into the drawer to the cash counted out.
- * It belongs to a shop and a person, not to a PC: opened at one register, it can be closed at
+ * It belongs to a shop and a person, not to a PC: opened at one machine, it can be closed at
  * another (SCHEMA-PLAN). Money is in centavos.
  */
 export interface Shift {

@@ -57,7 +57,7 @@ export async function setUpFirstShop(
     adminPassword: password,
     server,
   });
-  say(`Set up ${shopName}. On a register, sign in as "${username}" with that password.`);
+  say(`Set up ${shopName}. On any machine, sign in as "${username}" with that password.`);
   say('');
 }
 

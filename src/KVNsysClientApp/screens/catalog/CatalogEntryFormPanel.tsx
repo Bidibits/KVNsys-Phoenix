@@ -26,7 +26,7 @@ const parentOptions = (parents: CatalogEntry[]) => [
 const somethingWentWrong = (error: unknown) => ({
   ok: false as const,
   reason: 'unreachable' as const,
-  message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
+  message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
 });
 
 /**

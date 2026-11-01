@@ -14,12 +14,12 @@ const Lag = 100;
 const Settle = { timeout: 20_000 };
 
 /**
- * A slow network between the register and the server: everything sent either way arrives Lag ms
+ * A slow network between the machine and the server: everything sent either way arrives Lag ms
  * late, in order. On this PC a lookup takes a few milliseconds, faster than a test can scan again,
  * so without it the scans never overlap and the bug never shows. At a branch they will.
  */
 function slowNetwork(serverPort: number): Promise<Relay> {
-  const relay = createRelay((register) => {
+  const relay = createRelay((machine) => {
     const toServer = connect(serverPort, '127.0.0.1');
     const later = (work: () => void) => setTimeout(work, Lag);
     const pass = (from: Socket, to: Socket) => {
@@ -27,8 +27,8 @@ function slowNetwork(serverPort: number): Promise<Relay> {
       from.on('end', () => later(() => to.end()));
       from.on('error', () => later(() => to.destroy()));
     };
-    pass(register, toServer);
-    pass(toServer, register);
+    pass(machine, toServer);
+    pass(toServer, machine);
   });
   return new Promise((resolve) => relay.listen(0, '127.0.0.1', () => resolve(relay)));
 }

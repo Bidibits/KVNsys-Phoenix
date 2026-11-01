@@ -30,7 +30,7 @@ export function App() {
           onSignedIn={(user) => setStage({ kind: 'signed-in', connected: stage.connected, user })}
           // Choosing another server mustn't bounce straight back to this one.
           onChangeServer={() => setStage({ kind: 'connect', autoConnect: false })}
-          // The server's password changed since this register connected: ask for the new one.
+          // The server's password changed since this machine connected: ask for the new one.
           onServerPasswordNeeded={(problem) => setStage({ kind: 'connect', autoConnect: false, problem, askServerPassword: true })}
         />
       );

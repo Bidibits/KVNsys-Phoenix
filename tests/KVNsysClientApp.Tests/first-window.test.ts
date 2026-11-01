@@ -55,7 +55,7 @@ describe('the first window, driven like a person would', () => {
     await notice.waitFor();
     expect(await notice.textContent()).toBe(
       `Connected to KVNsys Server ${ServerVersion} at https://${serverAddress}. ` +
-        'This register now trusts this server, and will refuse any other that tries to answer at this address.',
+        'This machine now trusts this server, and will refuse any other that tries to answer at this address.',
     );
     expect(await window.getByLabel('Username').isVisible()).toBe(true);
   });
@@ -82,8 +82,8 @@ describe('the first window, driven like a person would', () => {
       'findStockItem',
       'listAudits',
       'listCatalog',
+      'listMachines',
       'listProducts',
-      'listRegisters',
       'listRoles',
       'listStock',
       'listUsers',
@@ -98,8 +98,8 @@ describe('the first window, driven like a person would', () => {
       'resetPassword',
       'roleForm',
       'saveCatalogEntry',
+      'saveMachine',
       'saveProduct',
-      'saveRegister',
       'saveRole',
       'saveUser',
       'savedServerAddress',

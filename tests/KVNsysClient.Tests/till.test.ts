@@ -8,7 +8,7 @@ const found = (product: SaleProduct) => async () => ({ ok: true as const, produc
 const notFound = async () => ({ ok: false as const, reason: 'not-found' as const, message: 'No product has the code or barcode X.' });
 const shown = (till: Till) => till.view().lines.map((line) => [line.name, line.quantity, line.total]);
 
-describe('the till: the sale being rung up on a register', () => {
+describe('the till: the sale being rung up on a machine', () => {
   it('starts empty, at zero', () => {
     expect(new Till().view()).toEqual({ lines: [], subtotal: 0, discountTotal: 0, total: 0, discount: null });
   });

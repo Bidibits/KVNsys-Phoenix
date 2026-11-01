@@ -25,7 +25,7 @@ export interface DashboardView {
     | { ok: false; message: string };
   /** The running server's own answer, or why there isn't one (it's off, most likely). */
   server: { ok: true; status: ServerStatus } | { ok: false; reason: ControlProblem; message: string };
-  /** The port registers reach the server on, from its settings: shown even while it's off. */
+  /** The port machines reach the server on, from its settings: shown even while it's off. */
   port: number;
   /** This PC's addresses on the shop's network. */
   addresses: string[];

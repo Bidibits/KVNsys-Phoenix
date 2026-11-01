@@ -4,7 +4,7 @@ import {
   createPrismaClient,
   PrismaCatalogBook,
   PrismaProductCatalog,
-  PrismaRegisterBook,
+  PrismaMachineBook,
   PrismaRoleCatalog,
   PrismaUserAccounts,
   type PrismaClient,
@@ -31,7 +31,7 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
     serverPc = randomUUID();
     counter = randomUUID();
     await db.machine.create({ data: { id: serverPc, code: 'HQ-SRV', name: 'Server', machineUuid: 'hw-server', machineName: 'SERVER-PC', locationId: shopId } });
-    await db.machine.create({ data: { id: counter, code: 'HQ-R01', name: 'Counter 1', machineUuid: 'hw-counter', machineName: 'COUNTER-PC', locationId: shopId } });
+    await db.machine.create({ data: { id: counter, code: 'HQ-M01', name: 'Counter 1', machineUuid: 'hw-counter', machineName: 'COUNTER-PC', locationId: shopId } });
     const role = randomUUID();
     await db.role.create({ data: { id: role, code: 'ADMIN', name: 'Administrator', level: 100 } });
     const accounts = new PrismaUserAccounts(db);
@@ -100,10 +100,10 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
     expect((await new PrismaProductCatalog(db).list())[0]!.history).toMatchObject({ createdBy: 'Ana Santos Cruz (ana)', createdMachine: 'Counter 1' });
     expect((await new PrismaUserAccounts(db).list()).map((account) => account.history.createdAt)).toHaveLength(2);
     expect((await new PrismaRoleCatalog(db).list())[0]!.history.createdAt).toMatch(/Z$/);
-    const machines = await new PrismaRegisterBook(db).list(shopId);
+    const machines = await new PrismaMachineBook(db).list(shopId);
     expect(machines.map((machine) => [machine.code, machine.hardwareId, machine.description, typeof machine.history.createdAt])).toEqual([
       ['HQ-SRV', 'hw-server', null, 'string'],
-      ['HQ-R01', 'hw-counter', null, 'string'],
+      ['HQ-M01', 'hw-counter', null, 'string'],
     ]);
   });
 });

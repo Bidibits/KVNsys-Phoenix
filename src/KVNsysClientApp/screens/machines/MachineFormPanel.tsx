@@ -1,31 +1,31 @@
-import type { ListedRegister, RegisterResult, RegisterStatus, SentRegister } from '@kvnsys/client';
+import type { ListedMachine, MachineResult, MachineStatus, SentMachine } from '@kvnsys/client';
 import { Button, FormPanel, Notice, SelectField, TextField } from '@kvnsys/ui';
 import { useState } from 'react';
 
-/** Every status, with what it means. Naming them by RegisterStatus makes the build fail if one is missing. */
+/** Every status, with what it means. Naming them by MachineStatus makes the build fail if one is missing. */
 const StatusChoices = {
   Active: 'Active: people can sign in at it',
   Inactive: 'Inactive: switched off, nobody can sign in at it',
-} satisfies Record<RegisterStatus, string>;
+} satisfies Record<MachineStatus, string>;
 const StatusOptions = Object.entries(StatusChoices).map(([value, label]) => ({ value, label }));
 
 /**
- * Naming a register, or switching it off, in a panel from the right. The server PC can only be
+ * Naming a machine, or switching it off, in a panel from the right. The server PC can only be
  * renamed: switching it off would lock its own screen out.
  */
-export function RegisterFormPanel({
-  register,
+export function MachineFormPanel({
+  machine,
   onClose,
   onSaved,
   onSignInAgain,
 }: {
-  register: ListedRegister;
+  machine: ListedMachine;
   onClose: () => void;
-  onSaved: (register: SentRegister) => void;
+  onSaved: (machine: SentMachine) => void;
   onSignInAgain: () => void;
 }) {
-  const [name, setName] = useState(register.name);
-  const [status, setStatus] = useState<string>(register.status);
+  const [name, setName] = useState(machine.name);
+  const [status, setStatus] = useState<string>(machine.status);
   const [problem, setProblem] = useState<{ message: string; ended: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -33,21 +33,21 @@ export function RegisterFormPanel({
     if (saving) return;
     setSaving(true);
     setProblem(null);
-    const answer = await window.kvnsys.saveRegister(register.id, { name, status }).catch(
-      (error: unknown): RegisterResult => ({
+    const answer = await window.kvnsys.saveMachine(machine.id, { name, status }).catch(
+      (error: unknown): MachineResult => ({
         ok: false,
         reason: 'unreachable',
-        message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
       }),
     );
     setSaving(false);
-    if (answer.ok) onSaved(answer.register);
+    if (answer.ok) onSaved(answer.machine);
     else setProblem({ message: answer.message, ended: answer.reason === 'ended' });
   }
 
   return (
     <FormPanel
-      title="Edit register"
+      title="Edit machine"
       onClose={onClose}
       onSubmit={() => void save()}
       actions={
@@ -69,12 +69,12 @@ export function RegisterFormPanel({
       )}
       <div className="mt-4 first:mt-0">
         <p className="mb-4 text-[15px] text-muted-foreground">
-          {register.code}
-          {register.computerName && ` · ${register.computerName}`}
+          {machine.code}
+          {machine.computerName && ` · ${machine.computerName}`}
         </p>
         <TextField size="compact" label="Name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-        <SelectField label="Status" value={status} options={StatusOptions} onChange={setStatus} disabled={register.isServer} />
-        {register.isServer && <p className="text-[15px] text-muted-foreground">The server PC stays switched on. Only its name can change.</p>}
+        <SelectField label="Status" value={status} options={StatusOptions} onChange={setStatus} disabled={machine.isServer} />
+        {machine.isServer && <p className="text-[15px] text-muted-foreground">The server PC stays switched on. Only its name can change.</p>}
       </div>
     </FormPanel>
   );

@@ -59,7 +59,7 @@ export async function startServerControl(app: INestApplication, options: { dataD
       id: session.id,
       username: session.user.username,
       displayName: session.user.displayName,
-      register: session.register && { code: session.register.code, name: session.register.name },
+      machine: session.machine && { code: session.machine.code, name: session.machine.name },
       since: session.startedAt.toISOString(),
     })),
   });

@@ -1,7 +1,7 @@
 // `pnpm package`: makes the two programs a shop's PCs run, from what `pnpm build` produced.
 //
-//   out/KVNsys POS & Inventory/            the app for each register: Electron, with its own Chrome and Node
-//   out/KVNsys POS & Inventory Setup.exe   that app as one setup file, to carry to a register
+//   out/KVNsys POS & Inventory/            the app for each machine: Electron, with its own Chrome and Node
+//   out/KVNsys POS & Inventory Setup.exe   that app as one setup file, to carry to a machine
 //   out/KVNsys Server/                     the server: KVNsys Server.exe, a console program, with its own Node
 //   out/KVNsys Server Dashboard/           the server's dashboard: Electron, like the app, run as administrator
 //   out/KVNsys Server Setup.exe            the server PC's setup file: the server, its dashboard, and its own PostgreSQL
@@ -24,7 +24,7 @@ const stage = join(out, 'stage');
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
 const writeJson = (path, value) => writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 
-/** The register app. Its desktop side is bundled into one file, so the package needs no node_modules. */
+/** The app. Its desktop side is bundled into one file, so the package needs no node_modules. */
 async function packageClient() {
   const app = join(root, 'src', 'KVNsysClientApp');
   const { productName, version } = readJson(join(app, 'package.json'));
@@ -54,7 +54,7 @@ async function packageClient() {
     // Also names the app's settings folder in %APPDATA%, so it must stay the same.
     productName,
     version,
-    description: 'KVNsys POS & Inventory, the app for each register',
+    description: 'KVNsys POS & Inventory, the app for each machine',
     author: 'KVNsys',
     private: true,
     type: 'module',
@@ -82,7 +82,7 @@ async function packageClient() {
 }
 
 /**
- * The register's setup file, made from the app packageClient made. Double-clicked, it installs the
+ * The app's setup file, made from the app packageClient made. Double-clicked, it installs the
  * app for the person signed in to Windows, with no administrator rights and no questions. It adds
  * a desktop icon, a Start menu icon, and an uninstaller in Windows' list of apps.
  */
@@ -111,7 +111,7 @@ async function makeClientSetup(packagedApp) {
         perMachine: false,
         createDesktopShortcut: true,
         createStartMenuShortcut: true,
-        // Uninstalling leaves nothing behind: the register's settings (its server, the server it
+        // Uninstalling leaves nothing behind: the app's settings (its server, the server it
         // trusts, the server's password) go too. An update keeps them; electron-builder only deletes
         // them on a real uninstall.
         deleteAppDataOnUninstall: true,
@@ -125,7 +125,7 @@ async function makeClientSetup(packagedApp) {
 }
 
 /**
- * The server's dashboard, packaged like the register app. It runs as administrator, because only
+ * The server's dashboard, packaged like the app. It runs as administrator, because only
  * administrators may turn a service on and off, and only they may read the server's folder, where
  * the running server leaves the dashboard its key. That's asked for by its icons (the server's
  * setup marks them "Run as administrator"), not by the program itself: a program marked to always
@@ -289,4 +289,4 @@ for (const path of made) {
   console.log(`Made ${path}`);
 }
 console.log('Run `pnpm install:here` to install the app and the server on this PC, with icons on the desktop.');
-console.log('A register gets the app from the setup file instead.');
+console.log('Other machines get the app from the setup file instead.');

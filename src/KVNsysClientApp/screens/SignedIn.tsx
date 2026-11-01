@@ -5,7 +5,7 @@ import { AuditLogScreen } from './audits/AuditLogScreen';
 import { CatalogListScreen } from './catalog/CatalogListScreen';
 import { HomeScreen, type Area } from './home/HomeScreen';
 import { ProductsScreen } from './products/ProductsScreen';
-import { RegistersScreen } from './registers/RegistersScreen';
+import { MachinesScreen } from './machines/MachinesScreen';
 import { RolesScreen } from './roles/RolesScreen';
 import { SalesScreen } from './selling/SalesScreen';
 import { SellScreen } from './selling/SellScreen';
@@ -26,12 +26,12 @@ const Titles: Record<Place, string> = {
   stock: 'Stock',
   users: 'Users',
   roles: 'Roles',
-  registers: 'Registers',
+  machines: 'Machines',
   audits: 'Audit log',
 };
 
 /** The screens with a list the title bar's search box filters. Sell has its own code box. */
-const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'stock', 'users', 'roles', 'registers', 'audits']);
+const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'stock', 'users', 'roles', 'machines', 'audits']);
 
 /**
  * Every screen opened, in order, and where Back and Forward have got to (design-direction.md,
@@ -47,7 +47,7 @@ interface History {
 /**
  * The app once someone is signed in: the frame, with Home or an area inside it, Back and Forward
  * through the screens opened, and the search box for the screen's list. Signing out cancels this
- * register's pass at the server, then goes back to the sign-in screen.
+ * machine's pass at the server, then goes back to the sign-in screen.
  */
 export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOut: () => void }) {
   const [history, setHistory] = useState<History>({ places: ['home'], at: 0, visit: 0 });
@@ -85,7 +85,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
     <ToastProvider>
       <AppFrame
         title={Titles[place]}
-        signedIn={{ name: user.displayName, username: user.username, register: user.register?.name ?? null }}
+        signedIn={{ name: user.displayName, username: user.username, machine: user.machine?.name ?? null }}
         onHome={() => open('home')}
         onBack={history.at > 0 ? () => step(-1) : null}
         onForward={history.at < history.places.length - 1 ? () => step(1) : null}
@@ -106,7 +106,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
           {place === 'stock' && <StockScreen user={user} {...screen} />}
           {place === 'users' && <UsersScreen user={user} {...screen} />}
           {place === 'roles' && <RolesScreen user={user} {...screen} />}
-          {place === 'registers' && <RegistersScreen user={user} {...screen} />}
+          {place === 'machines' && <MachinesScreen user={user} {...screen} />}
           {place === 'audits' && <AuditLogScreen {...screen} />}
         </div>
       </AppFrame>

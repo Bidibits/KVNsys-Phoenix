@@ -127,7 +127,7 @@ try {
     [IO.File]::WriteAllBytes($superuserFile, $protected)
     Protect-ForAdministrators $superuserFile
 
-    # Answers on this PC only. Registers never talk to PostgreSQL; only KVNsys Server does.
+    # Answers on this PC only. Machines never talk to PostgreSQL; only KVNsys Server does.
     # ASCII: appending UTF-8 here could put a byte-order mark mid-file, which PostgreSQL can't read.
     Add-Content -LiteralPath (Join-Path $dataDir 'postgresql.conf') -Encoding ASCII -Value @(
       '', '# KVNsys', "port = $Port", "listen_addresses = 'localhost'", 'logging_collector = on')

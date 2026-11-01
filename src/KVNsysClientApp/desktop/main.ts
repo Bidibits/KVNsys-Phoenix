@@ -3,7 +3,7 @@
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  changeRegister,
+  changeMachine,
   listAudits,
   type AuditListResult,
   closeShift,
@@ -14,10 +14,10 @@ import {
   type CurrentShiftResult,
   type ShiftResult,
   findSaleProduct,
-  listRegisters,
+  listMachines,
   readThisPc,
-  type RegisterListResult,
-  type RegisterResult,
+  type MachineListResult,
+  type MachineResult,
   getReceipt,
   listDaySales,
   type DaySalesResult,
@@ -84,8 +84,8 @@ import {
   ConnectChannel,
   CurrentShiftChannel,
   OpenShiftChannel,
-  ListRegistersChannel,
-  SaveRegisterChannel,
+  ListMachinesChannel,
+  SaveMachineChannel,
   ListAuditsChannel,
   DaySalesChannel,
   ReceiptChannel,
@@ -129,15 +129,15 @@ import { TrustFile } from './trust-file.js';
 const AppName = 'KVNsys POS & Inventory';
 
 // Where this PC keeps the app's settings: Windows' usual place for the signed-in account. Tests
-// point it at a throwaway folder, so they never touch a real register's settings.
+// point it at a throwaway folder, so they never touch a real machine's settings.
 if (process.env.KVNSYS_APP_DATA) app.setPath('userData', process.env.KVNSYS_APP_DATA);
 const settings = new SettingsFile(join(app.getPath('userData'), 'settings.json'));
 const trustFile = new TrustFile(join(app.getPath('userData'), 'trusted-servers.json'));
 
-/** This PC, as it tells the server at every sign-in, so the server knows which register it's at. */
+/** This PC, as it tells the server at every sign-in, so the server knows which machine it's at. */
 const thisPc = readThisPc();
 
-/** The server this register last connected to in this run. Sign-in only ever goes there. */
+/** The server this machine last connected to in this run. Sign-in only ever goes there. */
 let connectedAddress: string | null = null;
 
 /** That server's password, when it has one: sent with every sign-in. Null when it has none. */
@@ -179,7 +179,7 @@ function rememberServerPassword(address: string, password: string | null): void 
  */
 let session: { address: string; pass: SessionPass } | null = null;
 
-/** The sale being rung up on this register. Each sign-in, and each sign-out, starts an empty one. */
+/** The sale being rung up on this machine. Each sign-in, and each sign-out, starts an empty one. */
 let till = new Till();
 
 ipcMain.handle(SavedAddressChannel, (): string | null => settings.load().serverAddress ?? null);
@@ -207,11 +207,11 @@ ipcMain.handle(ConnectChannel, async (_event, typed: unknown, typedPassword: unk
     });
   } catch (error) {
     // Only an unexpected failure on this PC gets here, such as being unable to save the trust.
-    console.error('Connecting failed on this register:', error);
+    console.error('Connecting failed on this machine:', error);
     return {
       ok: false,
       reason: 'unreachable',
-      message: `Something went wrong on this register while connecting: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Something went wrong on this machine while connecting: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
   // A failed attempt never replaces the address that worked: the server may just be off.
@@ -234,7 +234,7 @@ ipcMain.handle(ConnectChannel, async (_event, typed: unknown, typedPassword: unk
       if (joined.reason !== 'server-password') return joined;
       if (!given) {
         rememberServerPassword(address, null);
-        return { ok: false, reason: 'server-password', message: "This server's password has changed since this register last connected. Type the new one." };
+        return { ok: false, reason: 'server-password', message: "This server's password has changed since this machine last connected. Type the new one." };
       }
       return joined;
     }
@@ -267,10 +267,10 @@ ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknow
   const result = await signIn(
     connectedAddress,
     { username, password },
-    { pin: trusted.servers[connectedAddress] ?? null, register: thisPc, serverPassword: connectedServerPassword },
+    { pin: trusted.servers[connectedAddress] ?? null, machine: thisPc, serverPassword: connectedServerPassword },
   );
   if (!result.ok) {
-    // The server's password changed (or was switched on) since this register connected: the
+    // The server's password changed (or was switched on) since this machine connected: the
     // remembered one is no use any more, and the screens go back to ask for the new one.
     if (result.reason === 'server-password') {
       rememberServerPassword(connectedAddress, null);
@@ -286,7 +286,7 @@ ipcMain.handle(SignInChannel, async (_event, username: unknown, password: unknow
 ipcMain.handle(SignOutChannel, async (): Promise<void> => {
   if (!session) return;
   const { address, pass } = session;
-  // Forgotten here first: whatever the server says, this register is now signed out.
+  // Forgotten here first: whatever the server says, this machine is now signed out.
   session = null;
   till = new Till();
   const trusted = trustFile.read();
@@ -589,15 +589,15 @@ ipcMain.handle(ReceiptChannel, async (_event, id: unknown): Promise<SaleResult> 
   return withPass((address, pass, options) => getReceipt(address, pass, receiptId, options));
 });
 
-ipcMain.handle(ListRegistersChannel, (): Promise<RegisterListResult> => withPass(listRegisters));
+ipcMain.handle(ListMachinesChannel, (): Promise<MachineListResult> => withPass(listMachines));
 
-ipcMain.handle(SaveRegisterChannel, async (_event, id: unknown, typed: unknown): Promise<RegisterResult> => {
-  const registerId = asProductId(id);
-  if (!registerId || typeof typed !== 'object' || typed === null) return NotAForm;
+ipcMain.handle(SaveMachineChannel, async (_event, id: unknown, typed: unknown): Promise<MachineResult> => {
+  const machineId = asProductId(id);
+  if (!machineId || typeof typed !== 'object' || typed === null) return NotAForm;
   const name = asText((typed as Record<string, unknown>).name);
   const status = asText((typed as Record<string, unknown>).status);
   if (name === undefined || status === undefined) return NotAForm;
-  return withPass((address, pass, options) => changeRegister(address, pass, registerId, { name, status }, options));
+  return withPass((address, pass, options) => changeMachine(address, pass, machineId, { name, status }, options));
 });
 
 ipcMain.handle(ListAuditsChannel, async (_event, typed: unknown): Promise<AuditListResult> => {
@@ -641,7 +641,7 @@ function openWindow(): void {
     },
   });
 
-  // A register's window is the app, never a browser: it can't open new windows or wander off.
+  // The app's window is never a browser: it can't open new windows or wander off.
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event) => event.preventDefault());
 

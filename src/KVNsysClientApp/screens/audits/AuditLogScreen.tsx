@@ -44,7 +44,7 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
         (error: unknown): AuditListResult => ({
           ok: false,
           reason: 'unreachable',
-          message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
+          message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
         }),
       )
       .then((answer) => {

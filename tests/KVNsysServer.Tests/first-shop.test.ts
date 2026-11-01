@@ -51,7 +51,7 @@ describe('setUpFirstShop', () => {
     expect(questions.asked).toHaveLength(4);
     // The password question and the last line name the username as it will be typed at sign-in.
     expect(questions.asked[2]).toContain('"kenly"');
-    expect(said).toContain('Set up Kenly Lucena. On a register, sign in as "kenly" with that password.');
+    expect(said).toContain('Set up Kenly Lucena. On any machine, sign in as "kenly" with that password.');
   });
 
   it('offers admin as the username, and says so, when none is typed', async () => {

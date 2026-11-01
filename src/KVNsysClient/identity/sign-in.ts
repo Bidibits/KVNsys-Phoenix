@@ -1,4 +1,4 @@
-import { SignInPath, SignInReply, type RegisterIdentity, type SessionPass, type SignedInUser } from '@kvnsys/wire';
+import { SignInPath, SignInReply, type MachineIdentity, type SessionPass, type SignedInUser } from '@kvnsys/wire';
 import { describeTransportFailure, type TransportProblem } from '../connection/failures.js';
 import { requestJson, type ServerPin } from '../connection/secure-request.js';
 
@@ -15,7 +15,7 @@ const DefaultTimeoutMs = 5000;
 /**
  * Asks the server whether this username and password are right.
  *
- * The password is only ever sent to a server this register already trusts, one whose certificate
+ * The password is only ever sent to a server this machine already trusts, one whose certificate
  * it has pinned. Never on a first contact, and never to a server presenting any other certificate:
  * that's refused during the handshake, before the password leaves this PC.
  */
@@ -23,16 +23,16 @@ export async function signIn(
   address: string,
   credentials: { username: string; password: string },
   /**
-   * `register`: this PC, so the sign-in is at a register (readThisPc). Left out, it's at none.
+   * `machine`: this PC, so the sign-in is at a machine (readThisPc). Left out, it's at none.
    * `serverPassword`: for a server that has one.
    */
-  options: { pin: ServerPin | null; timeoutMs?: number; register?: RegisterIdentity | null; serverPassword?: string | null },
+  options: { pin: ServerPin | null; timeoutMs?: number; machine?: MachineIdentity | null; serverPassword?: string | null },
 ): Promise<SignInResult> {
   if (!options.pin) {
     return {
       ok: false,
       reason: 'not-connected',
-      message: "This register hasn't connected to that server securely yet, so it won't send a password there. Connect first.",
+      message: "This machine hasn't connected to that server securely yet, so it won't send a password there. Connect first.",
     };
   }
   if (!credentials.username.trim() || !credentials.password) {
@@ -44,7 +44,7 @@ export async function signIn(
   try {
     const body = {
       ...credentials,
-      ...(options.register ? { register: options.register } : {}),
+      ...(options.machine ? { machine: options.machine } : {}),
       ...(options.serverPassword ? { serverPassword: options.serverPassword } : {}),
     };
     response = await requestJson({ address, path: SignInPath, method: 'POST', body, pin: options.pin, timeoutMs });

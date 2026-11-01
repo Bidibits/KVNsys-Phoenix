@@ -85,7 +85,7 @@ describeWithDatabase('the audit log in the real app', () => {
     expect(await headingsOf(table())).toEqual(['At', 'By', 'Machine', 'Shop', 'Table', 'Record', 'Column', 'Change', 'Source', 'Before', 'After']);
     const rows = await rowsShown();
     // This PC recorded itself when the administrator signed in, so that's the newest.
-    expect(rows[0]!.slice(3, 5)).toEqual(['Machines', expect.stringMatching(/^New register/)]);
+    expect(rows[0]!.slice(3, 5)).toEqual(['Machines', expect.stringMatching(/^New machine/)]);
     // The product's last save, its columns in the form's order; setting the shop up was KVNsys's.
     expect(rows.filter((row) => row[RecordAt] === 'Stand fan (PRD-0100)').slice(0, 2)).toEqual([
       ['System Administrator (admin)', 'Server', 'Kenlyn', 'Products', 'Stand fan (PRD-0100)', 'Category', 'Updated', 'Manual', '—', 'Appliances'],

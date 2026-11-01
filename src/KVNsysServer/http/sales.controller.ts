@@ -17,7 +17,7 @@ import {
   type Product,
   type ProductCatalog,
   type Receipt,
-  type RegisterBook,
+  type MachineBook,
   type SalesJournal,
   type ShiftBook,
   type ShopDirectory,
@@ -49,7 +49,7 @@ export interface SalesOperationParts {
   catalog: ProductCatalog;
   shops: ShopDirectory;
   accounts: UserAccounts;
-  registers: RegisterBook;
+  machines: MachineBook;
   shifts: ShiftBook;
   authorizer: Authorizer;
   /** The PC this server runs on, which says which shop it sells at. */
@@ -114,7 +114,7 @@ export class SalesController {
   @Post()
   @HttpCode(201)
   async record(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<ReceiptReply> {
-    const { parts, shop, person, register } = await this.allow(authorization, Accesses.SalesSell);
+    const { parts, shop, person, machine } = await this.allow(authorization, Accesses.SalesSell);
     const fields = SaleFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
     const { lines, discount } = fields.data;
@@ -126,7 +126,7 @@ export class SalesController {
     const shift = await parts.shifts.current(person.id, shop.id);
     if (!shift) throw problem(409, NoShiftYet);
 
-    // Priced again from the catalog as it is now, never from what the register says a price is.
+    // Priced again from the catalog as it is now, never from what the machine says a price is.
     const products = new Map<string, Product>();
     for (const id of new Set(lines.map((line) => line.productId))) {
       const product = Uuid.test(id) ? await parts.catalog.get(id) : null;
@@ -143,11 +143,11 @@ export class SalesController {
             'Check the cart, then take payment again.',
         );
       }
-      // At the register signed in at; the shop is always the server's own.
-      const lineage = { userId: person.id, machineId: register?.machineId ?? null, locationId: shop.id };
+      // At the machine signed in at; the shop is always the server's own.
+      const lineage = { userId: person.id, machineId: machine?.machineId ?? null, locationId: shop.id };
       return parts.journal.record(sale, takeCash(sale.total, tendered), shop.id, lineage, shift.id);
     });
-    return { receipt: receiptOnWire(receipt), shop, cashier: person.displayName, register: register?.name ?? null };
+    return { receipt: receiptOnWire(receipt), shop, cashier: person.displayName, machine: machine?.name ?? null };
   }
 
   /** A day's receipts at this shop, oldest first, and their totals. Today, by the shop's clock, when no date is given. */
@@ -181,8 +181,8 @@ export class SalesController {
     const receipt = await parts.journal.get(id);
     if (!receipt || receipt.locationId !== shop.id) throw problem(404, "That receipt isn't one this shop gave.");
     const names = await namesOf(parts.accounts, [receipt.createdByUser]);
-    const register = receipt.machineId ? await parts.registers.get(receipt.machineId) : null;
-    return { receipt: receiptOnWire(receipt), shop, cashier: names.get(receipt.createdByUser) ?? null, register: register?.name ?? null };
+    const machine = receipt.machineId ? await parts.machines.get(receipt.machineId) : null;
+    return { receipt: receiptOnWire(receipt), shop, cashier: names.get(receipt.createdByUser) ?? null, machine: machine?.name ?? null };
   }
 
   /** The pass and the right, checked before anything else is answered; then the server's own shop. */
@@ -193,7 +193,7 @@ export class SalesController {
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
     const shop = await parts.shops.serverShop(parts.server, serverMachineCode(FirstShopCode));
     if (!shop) throw problem(503, NoShop);
-    return { parts, shop, person: verdict.person, register: verdict.register };
+    return { parts, shop, person: verdict.person, machine: verdict.machine };
   }
 }
 

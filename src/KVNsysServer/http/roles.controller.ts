@@ -38,10 +38,10 @@ export class RolesController {
   @Post()
   @HttpCode(201)
   async add(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<RoleReply> {
-    const { roles, person, register } = await this.allow(authorization, Accesses.RolesManage);
+    const { roles, person, machine } = await this.allow(authorization, Accesses.RolesManage);
     const fields = RoleFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
-    return { role: await saving(async () => roles.create(checkRoleDetails(fields.data), lineageOf(person, register))) };
+    return { role: await saving(async () => roles.create(checkRoleDetails(fields.data), lineageOf(person, machine))) };
   }
 
   @Put(':id')
@@ -50,11 +50,11 @@ export class RolesController {
     @Param('id') id: string,
     @Body() body: unknown,
   ): Promise<RoleReply> {
-    const { roles, sessions, person, register } = await this.allow(authorization, Accesses.RolesManage);
+    const { roles, sessions, person, machine } = await this.allow(authorization, Accesses.RolesManage);
     const fields = RoleFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
-    const role = await saving(async () => roles.update(id, checkRoleDetails(fields.data), lineageOf(person, register)));
-    // Switched off: everyone with this role is signed out now, on every register, not at their next request.
+    const role = await saving(async () => roles.update(id, checkRoleDetails(fields.data), lineageOf(person, machine)));
+    // Switched off: everyone with this role is signed out now, on every machine, not at their next request.
     if (role.status !== 'Active') for (const userId of await roles.memberIds(role.id)) sessions.cancelFor(userId);
     return { role };
   }
@@ -65,6 +65,6 @@ export class RolesController {
     if (!parts) throw problem(503, NoDatabase);
     const verdict = await parts.authorizer.check(bearerToken(authorization), access);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
-    return { ...parts, person: verdict.person, register: verdict.register };
+    return { ...parts, person: verdict.person, machine: verdict.machine };
   }
 }

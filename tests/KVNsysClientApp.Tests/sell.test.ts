@@ -185,6 +185,7 @@ describeWithDatabase('selling from the real app: scan, discount, pay, receipt', 
     await receipt.waitFor();
     expect(await receipt.getByText('Receipt HQ-000001').isVisible()).toBe(true);
     expect(await receipt.getByText('Cashier: Ana Cruz').isVisible()).toBe(true);
+    expect(await receipt.getByText(/^Machine: New machine \(/).isVisible()).toBe(true);
     expect(await receipt.getByText('Lola Cruz · ID OSCA-12345').isVisible()).toBe(true);
     expect(await window.getByLabel('Change to give').textContent()).toBe('₱8.80');
 

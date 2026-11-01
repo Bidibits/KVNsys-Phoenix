@@ -16,8 +16,8 @@ export class SessionController {
       throw new HttpException({ signedIn: false, message: token ? this.sessions.whyEnded(token) : SignInEnded } satisfies SessionReply, 401);
     }
     const { username, displayName, roleCode, rights } = session.user;
-    const register = session.register && { code: session.register.code, name: session.register.name };
-    return { signedIn: true, user: { username, displayName, roleCode, rights, register }, expiresAt: session.expiresAt.toISOString() };
+    const machine = session.machine && { code: session.machine.code, name: session.machine.name };
+    return { signedIn: true, user: { username, displayName, roleCode, rights, machine }, expiresAt: session.expiresAt.toISOString() };
   }
 
   /** Cancels the pass. Always 200: a pass that's already gone is just as signed out. */

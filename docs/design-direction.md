@@ -39,7 +39,7 @@ Every screen is swapped into that area.
 **In Beta:** the title bar has two rows, holding:
 - **Navigation:** Back, Forward and Home.
 - **Search:** a search box that filters the screen you're on, plus Refresh and Advance Search.
-- **Who and where:** who's signed in (full name and username) and which register (register name
+- **Who and where:** who's signed in (full name and username) and which machine (machine name
   and computer name).
 - **The rest:** the screen's title, a clock and the date, Settings, Information, Log Out, a pin
   that keeps the window on top, and the window buttons.
@@ -64,7 +64,7 @@ Capstone 3Re, counting Log Out). A button you have no right to is switched off.
 
 **In Phoenix:**
 - Home shows one tile per area. At launch: Sell, Shifts, Sales, Products, People and
-  Registers. Stock, Settings and the rest join as they're built. (Sell, Products, Stock, Users and
+  Machines. Stock, Settings and the rest join as they're built. (Sell, Products, Stock, Users and
   Roles are there now.)
 - A tile you may not use is greyed out, with a note saying why.
 - The server still checks every request. The greyed tile only saves a pointless click.
@@ -116,7 +116,7 @@ heading, the row stripes, and the sort order. Settings is a page with a section 
 left.
 
 **In Phoenix:** the same, stored on the server for each person, so the settings follow them to
-whichever register they sign in at. Release did this too.
+whichever machine they sign in at. Release did this too.
 
 ### 8. Notices, not message boxes
 
@@ -156,7 +156,7 @@ calm. "Modern" changes how it feels, not what it is:
 | Forms | A side panel or a pop-up window | A panel that slides in from the right while the list stays visible |
 | Notices | Rounded pop-up notices, in the middle of the screen unless told otherwise | Pop-up notices in a corner, and themed dialogs for decisions |
 | Movement | None | A little: the short fades and slides shadcn's parts come with, nothing bouncy |
-| Size | One size | **Two:** back-office lists compact, so many rows fit, as in Beta; the selling screen large, with big buttons and type, for speed (and for fingers, if the registers have touch screens) |
+| Size | One size | **Two:** back-office lists compact, so many rows fit, as in Beta; the selling screen large, with big buttons and type, for speed (and for fingers, if the machines have touch screens) |
 
 On the selling screen the keyboard comes first: the barcode box always has the cursor, and a
 scan or Enter adds the item. The keys for payment and discount get decided with the cashiers.
@@ -179,14 +179,14 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Log in (`logInLocalDatabase`, `logInConnectToServer`) | Sign in, against a local database or a server | ✅ Connect to the shop's server over secure HTTPS, sign in, sessions. Registers always go through the server: no local-database mode, by design. |
+| Log in (`logInLocalDatabase`, `logInConnectToServer`) | Sign in, against a local database or a server | ✅ Connect to the shop's server over secure HTTPS, sign in, sessions. Machines always go through the server: no local-database mode, by design. |
 | Users (list, form, search) | Accounts and their roles | ✅ A users list and form, to create the cashiers' accounts (2026-10-19) · ⏭ search |
 | Roles (list, form, search) | Roles and the rights each holds | ✅ Only the Administrator is made at install (decided 2026-10-19) · ✅ making and editing roles and their rights, so a shop can make a cashier role (2026-10-19) · ⏭ search |
-| Terminals (list, form, search) | The registers | ✅ Each register recorded by itself the first time someone signs in at it, plus a list to name them or switch them off (2026-10-24) · ⏭ search |
-| Configurations | This PC's shop and register | ✅ It remembers its server · ⏭ a settings page |
+| Terminals (list, form, search) | The machines | ✅ Each machine recorded by itself the first time someone signs in at it, plus a list to name them or switch them off (2026-10-24) · ⏭ search |
+| Configurations | This PC's shop and machine | ✅ It remembers its server · ⏭ a settings page |
 | Locations (list, form, search) | The shops | ✅ The first shop is made at install · ⏭ screens, when a second branch joins |
 | Storages (list, form, search) | Places stock is kept inside a shop | ⏭ |
-| Server Manager | Start or stop the server, change its port, see connected registers | ✅ The server sets up its own database and first shop, and its port is a setting · ✅ the server's dashboard, from a desktop icon on the server PC: turn the server on and off, start it with the PC or not (not, after install), turn it off with the dashboard or not (not, unless ticked), who's connected and disconnecting them, the server password on or off and changing it (2026-10-27) · ⏭ changing the port from the dashboard, and showing the logs |
+| Server Manager | Start or stop the server, change its port, see connected machines | ✅ The server sets up its own database and first shop, and its port is a setting · ✅ the server's dashboard, from a desktop icon on the server PC: turn the server on and off, start it with the PC or not (not, after install), turn it off with the dashboard or not (not, unless ticked), who's connected and disconnecting them, the server password on or off and changing it (2026-10-27) · ⏭ changing the port from the dashboard, and showing the logs |
 
 ### Selling and the day
 
@@ -224,7 +224,7 @@ Key:
 
 | Feature | Phoenix |
 |---|---|
-| One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · ✅ the register's name, Back and Forward, and the search box (2026-10-24) |
+| One window with the top bar, Home tiles, and Back, Forward and Home | ✅ The frame: the top bar (Home, the screen's name, who's signed in, Sign out) and Home's tiles, greyed out without the right (2026-10-18) · ✅ the machine's name, Back and Forward, and the search box (2026-10-24) |
 | A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18), the form panel from the right (2026-10-19), and a simple search box over every list (2026-10-24) · ✅ every column and who made and last updated each record, in a grid like Beta's: columns keep their width and scroll sideways, a heading sorts (2026-10-30) · 🟢 building them from one description · ⏭ Advance Search |
 | Pop-up notices and themed dialogs | ✅ "Saved …" pops up and goes on its own; a themed dialog asks before throwing work away (2026-10-24) |
 | Light theme (Standard) | ✅ (2026-10-18) · ⏭ dark theme |
@@ -235,7 +235,7 @@ Key:
 
 - A nightly backup, and one restore actually tested
 - KVNsys Server installed from one setup file and starting with Windows (being built)
-- The register app installed from one setup file (✅)
+- The app installed from one setup file (✅)
 
 ---
 

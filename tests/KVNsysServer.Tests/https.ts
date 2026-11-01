@@ -1,7 +1,7 @@
 import { request } from 'node:https';
 
 /**
- * An HTTPS request that trusts only the given certificate, the way a register that has pinned
+ * An HTTPS request that trusts only the given certificate, the way a machine that has pinned
  * the server does. Resolves with the status and the parsed body.
  */
 export function httpsJson(

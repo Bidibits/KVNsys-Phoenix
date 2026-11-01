@@ -7,7 +7,7 @@ export interface UserForSignIn {
   lastName: string;
   passwordHash: string;
   status: string;
-  /** The role's rights come along so a register can grey out what this person can't open. */
+  /** The role's rights come along so the app can grey out what this person can't open. */
   role: { code: string; status: string; accesses: string[] };
 }
 

@@ -10,17 +10,18 @@ import { cellsUnder, headingsOf, HistoryHeadings } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
-const firstName = `New register (${hostname()})`.slice(0, 60);
+const firstName = `New machine (${hostname()})`.slice(0, 60);
 /** A date and time by the shop's clock, as the lists show it: "Oct 30, 2026, 2:16 PM". */
 const ShownTime = /^[A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2}\s[AP]M$/;
 
 /** Set KVNSYS_SCREENSHOTS to a folder to keep a picture of each step, for a person to look at. */
 async function picture(window: Page, name: string) {
   const folder = process.env.KVNSYS_SCREENSHOTS;
-  if (folder) await window.screenshot({ path: join(folder, `${name}.png`) });
+  // Animations finished first, so a panel sliding in is pictured where it stops.
+  if (folder) await window.screenshot({ path: join(folder, `${name}.png`), animations: 'disabled' });
 }
 
-describeWithDatabase('registers from the real app', () => {
+describeWithDatabase('machines from the real app', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
   let server: Awaited<ReturnType<typeof createServer>>;
@@ -67,44 +68,47 @@ describeWithDatabase('registers from the real app', () => {
   const signedIn = () => window.getByLabel('Signed in').textContent();
   const rowsShown = () =>
     window
-      .getByRole('table', { name: 'Registers' })
+      .getByRole('table', { name: 'Machines' })
       .locator('tbody tr')
       .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(0, 3).map((cell) => cell.textContent ?? '')));
 
-  it('records this PC as a register the first time someone signs in at it, and shows it in the title bar', async () => {
+  it('records this PC as a machine the first time someone signs in at it, and shows it in the title bar', async () => {
     await signIn();
     await window.getByRole('navigation', { name: 'Areas' }).waitFor();
     expect(await signedIn()).toBe(`System Administratoradmin · ${firstName}`);
-    expect(await db.machine.findFirstOrThrow({ where: { code: 'HQ-R01' } })).toMatchObject({ name: firstName, machineName: hostname() });
+    expect(await db.machine.findFirstOrThrow({ where: { code: 'HQ-M01' } })).toMatchObject({ name: firstName, machineName: hostname() });
   });
 
-  it('lists the registers, the server PC first, and names this one', async () => {
-    await window.getByRole('button', { name: /^Registers/ }).click();
-    await window.getByRole('table', { name: 'Registers' }).waitFor();
+  it('lists the machines, the server PC first, and names this one', async () => {
+    await picture(window, 'home');
+    await window.getByRole('button', { name: /^Machines/ }).click();
+    await window.getByRole('table', { name: 'Machines' }).waitFor();
     expect(await rowsShown()).toEqual([
       ['HQ-SRV', 'Serverthe server PC', 'TEST-SERVER'],
-      ['HQ-R01', firstName, hostname()],
+      ['HQ-M01', firstName, hostname()],
     ]);
     await window.getByRole('button', { name: `Edit ${firstName}` }).click();
-    const form = window.getByRole('dialog', { name: 'Edit register' });
+    const form = window.getByRole('dialog', { name: 'Edit machine' });
+    await form.waitFor();
+    await picture(window, 'machine-edit');
     await form.getByLabel('Name', { exact: true }).fill('Counter 1');
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Counter 1.').waitFor();
-    expect((await rowsShown())[1]).toEqual(['HQ-R01', 'Counter 1', hostname()]);
+    expect((await rowsShown())[1]).toEqual(['HQ-M01', 'Counter 1', hostname()]);
   });
 
-  const table = () => window.getByRole('table', { name: 'Registers' });
+  const table = () => window.getByRole('table', { name: 'Machines' });
 
   it('shows every column of the machines table, then who made each and who last changed it, when, on which machine and at which shop', async () => {
     await picture(window, 'machines');
     expect(await headingsOf(table())).toEqual(['Code', 'Name', 'Computer name', 'Hardware id', 'Shop', 'Status', 'Description', ...HistoryHeadings, 'Change']);
-    const hardwareId = (await db.machine.findFirstOrThrow({ where: { code: 'HQ-R01' } })).machineUuid;
+    const hardwareId = (await db.machine.findFirstOrThrow({ where: { code: 'HQ-M01' } })).machineUuid;
     const who = ['Updated by', 'Updated machine', 'Updated shop', 'Created by', 'Created machine', 'Created shop'];
     expect(await cellsUnder(table(), ['Code', 'Hardware id', 'Shop', 'Status', 'Description', ...who])).toEqual([
       // Set up by KVNsys itself, on the server PC, and never changed.
       ['HQ-SRV', 'test-hardware-id', 'Head Office', 'Active', '—', '—', '—', '—', 'KVNsys itself', 'Server', 'Head Office'],
       // Recorded when the administrator first signed in at it, then renamed by them, at it.
-      ['HQ-R01', hardwareId, 'Head Office', 'Active', '—', 'System Administrator (admin)', 'Counter 1', 'Head Office', 'System Administrator (admin)', '—', 'Head Office'],
+      ['HQ-M01', hardwareId, 'Head Office', 'Active', '—', 'System Administrator (admin)', 'Counter 1', 'Head Office', 'System Administrator (admin)', '—', 'Head Office'],
     ]);
     const [server, counter] = await cellsUnder(table(), ['Updated at', 'Created at']);
     expect(server).toEqual(['—', expect.stringMatching(ShownTime)]);
@@ -114,13 +118,13 @@ describeWithDatabase('registers from the real app', () => {
   it('sorts by a heading, then the other way, then back to the server PC first', async () => {
     const codes = async () => (await cellsUnder(table(), ['Code'])).map(([code]) => code);
     const heading = () => table().locator('th', { hasText: 'Code' });
-    expect(await codes()).toEqual(['HQ-SRV', 'HQ-R01']);
+    expect(await codes()).toEqual(['HQ-SRV', 'HQ-M01']);
     await heading().getByRole('button').click();
-    expect([await heading().getAttribute('aria-sort'), await codes()]).toEqual(['ascending', ['HQ-R01', 'HQ-SRV']]);
+    expect([await heading().getAttribute('aria-sort'), await codes()]).toEqual(['ascending', ['HQ-M01', 'HQ-SRV']]);
     await heading().getByRole('button').click();
-    expect([await heading().getAttribute('aria-sort'), await codes()]).toEqual(['descending', ['HQ-SRV', 'HQ-R01']]);
+    expect([await heading().getAttribute('aria-sort'), await codes()]).toEqual(['descending', ['HQ-SRV', 'HQ-M01']]);
     await heading().getByRole('button').click();
-    expect([await heading().getAttribute('aria-sort'), await codes()]).toEqual(['none', ['HQ-SRV', 'HQ-R01']]);
+    expect([await heading().getAttribute('aria-sort'), await codes()]).toEqual(['none', ['HQ-SRV', 'HQ-M01']]);
   });
 
   it('scrolls sideways inside its box, never the window, and keeps the Edit buttons in view at its right-hand edge', async () => {
@@ -144,7 +148,7 @@ describeWithDatabase('registers from the real app', () => {
 
   it('lets the server PC be renamed, never switched off', async () => {
     await window.getByRole('button', { name: 'Edit Server' }).click();
-    const form = window.getByRole('dialog', { name: 'Edit register' });
+    const form = window.getByRole('dialog', { name: 'Edit machine' });
     expect(await form.getByLabel('Status').isDisabled()).toBe(true);
     expect(await form.getByText('The server PC stays switched on. Only its name can change.').isVisible()).toBe(true);
     await window.keyboard.press('Escape');
@@ -158,16 +162,16 @@ describeWithDatabase('registers from the real app', () => {
     expect(await signedIn()).toBe('System Administratoradmin · Counter 1');
   });
 
-  it('switching this register off signs it out at once, and nobody can sign in at it after', async () => {
-    await window.getByRole('button', { name: /^Registers/ }).click();
+  it('switching this machine off signs it out at once, and nobody can sign in at it after', async () => {
+    await window.getByRole('button', { name: /^Machines/ }).click();
     await window.getByRole('button', { name: 'Edit Counter 1' }).click();
-    const form = window.getByRole('dialog', { name: 'Edit register' });
+    const form = window.getByRole('dialog', { name: 'Edit machine' });
     await form.getByLabel('Status').selectOption('Inactive');
     await form.getByRole('button', { name: 'Save' }).click();
     // The save itself was allowed; the list asked for after it finds the sign-in ended.
     await window.getByText('Your sign-in has ended. Sign in again.').waitFor();
     await window.getByRole('button', { name: 'Sign in again' }).click();
     await signIn();
-    await window.getByText('This register, Counter 1, is switched off. Ask a manager.').waitFor();
+    await window.getByText('This machine, Counter 1, is switched off. Ask a manager.').waitFor();
   });
 });

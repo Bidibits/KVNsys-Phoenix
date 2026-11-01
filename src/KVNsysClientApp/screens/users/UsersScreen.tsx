@@ -41,7 +41,7 @@ export function UsersScreen({ user, search, onSignInAgain }: { user: SignedInUse
       .catch((error: unknown): UserListResult => ({
         ok: false,
         reason: 'unreachable',
-        message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
       }))
       .then((answer) => {
         if (showing) setResult(answer);

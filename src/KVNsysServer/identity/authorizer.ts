@@ -1,9 +1,9 @@
 import { AccessDescriptions, maySignIn, UserDirectory, type AccessName } from '@kvnsys/core';
-import { SignInEnded, Sessions, type SessionRegister } from './sessions.js';
+import { SignInEnded, Sessions, type SessionMachine } from './sessions.js';
 import { SwitchedOff, type SignedInPerson } from './sign-in.js';
 
 export type Authorization =
-  | { ok: true; person: SignedInPerson; register: SessionRegister | null }
+  | { ok: true; person: SignedInPerson; machine: SessionMachine | null }
   /** 401: sign in again. 403: signed in, but the role may not. */
   | { ok: false; status: 401 | 403; message: string };
 
@@ -36,6 +36,6 @@ export class Authorizer {
     }
     const lacking = (typeof access === 'string' ? [access] : access).find((needed) => !standing.role.accesses.includes(needed));
     if (lacking) return { ok: false, status: 403, message: lacksRight(lacking) };
-    return { ok: true, person: session.user, register: session.register };
+    return { ok: true, person: session.user, machine: session.machine };
   }
 }

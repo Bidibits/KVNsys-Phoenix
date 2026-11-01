@@ -8,7 +8,7 @@ import { _electron as electron } from 'playwright-core';
 // No trailing slash: on Windows a path ending in \ before the closing quote reads as an escaped
 // quote, and Electron is handed a broken path. That cost a debugging session.
 const appDir = fileURLToPath(new URL('../../src/KVNsysClientApp', import.meta.url));
-// The app's own copy of Electron: what a register would run.
+// The app's own copy of Electron: what a machine would run.
 const electronPath = createRequire(join(appDir, 'package.json'))('electron') as string;
 
 /** A settings folder that belongs to one test, so tests never touch this PC's real settings. */

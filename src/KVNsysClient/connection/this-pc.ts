@@ -1,15 +1,15 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { hostname } from 'node:os';
-import type { RegisterIdentity } from '@kvnsys/wire';
+import type { MachineIdentity } from '@kvnsys/wire';
 
 /**
- * Who this PC is, for the server to know which register a sign-in is at: its hardware id, which
+ * Who this PC is, for the server to know which machine a sign-in is at: its hardware id, which
  * survives renaming it (Windows' MachineGuid, or /etc/machine-id on Linux), and its computer name.
- * Null when the id can't be read: that PC then signs in at no register. Reinstalling Windows
- * changes the id, and the PC is then recorded as a new register.
+ * Null when the id can't be read: that PC then signs in at no machine. Reinstalling Windows
+ * changes the id, and the PC is then recorded as a new machine.
  */
-export function readThisPc(): RegisterIdentity | null {
+export function readThisPc(): MachineIdentity | null {
   const hardwareId = readHardwareId();
   return hardwareId ? { hardwareId, computerName: hostname() } : null;
 }

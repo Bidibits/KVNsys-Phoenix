@@ -7,7 +7,7 @@
 <service>
   <id>kvnsys-server</id>
   <name>KVNsys Server</name>
-  <description>Serves KVNsys POS &amp; Inventory to the shop's registers. Turned on and off from the KVNsys Server dashboard, where it can also be set to start with Windows.</description>
+  <description>Serves KVNsys POS &amp; Inventory to the shop's machines. Turned on and off from the KVNsys Server dashboard, where it can also be set to start with Windows.</description>
   <executable>%BASE%\KVNsys Server.exe</executable>
   <workingdirectory>%BASE%</workingdirectory>
   <startmode>Manual</startmode>

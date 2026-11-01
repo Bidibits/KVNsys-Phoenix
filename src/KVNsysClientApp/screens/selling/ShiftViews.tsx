@@ -16,7 +16,7 @@ export function StartShift({ onStarted, onSignInAgain }: { onStarted: (shift: Sh
       (error: unknown): ShiftResult => ({
         ok: false,
         reason: 'unreachable',
-        message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
       }),
     );
     setStarting(false);

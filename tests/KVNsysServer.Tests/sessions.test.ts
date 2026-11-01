@@ -60,7 +60,7 @@ describe('Sessions', () => {
     expect(sessions.find(kept)).not.toBeNull();
   });
 
-  it("ends every pass one person holds, on every register, and leaves everyone else's", () => {
+  it("ends every pass one person holds, on every machine, and leaves everyone else's", () => {
     const { sessions } = sessionsWithClock();
     const first = sessions.start(ana).token;
     const second = sessions.start(ana).token;
@@ -83,11 +83,11 @@ describe('Sessions', () => {
 
   it("lists who's signed in, oldest first, without any pass, and forgets passes that have run out", () => {
     const { sessions, advance } = sessionsWithClock();
-    const first = sessions.start(ana, { machineId: 'm1', locationId: 'l1', code: 'HQ-R01', name: 'Counter 1' });
+    const first = sessions.start(ana, { machineId: 'm1', locationId: 'l1', code: 'HQ-M01', name: 'Counter 1' });
     advance(Hour);
     sessions.start({ ...ana, id: '0192f3c1-0000-7000-8000-000000000002', username: 'ben' });
     const listed = sessions.list();
-    expect(listed.map((session) => [session.user.username, session.register?.name ?? null])).toEqual([
+    expect(listed.map((session) => [session.user.username, session.machine?.name ?? null])).toEqual([
       ['ana', 'Counter 1'],
       ['ben', null],
     ]);
@@ -97,7 +97,7 @@ describe('Sessions', () => {
     expect(sessions.list().map((session) => session.user.username)).toEqual(['ben']);
   });
 
-  it('disconnects one sign-in by its id, and tells that register why at its next request', () => {
+  it('disconnects one sign-in by its id, and tells that machine why at its next request', () => {
     const { sessions } = sessionsWithClock();
     const gone = sessions.start(ana).token;
     const kept = sessions.start(ana).token;

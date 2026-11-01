@@ -128,7 +128,7 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
     const { pass, options } = as('ana');
     await db.product.update({ where: { id: sardines.id }, data: { retailPrice: '30.00' } });
     try {
-      // The register still holds the old price.
+      // The machine still holds the old price.
       expect(await recordSale(address, pass, { cart: [{ product: sardines, quantity: 2 }], discount: null, tendered: '100' }, options)).toEqual({
         ok: false,
         reason: 'refused',
@@ -140,7 +140,7 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
     }
   });
 
-  it("never takes the register's word for a price: a total sent low is refused", async () => {
+  it("never takes the machine's word for a price: a total sent low is refused", async () => {
     const response = await httpsJson(`${address}${SalesPath}`, {
       ca: certificate.cert,
       method: 'POST',

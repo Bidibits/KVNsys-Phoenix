@@ -117,7 +117,7 @@ describe("the dashboard's channel to the running server", () => {
     for (const address of outside) expect(await answersAt(address, control.port)).toBe(false);
   });
 
-  it('turns the server password on, changes it and turns it off; registers see it in hello and at join', async () => {
+  it('turns the server password on, changes it and turns it off; machines see it in hello and at join', async () => {
     const hello = async () => (await httpsJson(base + HelloPath, { ca: certificate.cert })).body as { serverPassword: boolean };
     const join = (serverPassword?: string) => httpsJson(base + JoinPath, { ca: certificate.cert, method: 'POST', body: { serverPassword } });
 
@@ -182,7 +182,7 @@ describe('the dashboard, when the server is not there to answer', () => {
     }
   });
 
-  it('reads the port registers use from the settings file, or the usual one', () => {
+  it('reads the port machines use from the settings file, or the usual one', () => {
     expect(configuredPort(dataDir)).toBe(9000);
     writeFileSync(join(dataDir, 'server.env'), 'KVNSYS_PORT=9107\n');
     expect(configuredPort(dataDir)).toBe(9107);
@@ -233,21 +233,21 @@ describeWithDatabase("who's connected, disconnecting, and signing in with the se
     const response = await httpsJson(base + SignInPath, {
       ca: certificate.cert,
       method: 'POST',
-      body: { username: 'admin', password: AdminPassword, register: { hardwareId: `hw-${computerName}`, computerName }, ...extra },
+      body: { username: 'admin', password: AdminPassword, machine: { hardwareId: `hw-${computerName}`, computerName }, ...extra },
     });
     return response as { status: number; body: { signedIn: boolean; message?: string; serverPassword?: true; session?: { token: string } } };
   }
   const sessionOf = (token: string) => httpsJson(base + SessionPath, { ca: certificate.cert, headers: { Authorization: `Bearer ${token}` } });
 
-  it('lists each sign-in with its register, never its pass, and disconnects one', async () => {
+  it('lists each sign-in with its machine, never its pass, and disconnects one', async () => {
     const front = (await signIn('FRONT-PC')).body.session!.token;
     const back = (await signIn('BACK-PC')).body.session!.token;
 
     const status = await serverStatus(dataDir);
     if (!status.ok) throw new Error(status.message);
-    expect(status.value.connected.map((person) => [person.username, person.register?.name])).toEqual([
-      ['admin', 'New register (FRONT-PC)'],
-      ['admin', 'New register (BACK-PC)'],
+    expect(status.value.connected.map((person) => [person.username, person.machine?.name])).toEqual([
+      ['admin', 'New machine (FRONT-PC)'],
+      ['admin', 'New machine (BACK-PC)'],
     ]);
     expect(JSON.stringify(status.value)).not.toContain(front);
 

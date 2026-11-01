@@ -7,7 +7,7 @@ export type TrustedServers = Record<string, ServerPin & { trustedAt: string }>;
 export type TrustRead = { ok: true; servers: TrustedServers } | { ok: false; message: string };
 
 /**
- * The servers this register trusts, one pinned certificate each, in their own file.
+ * The servers this machine trusts, one pinned certificate each, in their own file.
  *
  * Stricter than the settings file, on purpose. A missing file means "trusts nobody yet", which is
  * a first start. A damaged file is NOT treated the same way: quietly forgetting the pins would let
@@ -51,8 +51,8 @@ export class TrustFile {
 
   private damaged(): string {
     return (
-      `This register's list of trusted servers (${this.path}) is damaged, so it won't connect to any ` +
-      'server until IT checks it. Deleting the file resets this register to trust the next server it connects to.'
+      `This machine's list of trusted servers (${this.path}) is damaged, so it won't connect to any ` +
+      'server until IT checks it. Deleting the file resets this machine to trust the next server it connects to.'
     );
   }
 }

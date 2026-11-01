@@ -10,7 +10,7 @@ export interface SignedInPerson {
   displayName: string;
   roleCode: string;
   /**
-   * The role's rights as they were at sign-in, for the register to grey out what this person
+   * The role's rights as they were at sign-in, for the app to grey out what this person
    * can't open. The server never trusts this copy: every request re-reads the real ones.
    */
   rights: string[];

@@ -24,7 +24,7 @@ export function loadServerSettings(dataDir: string, env: NodeJS.ProcessEnv = pro
 
 /**
  * Brings the server's files over from where an earlier version kept them, the first time it runs
- * from its new folder, so moving folders doesn't cost it its certificate (every register would then
+ * from its new folder, so moving folders doesn't cost it its certificate (every machine would then
  * refuse it) or its settings. Only what the new folder lacks is copied, and the originals stay
  * where they were, so going back to the earlier version still works. Returns what it copied.
  */

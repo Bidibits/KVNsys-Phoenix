@@ -23,7 +23,7 @@ describe('ServerPassword', () => {
 
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-  it('starts off, so a new install lets any register connect', async () => {
+  it('starts off, so a new install lets any machine connect', async () => {
     for (const password of [new ServerPassword(dir, hasher), new ServerPassword(null, hasher)]) {
       expect(password.state()).toBe('off');
       expect(await password.check(undefined)).toBeNull();

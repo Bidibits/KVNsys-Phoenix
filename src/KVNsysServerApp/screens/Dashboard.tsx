@@ -43,7 +43,7 @@ function powerOf(view: DashboardView): Power {
 type Asking = { kind: 'turn-off'; connected: number } | { kind: 'disconnect'; person: ConnectedPerson };
 
 /**
- * KVNsys Server's dashboard: is the server on, where registers reach it, who's connected, and the
+ * KVNsys Server's dashboard: is the server on, where machines reach it, who's connected, and the
  * server password. It looks again every two seconds while it's open.
  */
 export function Dashboard() {
@@ -121,7 +121,7 @@ export function Dashboard() {
         </span>
       ),
     },
-    { heading: 'Register', wrap: true, cell: (person) => (person.register ? person.register.name : 'No register') },
+    { heading: 'Machine', wrap: true, cell: (person) => (person.machine ? person.machine.name : 'No machine') },
     { heading: 'Signed in', cell: (person) => <ShopTime at={person.since} show="time" /> },
     {
       heading: 'Disconnect',
@@ -202,7 +202,7 @@ export function Dashboard() {
 
           <div className="mt-4 grid gap-1 text-[15px]">
             <p>
-              {isOn ? 'Registers connect to' : 'When it’s on, registers connect to'}{' '}
+              {isOn ? 'Machines connect to' : 'When it’s on, machines connect to'}{' '}
               {view.addresses.length === 0 ? (
                 <span className="text-muted-foreground">this PC, once it's on the shop's network</span>
               ) : (
@@ -273,7 +273,7 @@ export function Dashboard() {
       {asking?.kind === 'turn-off' && (
         <ConfirmDialog
           title="Turn the server off?"
-          message={`${asking.connected === 1 ? 'One person is' : `${asking.connected} people are`} signed in. Their registers stop working until the server is on again, and a sale that isn't paid yet is lost.`}
+          message={`${asking.connected === 1 ? 'One person is' : `${asking.connected} people are`} signed in. Their machines stop working until the server is on again, and a sale that isn't paid yet is lost.`}
           confirmLabel="Turn it off"
           onConfirm={() => {
             setAsking(null);
@@ -285,7 +285,7 @@ export function Dashboard() {
       {asking?.kind === 'disconnect' && (
         <ConfirmDialog
           title={`Disconnect ${asking.person.displayName}?`}
-          message={`They're signed out${asking.person.register ? ` at ${asking.person.register.name}` : ''} at once, and anything they haven't finished, such as a sale not yet paid, is lost. They can sign in again.`}
+          message={`They're signed out${asking.person.machine ? ` at ${asking.person.machine.name}` : ''} at once, and anything they haven't finished, such as a sale not yet paid, is lost. They can sign in again.`}
           confirmLabel="Disconnect"
           onConfirm={() => {
             const person = asking.person;

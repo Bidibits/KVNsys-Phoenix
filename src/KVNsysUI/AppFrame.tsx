@@ -20,7 +20,7 @@ function TitleBarButton({ className, ...button }: ButtonHTMLAttributes<HTMLButto
  * The window once someone is signed in (design-direction.md, rules 1 and 2): the title bar on top,
  * and below it the one content area every screen is swapped into. The bar holds the everyday
  * actions. So far that's Back, Forward and Home, the screen's search, who's signed in and at which
- * register, and Sign out; Settings and the clock join it as they're built.
+ * machine, and Sign out; Settings and the clock join it as they're built.
  */
 export function AppFrame({
   title,
@@ -40,8 +40,8 @@ export function AppFrame({
   onForward: (() => void) | null;
   /** The box that filters the list on the screen (rule 2), or null on a screen with no list. */
   search: { value: string; onChange: (value: string) => void } | null;
-  /** Who's signed in, and at which register, if any. */
-  signedIn: { name: string; username: string; register?: string | null };
+  /** Who's signed in, and at which machine, if any. */
+  signedIn: { name: string; username: string; machine?: string | null };
   onHome: () => void;
   onSignOut: () => void;
   signingOut?: boolean;
@@ -91,7 +91,7 @@ export function AppFrame({
           <p className="min-w-0 text-right leading-tight" aria-label="Signed in">
             <span className="block truncate font-semibold">{signedIn.name}</span>
             <span className="block truncate text-sm opacity-80">
-              {signedIn.register ? `${signedIn.username} · ${signedIn.register}` : signedIn.username}
+              {signedIn.machine ? `${signedIn.username} · ${signedIn.machine}` : signedIn.username}
             </span>
           </p>
           <TitleBarButton onClick={onSignOut} disabled={signingOut}>

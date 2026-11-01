@@ -12,8 +12,8 @@ import type {
   JoinProblem,
   TransportProblem,
   ShiftResult,
-  RegisterListResult,
-  RegisterResult,
+  MachineListResult,
+  MachineResult,
   SaleResult,
   StatutoryDiscount,
   TillResult,
@@ -78,9 +78,9 @@ export interface KvnsysBridge {
   connectToServer(address: string, serverPassword?: string): Promise<ConnectReply>;
   /** The address that last connected, if this PC remembers one. */
   savedServerAddress(): Promise<string | null>;
-  /** Checks a username and password with the server this register is connected to. */
+  /** Checks a username and password with the server this machine is connected to. */
   signIn(username: string, password: string): Promise<SignInForScreens>;
-  /** Cancels this register's pass at the server, and forgets it here. Always ends signed out. */
+  /** Cancels this machine's pass at the server, and forgets it here. Always ends signed out. */
   signOut(): Promise<void>;
   /** Every entry in one of the catalogue's lists (suppliers, brands, manufacturers, categories), by name. */
   listCatalog(list: CatalogList): Promise<CatalogListResult>;
@@ -131,7 +131,7 @@ export interface KvnsysBridge {
   receiveStock(lines: DeliveryLineForm[], note: string): Promise<RecordStockResult>;
   /** Puts a product's count right, from what was counted and what KVNsys showed when it was typed. */
   countStock(form: CountForm): Promise<RecordStockResult>;
-  /** The sale being rung up on this register, priced. A new sign-in starts with an empty one. */
+  /** The sale being rung up on this machine, priced. A new sign-in starts with an empty one. */
   till(): Promise<TillResult>;
   /** Finds what was scanned or typed and adds one to the sale. */
   scanForSale(codeOrBarcode: string): Promise<TillResult>;
@@ -147,10 +147,10 @@ export interface KvnsysBridge {
   daySales(date: string | null): Promise<DaySalesResult>;
   /** One receipt as it was given. */
   receipt(id: string): Promise<SaleResult>;
-  /** The shop's registers, the server PC first, if the signed-in person may see them. */
-  listRegisters(): Promise<RegisterListResult>;
-  /** Renames a register, or switches it off or on, as typed and picked. */
-  saveRegister(id: string, form: { name: string; status: string }): Promise<RegisterResult>;
+  /** The shop's machines, the server PC first, if the signed-in person may see them. */
+  listMachines(): Promise<MachineListResult>;
+  /** Renames a machine, or switches it off or on, as typed and picked. */
+  saveMachine(id: string, form: { name: string; status: string }): Promise<MachineResult>;
   /** The newest changes in the audit log that match, if the signed-in person may see it. Empty parts mean any. */
   listAudits(filter: AuditFilterForm): Promise<AuditListResult>;
   /** The signed-in person's open shift, with its figures so far, or none. */
@@ -195,8 +195,8 @@ export const ClearSaleChannel = 'kvnsys:clear-sale';
 export const PaySaleChannel = 'kvnsys:pay-sale';
 export const DaySalesChannel = 'kvnsys:day-sales';
 export const ReceiptChannel = 'kvnsys:receipt';
-export const ListRegistersChannel = 'kvnsys:list-registers';
-export const SaveRegisterChannel = 'kvnsys:save-register';
+export const ListMachinesChannel = 'kvnsys:list-machines';
+export const SaveMachineChannel = 'kvnsys:save-machine';
 export const ListAuditsChannel = 'kvnsys:list-audits';
 export const CurrentShiftChannel = 'kvnsys:current-shift';
 export const OpenShiftChannel = 'kvnsys:open-shift';

@@ -33,11 +33,11 @@ and everything a user sees, is called KVNsys.
 - **Signing in.** Once connected, the app asks for a username and password, checks them with the
   server, and shows who signed in, or why not ("Wrong username or password." whether the password
   is wrong or the name doesn't exist, so nobody can use it to find usernames). The password only
-  ever goes to a server this register already trusts.
+  ever goes to a server this machine already trusts.
 - **Sessions.** A sign-in comes with a pass that proves who's signed in, for the requests that
   follow. It lasts 12 hours and lives only in the app's memory, on the desktop side: the screens
   never see it and it's never written to disk. Signing out hands it back and the server cancels
-  it. Restarting the server ends every session, and registers sign in again.
+  it. Restarting the server ends every session, and machines sign in again.
 - **The server sets up a new install by itself.** Given an empty database, or one that doesn't exist yet, it creates what's missing and
   asks once for the shop's name and the first administrator's username and password. No pnpm needed.
 - **Every connection is HTTPS, and the app knows its server.** The server makes its own security
@@ -48,7 +48,7 @@ and everything a user sees, is called KVNsys.
   staff type), a barcode (what the scanner reads, if it has one), a name, a price and a status.
   Prices are exact to the centavo. A code or barcode belongs to one product only, so a scan can
   never find two.
-- **Products over the network.** A signed-in register can list, find, add and change products
+- **Products over the network.** A signed-in machine can list, find, add and change products
   through the server, if the person's role allows it: a cashier can look products up, a manager
   can also add and change them. Rights are checked on every request, so taking one away, or
   switching an account off, works at once.
@@ -76,7 +76,7 @@ and everything a user sees, is called KVNsys.
   and the manufacturer, then every other field. The search box finds a product by those too:
   "appliances" finds every product under Appliances, fans included, and "hanabishi" every
   Hanabishi. Pictures are
-  made small on the register and fetched only as their rows come into view, so a long list never
+  made small on the machine and fetched only as their rows come into view, so a long list never
   pulls every picture over the network.
 - **The till charges promo and wholesale prices.** Each line is charged the cheapest price the
   customer qualifies for: the promo price while there is one, and the wholesale price once the
@@ -87,7 +87,7 @@ and everything a user sees, is called KVNsys.
   until the owners decide (decisions.md, Open). A product that doesn't take itself out of stock,
   such as a service, sells without touching the stock.
 - **Every list is a grid, like Beta's, and says who made each record and who last updated it.**
-  Products, the four catalogue lists, Users, Roles and Registers show every column of their table,
+  Products, the four catalogue lists, Users, Roles and Machines show every column of their table,
   then Updated by, Updated machine, Updated shop, Updated at, Created by, Created machine, Created
   shop and Created at. Columns keep their width; a value too long for its column is cut short and
   shows whole when the pointer rests on it; the table scrolls sideways in its own box. Clicking a
@@ -100,7 +100,7 @@ and everything a user sees, is called KVNsys.
   able to manage users, so nobody can lock the shop out, themselves included.
 - **Roles.** The Roles tile lists every role with its code, its rights in a few words and how many
   accounts have it. Someone whose role may change roles gets Add role and Edit: a name, Active or switched
-  off, and a tick box per right, grouped by area (Registers, Products, Users, Roles). Ticking
+  off, and a tick box per right, grouped by area (Machines, Products, Users, Roles). Ticking
   "change" ticks "see" with it. A change counts at once; switching a role off signs out everyone
   who has it. The Administrator always holds every right, including any a later version adds, and
   stays switched on: only its name can change.
@@ -111,7 +111,7 @@ and everything a user sees, is called KVNsys.
   reading stock is quick and the two never disagree. A line is never changed or deleted, and the
   database itself refuses to; a mistake is put right by another line. Many sales at once never
   lose a piece.
-- **Stock over the network.** A signed-in register can see the shop's stock (every product, with
+- **Stock over the network.** A signed-in machine can see the shop's stock (every product, with
   how many are here), one product's stock with its newest movements and who made each, and can
   record goods in from a supplier or put a count right with the reason, one line or a whole
   delivery at once, all saved or none. Each needs its own right: see stock, receive stock, adjust
@@ -129,10 +129,10 @@ and everything a user sees, is called KVNsys.
   off every line, keeping the ID number and the name. A product switched off, or with no price
   yet, can't be sold. Recording a sale saves its receipt, its lines and its cash payment, and takes
   its pieces out of stock, all in one go or not at all. Receipts are numbered per shop, HQ-000001
-  and up, with no gaps, even when registers sell at once. Each line keeps the code, name and price
+  and up, with no gaps, even when machines sell at once. Each line keeps the code, name and price
   as sold. The database refuses to change or delete a receipt.
 - **Selling over the network.** A role with the new "Sell" right can find a product by what was
-  scanned or typed, and record a sale paid in cash. The register keeps the cart and prices it with
+  scanned or typed, and record a sale paid in cash. The machine keeps the cart and prices it with
   the same rules as the server; the server prices it again from its catalog as it is now, and
   refuses the sale if a price changed since it was rung up, so nobody is charged what the cashier
   didn't see. The sale is always at the server's own shop, and the receipt comes back with the
@@ -144,18 +144,18 @@ and everything a user sees, is called KVNsys.
   the cash given, says if it's short, and records the sale; the receipt then shows on screen (the
   shop, its number, when, the cashier, every line, the discount and whose ID, total, cash and
   change) with the change in big type, and Enter starts the next sale. The cart is kept by the
-  register's desktop side, priced with KVNsysCore's rules at every change, so a product that can't
+  app's desktop side, priced with KVNsysCore's rules at every change, so a product that can't
   be sold never gets in. Signing out empties it. No printing yet.
 - **The day's sales.** A Sales tile, for a role with the new "See sales" right, opens today's
   sales at the shop: how many receipts, what they came to before and after discounts, and every
   receipt (number, time, cashier, pieces, discount, total), oldest first. Another day can be
   picked. View opens any receipt again, as it was given. A day is midnight to midnight Philippine
   time, and times show in Philippine time, whatever time zone a PC is set to.
-- **Registers.** A PC records itself as a register of the shop the first time someone signs in at
-  it (by its Windows machine id, so renaming the PC doesn't matter), as "New register (its
-  computer name)". The title bar then shows the register's name beside who's signed in, every
-  save (products, stock, sales, users, roles) records which register it was made at, and a
-  receipt names its register. A Registers tile lists them, the server PC first, with each one's
+- **Machines.** A PC records itself as a machine of the shop the first time someone signs in at
+  it (by its Windows machine id, so renaming the PC doesn't matter), as "New machine (its
+  computer name)". The title bar then shows the machine's name beside who's signed in, every
+  save (products, stock, sales, users, roles) records which machine it was made at, and a
+  receipt names its machine. A Machines tile lists them, the server PC first, with each one's
   hardware id and shop; a manager names
   them, or switches one off, which signs out whoever is at it and stops anyone signing in there.
 - **Shifts.** Before the first sale, a cashier starts a shift with the cash counted into the drawer;
@@ -189,9 +189,9 @@ building a screen.
 
 **For IT:**
 - The server's certificate is in `C:\ProgramData\KVNsys\Server` (or `KVNSYS_SERVER_DATA`) on the
-  server PC. Back it up: if it's lost, every register has to be reset.
-- To reset a register's trust, for example after replacing the server PC, delete
-  `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that register. It will then
+  server PC. Back it up: if it's lost, every machine has to be reset.
+- To reset a machine's trust, for example after replacing the server PC, delete
+  `trusted-servers.json` in `%APPDATA%\KVNsys POS & Inventory` on that machine. It will then
   trust the next server it connects to.
 - The server prints its certificate fingerprint when it starts, so the first connection can be
   checked against it. The schema (all 29 of SCHEMA-PLAN's tables, in one baseline migration) is in
@@ -202,7 +202,7 @@ building a screen.
 | Where | What runs | Who starts it |
 |---|---|---|
 | The server PC at each branch, and at HQ | **KVNsys Server** and PostgreSQL | It runs in the background, and can start with Windows. Its **KVNsys Server** icon opens the dashboard that turns it on and off. |
-| Each register | **KVNsys POS & Inventory**, the desktop app | The cashier double-clicks it. It finds the branch server over the shop's own network. |
+| Each machine | **KVNsys POS & Inventory**, the desktop app | The cashier double-clicks it. It finds the branch server over the shop's own network. |
 
 A branch never needs the internet to sell.
 
@@ -246,7 +246,7 @@ Dependencies point inward, as in Release:
 
 - **`KVNsysCore` uses nothing else:** no framework, no database, no screens.
 - **Only `KVNsysPostgres` contains SQL.**
-- **Nothing in the frontend uses `KVNsysPostgres` or `KVNsysServer`.** A register reaches the
+- **Nothing in the frontend uses `KVNsysPostgres` or `KVNsysServer`.** A machine reaches the
   database only by asking the server.
 - **Engines hold no screens; screens hold no rules.**
 
@@ -333,7 +333,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's username and password; any other database must already be KVNsys's, or it refuses to start. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
 | `pnpm start:dashboard` | Opens the server's dashboard on this PC, looking at the installed KVNsys Server service. Started like this it has no administrator rights, so Windows refuses to turn the server on or off; the installed dashboard asks for them. |
-| `pnpm package` | Builds everything, then makes the programs in `out/`: `KVNsys POS & Inventory` (the app), `KVNsys Server` (one `KVNsys Server.exe`) and `KVNsys Server Dashboard` (the server's dashboard), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a register, and `KVNsys Server Setup.exe` for the server PC, which carries the server and its dashboard. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
+| `pnpm package` | Builds everything, then makes the programs in `out/`: `KVNsys POS & Inventory` (the app), `KVNsys Server` (one `KVNsys Server.exe`) and `KVNsys Server Dashboard` (the server's dashboard), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a machine, and `KVNsys Server Setup.exe` for the server PC, which carries the server and its dashboard. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
 | `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
 | `pnpm fetch:installer-parts` | Downloads what the server's setup file will carry into `vendor/`, which isn't committed: PostgreSQL 18.6 for Windows from EDB (unpacked), and Microsoft's Visual C++ runtime. Each file is checked against its recorded fingerprint. |
 
@@ -341,7 +341,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 `pnpm install`, `pnpm build`, `pnpm db:deploy` and `pnpm seed`, in that order.
 
 **The installed programs.** Double-click **KVNsys Server** and it runs in its own window, showing
-the address registers use; close the window to stop it. If something's wrong, such as no
+the address machines use; close the window to stop it. If something's wrong, such as no
 database, it says what and waits for Enter before closing. It reads its settings from
 `server.env`, beside its certificate in `C:\ProgramData\KVNsys\Server`, written like `.env`. On
 this PC, `pnpm install:here` fills that in from `.env`. Windows may ask, the first time it starts,
@@ -359,7 +359,7 @@ shop's name and the administrator's username (it starts as `admin`) and password
 PostgreSQL runs as a Windows service that starts whenever the PC starts. KVNsys Server is a Windows
 service too, but a new install leaves it off: open **KVNsys Server** from the desktop to turn it on,
 and tick "Start the server when this PC starts" there, so it comes back on its own after a power cut.
-Installing again keeps whatever was chosen. One option, ticked by default, lets the shop's registers
+Installing again keeps whatever was chosen. One option, ticked by default, lets the shop's machines
 reach the server through Windows Firewall, on private networks only. Running the setup where KVNsys
 Server is already installed updates it and keeps the shop; it closes the dashboard first if it's open.
 
@@ -372,11 +372,11 @@ back up: if an earlier install left anything behind, it's packed into an archive
 Putting an archive back isn't built yet.
 
 **The server's dashboard.** Windows asks for administrator rights each time it's opened from its icon,
-because only administrators may turn a service on and off. It shows whether the server is on, the address registers
-type, and who's signed in at which register, with a Disconnect button for each. Its two tick boxes
+because only administrators may turn a service on and off. It shows whether the server is on, the address machines
+type, and who's signed in at which machine, with a Disconnect button for each. Its two tick boxes
 choose whether the server starts when the PC starts, and whether closing the dashboard turns the server
 off too; unticked, closing it leaves the server running. It also sets the **server password**: when
-that's on, a register has to give it once before anyone can sign in there, and remembers it after that.
+that's on, a machine has to give it once before anyone can sign in there, and remembers it after that.
 It can be set, changed or turned off while the server is on. "Open the logs folder" opens
 `C:\ProgramData\KVNsys\Logs`.
 
@@ -389,7 +389,7 @@ restores the newest copy into a throwaway database, compares every table with th
 removes the throwaway database again. The copies are on the same PC, so they don't survive that PC
 dying; a USB copy is a later step.
 
-**For a register:** copy `out\KVNsys POS & Inventory Setup.exe` to it, on a USB stick for example,
+**For a machine:** copy `out\KVNsys POS & Inventory Setup.exe` to it, on a USB stick for example,
 and double-click it. It installs the app for the person signed in to Windows, asking nothing and
 needing no administrator rights. It puts an icon on the desktop and in the Start menu, then opens
 the app. To remove it, use Windows' list of apps; its settings (which server it uses, which server it

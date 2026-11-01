@@ -24,9 +24,9 @@ export type AccessName = (typeof Accesses)[keyof typeof Accesses];
 
 /** What each right allows, in words a manager can read. */
 export const AccessDescriptions: Record<AccessName, string> = {
-  'machines.register': 'Register a new PC as a register',
-  'machines.view': 'See the list of registers',
-  'machines.manage': 'Rename, move, replace or retire a register',
+  'machines.register': 'Register a new PC as a machine',
+  'machines.view': 'See the list of machines',
+  'machines.manage': 'Rename, move, replace or retire a machine',
   'products.view': 'See the products and their prices',
   'products.manage': 'Add products, and change their details and prices',
   'users.view': 'See who has an account, and their role',
@@ -60,11 +60,11 @@ export interface RightGroup {
 
 export const RightGroups: readonly RightGroup[] = [
   {
-    area: 'Registers',
+    area: 'Machines',
     rights: [
       { access: 'machines.register', label: 'Register PCs' },
-      { access: 'machines.view', label: 'See registers' },
-      { access: 'machines.manage', label: 'Change registers', needs: 'machines.view' },
+      { access: 'machines.view', label: 'See machines' },
+      { access: 'machines.manage', label: 'Change machines', needs: 'machines.view' },
     ],
   },
   {

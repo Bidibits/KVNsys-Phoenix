@@ -11,7 +11,7 @@ import {
 } from '@kvnsys/wire';
 import { describe, expect, it } from 'vitest';
 
-const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'], register: { code: 'HQ-R01', name: 'Counter 1' } };
+const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: ['products.view'], machine: { code: 'HQ-M01', name: 'Counter 1' } };
 const session = { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' };
 
 describe('the sign-in call', () => {
@@ -32,7 +32,7 @@ describe('the sign-in call', () => {
     expect(SignInReply.safeParse({ signedIn: true, user, session }).success).toBe(true);
     expect(SignInReply.safeParse({ signedIn: false, message: 'Wrong username or password.' }).success).toBe(true);
     expect(SignInReply.safeParse({ signedIn: true }).success).toBe(false);
-    // A yes without a pass would leave the register with no way to prove who's signed in.
+    // A yes without a pass would leave the machine with no way to prove who's signed in.
     expect(SignInReply.safeParse({ signedIn: true, user }).success).toBe(false);
   });
 });
@@ -61,11 +61,11 @@ describe('sessions', () => {
   });
 });
 
-describe('which register a sign-in is at', () => {
+describe('which machine a sign-in is at', () => {
   it('is sent as the PC reads itself, or left out by one that cannot', async () => {
-    const { SignInRequest, RegisterIdentity } = await import('@kvnsys/wire');
-    expect(SignInRequest.safeParse({ username: 'ana', password: 'pw', register: { hardwareId: 'abc', computerName: 'COUNTER-PC' } }).success).toBe(true);
+    const { SignInRequest, MachineIdentity } = await import('@kvnsys/wire');
+    expect(SignInRequest.safeParse({ username: 'ana', password: 'pw', machine: { hardwareId: 'abc', computerName: 'COUNTER-PC' } }).success).toBe(true);
     expect(SignInRequest.safeParse({ username: 'ana', password: 'pw' }).success).toBe(true);
-    expect(RegisterIdentity.safeParse({ hardwareId: ' ', computerName: 'X' }).success).toBe(false);
+    expect(MachineIdentity.safeParse({ hardwareId: ' ', computerName: 'X' }).success).toBe(false);
   });
 });

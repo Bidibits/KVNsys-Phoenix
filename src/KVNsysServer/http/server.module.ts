@@ -4,7 +4,7 @@ import {
   PrismaAuditLog,
   PrismaCatalogBook,
   PrismaProductCatalog,
-  PrismaRegisterBook,
+  PrismaMachineBook,
   PrismaRoleCatalog,
   PrismaSalesJournal,
   PrismaShiftBook,
@@ -26,7 +26,7 @@ import { JoinController } from './join.controller.js';
 import { ProductsController } from './products.controller.js';
 import { SessionController } from './session.controller.js';
 import { SignInController, type SignInOperationParts } from './sign-in.controller.js';
-import { RegistersController, type RegistersOperationParts } from './registers.controller.js';
+import { MachinesController, type MachinesOperationParts } from './machines.controller.js';
 import { RolesController, type RolesOperationParts } from './roles.controller.js';
 import { SalesController, type SalesOperationParts } from './sales.controller.js';
 import { ShiftsController, type ShiftsOperationParts } from './shifts.controller.js';
@@ -36,7 +36,7 @@ import {
   CatalogOperation,
   DatabaseClient,
   ProductsOperation,
-  RegistersOperation,
+  MachinesOperation,
   RolesOperation,
   SalesOperation,
   ShiftsOperation,
@@ -63,12 +63,12 @@ class DatabaseLifecycle implements OnModuleDestroy {
 export class ServerModule {
   /**
    * `server` is the PC this server runs on, which says which shop's stock it keeps. `serverPassword`
-   * is the password registers must give, when it's on.
+   * is the password machines must give, when it's on.
    */
   static withDatabase(client: PrismaClient | null, server: PcIdentity, serverPassword: ServerPassword): DynamicModule {
     return {
       module: ServerModule,
-      controllers: [HelloController, JoinController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, RegistersController, ShiftsController, CatalogController, AuditsController],
+      controllers: [HelloController, JoinController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, MachinesController, ShiftsController, CatalogController, AuditsController],
       providers: [
         { provide: DatabaseClient, useValue: { client } satisfies Database },
         DatabaseLifecycle,
@@ -82,7 +82,7 @@ export class ServerModule {
             signIn: db
               ? ({
                   signIn: new SignIn(new PrismaUserDirectory(db), new ScryptPasswordHasher()),
-                  registers: new PrismaRegisterBook(db),
+                  machines: new PrismaMachineBook(db),
                   shops: new PrismaShopDirectory(db),
                   server,
                 } satisfies SignInOperationParts)
@@ -169,7 +169,7 @@ export class ServerModule {
                   catalog: new PrismaProductCatalog(db),
                   shops: new PrismaShopDirectory(db),
                   accounts: new PrismaUserAccounts(db),
-                  registers: new PrismaRegisterBook(db),
+                  machines: new PrismaMachineBook(db),
                   shifts: new PrismaShiftBook(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,
@@ -178,17 +178,17 @@ export class ServerModule {
           }),
         },
         {
-          provide: RegistersOperation,
+          provide: MachinesOperation,
           inject: [DatabaseClient, Sessions],
           useFactory: ({ client: db }: Database, sessions: Sessions) => ({
-            registers: db
+            machines: db
               ? ({
-                  registers: new PrismaRegisterBook(db),
+                  machines: new PrismaMachineBook(db),
                   shops: new PrismaShopDirectory(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   sessions,
                   server,
-                } satisfies RegistersOperationParts)
+                } satisfies MachinesOperationParts)
               : null,
           }),
         },

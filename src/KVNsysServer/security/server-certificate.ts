@@ -12,9 +12,9 @@ x509.cryptoProvider.set(webcrypto as unknown as Crypto);
 export interface ServerCertificate {
   /** PEM. Never leaves this PC. */
   key: string;
-  /** PEM. Sent to every register that connects. */
+  /** PEM. Sent to every machine that connects. */
   cert: string;
-  /** What a register remembers and checks every time: "AB:CD:…". */
+  /** What a machine remembers and checks every time: "AB:CD:…". */
   fingerprint256: string;
 }
 
@@ -22,9 +22,9 @@ const KeyFile = ServerKeyFile;
 const CertificateFile = ServerCertificateFile;
 
 /**
- * Makes a new self-signed certificate. The dates are deliberately wide: a register whose clock
+ * Makes a new self-signed certificate. The dates are deliberately wide: a machine whose clock
  * battery has died often thinks it's the year 2000, and a "not valid yet" certificate would lock it
- * out. Trust comes from the fingerprint the register pinned, not from the dates.
+ * out. Trust comes from the fingerprint the machine pinned, not from the dates.
  */
 export async function createServerCertificate(): Promise<ServerCertificate> {
   const algorithm = { name: 'ECDSA', namedCurve: 'P-256', hash: 'SHA-256' };
@@ -40,7 +40,7 @@ export async function createServerCertificate(): Promise<ServerCertificate> {
     extensions: [
       // Marked as its own authority, as `openssl req -x509` does by default. Electron's TLS
       // (BoringSSL) only accepts a pinned certificate as a trust anchor if it is one; plain Node is
-      // more lenient, so this was found by running the real app. It's safe because the register
+      // more lenient, so this was found by running the real app. It's safe because the app
       // also checks the exact fingerprint: a certificate this one signed would have another.
       new x509.BasicConstraintsExtension(true, undefined, true),
       new x509.KeyUsagesExtension(x509.KeyUsageFlags.digitalSignature | x509.KeyUsageFlags.keyCertSign, true),
@@ -60,8 +60,8 @@ export async function createServerCertificate(): Promise<ServerCertificate> {
 
 /**
  * This server's certificate: made on first start, then the very same one every time after, because
- * every register that has connected trusts exactly this one. Replacing it means resetting every
- * register's trust, so it's never replaced quietly.
+ * every machine that has connected trusts exactly this one. Replacing it means resetting every
+ * machine's trust, so it's never replaced quietly.
  */
 export async function loadOrCreateServerCertificate(dir: string): Promise<ServerCertificate & { created: boolean }> {
   const keyPath = join(dir, KeyFile);
@@ -77,7 +77,7 @@ export async function loadOrCreateServerCertificate(dir: string): Promise<Server
     const [found, missing] = haveKey ? [keyPath, certPath] : [certPath, keyPath];
     throw new Error(
       `Found ${found} but not ${missing}. Restore both from a backup. Making a new pair instead would ` +
-        "change this server's identity, and every register would then refuse it until IT resets them.",
+        "change this server's identity, and every machine would then refuse it until IT resets them.",
     );
   }
 

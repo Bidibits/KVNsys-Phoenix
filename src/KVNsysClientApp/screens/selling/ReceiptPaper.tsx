@@ -5,10 +5,10 @@ import { PriceBasisWords } from './prices';
 
 /**
  * A receipt as it was given, on screen until there's a printer: the shop, the receipt's number,
- * when, who and at which register, every line, the discount and whose ID it was, the total, the cash and the change.
+ * when, who and at which machine, every line, the discount and whose ID it was, the total, the cash and the change.
  */
 export function ReceiptPaper({ sale }: { sale: Extract<SaleResult, { ok: true }> }) {
-  const { receipt, shop, cashier, register } = sale;
+  const { receipt, shop, cashier, machine } = sale;
   return (
     <article aria-label="Receipt" className="w-[420px] shrink-0 self-start rounded-lg border border-border bg-field p-6 text-[15px] shadow-sm">
       <header className="mb-4 text-center">
@@ -19,7 +19,7 @@ export function ReceiptPaper({ sale }: { sale: Extract<SaleResult, { ok: true }>
         </p>
         {/* No name when the cashier's account isn't on this server. */}
         {cashier && <p className="text-muted-foreground">Cashier: {cashier}</p>}
-        {register && <p className="text-muted-foreground">Register: {register}</p>}
+        {machine && <p className="text-muted-foreground">Machine: {machine}</p>}
       </header>
       <ul className="border-y border-dashed border-border py-3">
         {receipt.lines.map((line, index) => (

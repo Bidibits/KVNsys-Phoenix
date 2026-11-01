@@ -125,7 +125,7 @@ describeWithDatabase('a server with a password, from the real app, across restar
     await open();
     await window
       .getByRole('alert')
-      .getByText("This server's password has changed since this register last connected. Type the new one.")
+      .getByText("This server's password has changed since this machine last connected. Type the new one.")
       .waitFor();
     expect(await window.getByLabel('Server address').inputValue()).toBe(`https://${address}`);
     await window.getByLabel('Server password').fill('third-door-9012');

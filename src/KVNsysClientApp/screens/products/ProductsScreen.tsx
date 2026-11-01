@@ -98,7 +98,7 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
       .catch((error: unknown): ProductRowsResult => ({
         ok: false,
         reason: 'unreachable',
-        message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
       }))
       .then((answer) => {
         if (showing) setResult(answer);

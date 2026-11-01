@@ -54,7 +54,7 @@ function notConnected() {
   return {
     ok: false,
     reason: 'not-connected',
-    message: "This register hasn't connected to that server securely, so it won't show it a pass. Connect first.",
+    message: "This machine hasn't connected to that server securely, so it won't show it a pass. Connect first.",
   } as const;
 }
 

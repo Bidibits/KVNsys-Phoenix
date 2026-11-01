@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 /** The server's private key. Never leaves this PC. */
 export const ServerKeyFile = 'server-key.pem';
-/** The server's certificate, which every register pins. */
+/** The server's certificate, which every machine pins. */
 export const ServerCertificateFile = 'server-certificate.pem';
 /** The server's settings, written like a .env file. */
 export const ServerSettingsFile = 'server.env';

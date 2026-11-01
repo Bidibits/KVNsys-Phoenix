@@ -17,8 +17,8 @@ export function describeTransportFailure(
       return {
         reason: 'not-trusted',
         message:
-          `The server at ${address} isn't the one this register trusts: its security certificate is different. ` +
-          "If the server PC was replaced or reinstalled, IT needs to reset this register's trust. " +
+          `The server at ${address} isn't the one this machine trusts: its security certificate is different. ` +
+          "If the server PC was replaced or reinstalled, IT needs to reset this machine's trust. " +
           "Otherwise, don't use it: something may be pretending to be the server.",
       };
     case 'not-secure':

@@ -26,7 +26,7 @@ describe("the server's certificate", () => {
     expect(existsSync(join(dir, 'server-certificate.pem'))).toBe(true);
   });
 
-  it('names KVNsys Server, and is valid from 2000 to 2099 so a register with a wrong clock still connects', async () => {
+  it('names KVNsys Server, and is valid from 2000 to 2099 so a machine with a wrong clock still connects', async () => {
     const certificate = new X509Certificate((await loadOrCreateServerCertificate(dir)).cert);
     expect(certificate.subject).toMatch(/CN=KVNsys Server/);
     expect(new Date(certificate.validFrom).getUTCFullYear()).toBe(2000);

@@ -5,7 +5,7 @@ import {
   PrismaAuditLog,
   PrismaCatalogBook,
   PrismaProductCatalog,
-  PrismaRegisterBook,
+  PrismaMachineBook,
   PrismaRoleCatalog,
   PrismaSetupStore,
   PrismaUserAccounts,
@@ -149,7 +149,7 @@ describeWithDatabase('the audit log, written by every save', () => {
 
   it('logs a PC recording itself and its new Windows name as Automatic, and a change on the screen as Manual', async () => {
     const shop = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Head Office' } })).id;
-    const book = new PrismaRegisterBook(db);
+    const book = new PrismaMachineBook(db);
     const pc = await book.recognise({ hardwareId: 'pc-1', computerName: 'OLD-NAME' }, shop, ana);
     await book.recognise({ hardwareId: 'pc-1', computerName: 'NEW-NAME' }, shop, ana);
     await book.update(pc.id, { name: 'Counter 1', status: 'Active' }, ana);
@@ -157,7 +157,7 @@ describeWithDatabase('the audit log, written by every save', () => {
     expect(rows).toContainEqual(['machine_uuid', null, 'pc-1', 'Created', 'Automatic']);
     expect(rows.slice(-2)).toEqual([
       ['machine_name', 'OLD-NAME', 'NEW-NAME', 'Updated', 'Automatic'],
-      ['name', 'New register (OLD-NAME)', 'Counter 1', 'Updated', 'Manual'],
+      ['name', 'New machine (OLD-NAME)', 'Counter 1', 'Updated', 'Manual'],
     ]);
   });
 
@@ -168,7 +168,7 @@ describeWithDatabase('the audit log, written by every save', () => {
     const accounts = new PrismaUserAccounts(db);
     const person = { username: 'ana', firstName: 'Ana', middleName: null, lastName: 'Cruz', roleId: admin, status: 'Active' as const };
     const anaId = (await accounts.create(person, 'scrypt$x', ana)).id;
-    const counter = await new PrismaRegisterBook(db).recognise({ hardwareId: 'pc-1', computerName: 'COUNTER' }, shop, ana);
+    const counter = await new PrismaMachineBook(db).recognise({ hardwareId: 'pc-1', computerName: 'COUNTER' }, shop, ana);
     const byAna = { userId: anaId, machineId: counter.id, locationId: shop };
 
     const book = new PrismaCatalogBook(db);
@@ -191,7 +191,7 @@ describeWithDatabase('the audit log, written by every save', () => {
       changeType: 'Updated',
       source: 'Manual',
       userName: 'Ana Cruz (ana)',
-      machineName: 'New register (COUNTER)',
+      machineName: 'New machine (COUNTER)',
       shopName: 'Kenlyn',
     });
     const times = all.entries.map((e) => e.at);

@@ -94,7 +94,7 @@ either one.
   Windows' built-in equivalent.
 - **Sign-in method:** passwords are checked with `scram-sha-256`, nothing weaker.
 - **The database answers only on the server PC itself:** `listen_addresses = 'localhost'`, and
-  `pg_hba.conf` allows only `127.0.0.1` and `::1`. Registers never talk to PostgreSQL. They talk to
+  `pg_hba.conf` allows only `127.0.0.1` and `::1`. Machines never talk to PostgreSQL. They talk to
   KVNsys Server, which is the only thing that does.
 
 ## Port
@@ -163,7 +163,7 @@ Only Administrators and SYSTEM can open `C:\KVNsys Archives`, since an archive h
 Putting an archive back into KVNsys isn't built yet; the database copy inside can be restored with
 PostgreSQL 18's `pg_restore`.
 
-The register app's uninstall removes its settings too: its server, the server it trusts and the
+The app's uninstall removes its settings too: its server, the server it trusts and the
 server's password. An update keeps them.
 
 Before 2026-10-28, uninstalling kept the data folder, the settings and the backups where they were,
@@ -225,7 +225,7 @@ The install script, run for real on the development PC next to its own PostgreSQ
   Both are fixed. The setup now also repairs the folder's permissions before writing to it.
 - **Installing again over that install** stopped the services, replaced the programs, kept the
   database and the shop (no shop page, no questions), and started the service.
-- **The installed register app** connected to the server running as a service and signed in with the
+- **The installed app** connected to the server running as a service and signed in with the
   first install's password. An ordinary account can't read the settings folder.
 - **Uninstalling** removed both services, the programs and the app list entry, and kept the data.
 - Not tried: the firewall option (left unticked), and a real restart of the PC.
@@ -295,7 +295,7 @@ One run with administrator rights on the development PC, silent installs, 51 che
   them whole into an archive, removed them, and set up the new shop it was given.
 - **Uninstalling with PostgreSQL unable to start:** the database couldn't be copied, so the whole
   data folder went into the archive (1,428 files, 7.5 MB), and then nothing was left.
-- **The register app:** an update kept its settings; uninstalling removed them and the app.
+- **The app:** an update kept its settings; uninstalling removed them and the app.
 - Not tried: an archive that can't be made (the data should stay, with a message), and the pages a
   person sees, since the run was silent. The PC was left clean, the test archives in the Recycle Bin.
 

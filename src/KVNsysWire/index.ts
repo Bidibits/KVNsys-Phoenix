@@ -53,12 +53,12 @@ export {
   StockPath,
 } from './stock.js';
 export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
-export { ListedRegisterOnWire, RegisterFields, RegisterListReply, RegisterOnWire, RegisterReply, registerPath, RegistersPath } from './registers.js';
+export { ListedMachineOnWire, MachineFields, MachineListReply, MachineOnWire, MachineReply, machinePath, MachinesPath } from './machines.js';
 export {
   JoinPath,
   JoinReply,
   JoinRequest,
-  RegisterIdentity,
+  MachineIdentity,
   SessionPass,
   SessionPath,
   SessionReply,

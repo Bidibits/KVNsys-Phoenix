@@ -27,8 +27,10 @@ import { z } from 'zod';
  * 19: every list sends each record's history (who made it and who last changed it: when, on which
  *     machine, at which shop); registers carry their hardware id and description, accounts and
  *     roles their description, and the register list each one's shop.
+ * 20: registers are called machines: /api/registers became /api/machines, and sign-in, the person
+ *     signed in and a receipt say `machine` where they said `register`.
  */
-export const ProtocolVersion = 19;
+export const ProtocolVersion = 20;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;
@@ -41,7 +43,7 @@ export const ServerHello = z.object({
   product: z.literal('KVNsys Server'),
   version: z.string(),
   protocol: z.number().int().positive(),
-  /** True when a register must give the server password (at /api/join, then at every sign-in). */
+  /** True when a machine must give the server password (at /api/join, then at every sign-in). */
   serverPassword: z.boolean(),
 });
 export type ServerHello = z.infer<typeof ServerHello>;

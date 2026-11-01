@@ -239,7 +239,7 @@ const SortingTables: Record<ProductSortingField, string> = {
 
 /**
  * A category, brand, supplier or manufacturer the product is sorted under has to be there still.
- * Someone may have chosen it a moment before another register's change took it away; the foreign
+ * Someone may have chosen it a moment before another machine's change took it away; the foreign
  * key would refuse it anyway, but not in words.
  */
 async function refuseGoneChoices(tx: Prisma.TransactionClient, product: FullProductDetails) {

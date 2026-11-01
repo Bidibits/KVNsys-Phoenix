@@ -107,7 +107,7 @@ export class StockController {
       const right = rightToRecordByHand(line.type);
       if (right) rights.add(right);
     }
-    const { parts, shop, person, register } = await this.allow(authorization, [...rights]);
+    const { parts, shop, person, machine } = await this.allow(authorization, [...rights]);
     if (!request.success) throw problem(400, NotUnderstood);
     if (lines.some((line) => rightToRecordByHand(line.type) === null)) throw problem(400, SoldOnlyBySale);
 
@@ -122,8 +122,8 @@ export class StockController {
         throw error;
       }
     });
-    // At the register signed in at; the shop is always the server's own.
-    const lineage = { userId: person.id, machineId: register?.machineId ?? null, locationId: shop.id };
+    // At the machine signed in at; the shop is always the server's own.
+    const lineage = { userId: person.id, machineId: machine?.machineId ?? null, locationId: shop.id };
     const saved = await saving(() => parts.ledger.record(changes, lineage));
     return { movements: await named(parts.accounts, saved) };
   }
@@ -136,7 +136,7 @@ export class StockController {
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
     const shop = await parts.shops.serverShop(parts.server, serverMachineCode(FirstShopCode));
     if (!shop) throw problem(503, NoShop);
-    return { parts, shop, person: verdict.person, register: verdict.register };
+    return { parts, shop, person: verdict.person, machine: verdict.machine };
   }
 }
 

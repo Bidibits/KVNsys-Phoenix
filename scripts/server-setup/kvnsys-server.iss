@@ -47,7 +47,7 @@ SetupLogging=yes
 FinishedLabel=KVNsys Server is installed. Open it from the KVNsys Server icon on the desktop to turn the server on or off, see who's connected, and choose whether it starts when this PC starts.
 
 [Tasks]
-Name: firewall; Description: "Let the shop's registers reach KVNsys Server through Windows Firewall (private networks only)"
+Name: firewall; Description: "Let the shop's machines reach KVNsys Server through Windows Firewall (private networks only)"
 
 [Dirs]
 ; The server's settings and certificate, the logs and the backups. Inno Setup never removes them
@@ -187,7 +187,7 @@ begin
   HasLeftovers := (not RegKeyExists(HKLM64, UninstallKey)) and DirExists(DataFolder);
   IsNewShop := HasLeftovers or not FileExists(DataFolder + '\PostgreSQL\18\data\PG_VERSION');
   About := 'This makes the first account, the administrator, who can do everything and adds everyone else. ' +
-    'Sign in with this username and password on a register. Write them down and keep them somewhere safe: ' +
+    'Sign in with this username and password on any machine. Write them down and keep them somewhere safe: ' +
     'there''s no other administrator to reset the password.';
   if HasLeftovers then
     About := 'KVNsys Server was on this PC before. What it left behind will be packed into one archive in ' +

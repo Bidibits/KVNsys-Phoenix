@@ -83,7 +83,7 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     expect(await db.inventoryLog.count()).toBe(3);
   });
 
-  it('gives many registers selling at once each their own number, one after another', async () => {
+  it('gives many machines selling at once each their own number, one after another', async () => {
     const one = priceSale([{ product: sardines, quantity: 1 }, { product: rice, quantity: 1 }], null);
     const receipts = await Promise.all(Array.from({ length: 20 }, () => sell(one)));
     expect(receipts.map((r) => r.number).sort((a, b) => a - b)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));

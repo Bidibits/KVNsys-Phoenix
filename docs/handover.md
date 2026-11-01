@@ -15,7 +15,8 @@ in this round:
 - Sales in the database, selling over the network, and the **Sell** screen: scan, quantity, the
   senior/PWD discount, cash, change, the receipt on screen
 - **Sales**: the day's receipts and totals, any day, any receipt again
-- **Registers**: each PC records itself at sign-in, and every save names it
+- **Machines** (called Registers until 2026-11-02): each PC records itself at sign-in, and every
+  save names it
 - **Shifts**: cash in the drawer to start, counted against expected to end
 - **Getting around**: Back and Forward, a search box on every list, "Saved …" notices, and asking
   before throwing work away
@@ -28,7 +29,7 @@ and forms, the product form has every field and a picture, and the products list
 
 Since then (2026-10-27): the server has a dashboard (`KVNsysServerApp`, an Electron window run as
 administrator) that turns it on and off, chooses whether it starts with the PC, lists who's connected
-and disconnects them, and sets the server password registers must give. 637 tests; the protocol is
+and disconnects them, and sets the server password machines must give. 637 tests; the protocol is
 at 17.
 
 ## Getting it onto your PC
@@ -55,7 +56,7 @@ pnpm start:server
 
 It creates the database, asks once for the shop's name and the first administrator's username (Enter
 for `admin`) and password, and prints the
-address registers use. In a second window:
+address the machines use. In a second window:
 
 ```
 pnpm start:app
@@ -67,7 +68,7 @@ first (Windows cmd).
 
 **A walk through it:** Products, add one with a price. Stock, Receive stock, scan or type its code,
 the pieces, Save delivery. Sell, Start shift with the cash in the drawer, scan the code, Pay. Sales
-shows the receipt. Back on Sell, End shift and count the drawer. Registers shows this PC.
+shows the receipt. Back on Sell, End shift and count the drawer. Machines shows this PC.
 
 **Tests:** `pnpm test`, after `pnpm build`. The database tests need `KVNSYS_TEST_POSTGRES_URL` in
 `.env`; without it they show as skipped, not passed.
@@ -106,7 +107,7 @@ Most of this is in the README and `decisions.md`; these are the ones that are ea
   fraction of a centavo, never a floating-point peso.
 - **A shop day is Philippine time,** whatever the PC is set to. Use `shopDate` and `shopDay` in
   `KVNsysCore/selling/days.ts`.
-- **Every save records who and at which register.** On the server, `lineageOf(person, register)` in
+- **Every save records who and at which machine.** On the server, `lineageOf(person, machine)` in
   `KVNsysServer/http/saving.ts`.
 - **Every save to a table people edit writes the audit log,** in its own transaction:
   `recordCreated` / `recordChanged` in `KVNsysPostgres/audits/audit-log.ts`. A new save path that
@@ -145,7 +146,7 @@ each list and form from one description.
 
 | To do | What it takes |
 |---|---|
-| **Rename Registers to Machines,** on screen and in the code | The screen, its tile, the messages ("this register"), and in the code the files, types and calls (`/api/registers`, `RegisterBook`, `ListedRegister` and the rest): about 120 files. "Register" as a verb stays (a PC registers itself, the `machines.register` right, `pg_ctl register`). Check every sense before replacing, as the Release-era rename of "till" had to. |
+| ~~**Rename Registers to Machines,** on screen and in the code~~ | **Done** (2026-11-02, protocol 20): the screen, its tile, the messages ("this machine"), and in the code the files, types and calls (`/api/machines`, `MachineBook`, `ListedMachine` and the rest). New machines get codes like `HQ-M01`. "Register" as a verb stays (the `machines.register` right, `pg_ctl register`, `Register-ScheduledTask`), and so does "the old register", the shop's old POS. |
 | ~~**The Machines list shows every column**~~ | **Done** (2026-10-30), and every other list too: each shows every column, then who made the record and who last updated it, when, on which machine and at which shop, in a grid like Beta's (`decisions.md`). |
 | ~~**An audits screen,** to see each change by table, record and column~~ | **Done.** Every save writes its changes (2026-10-28) and the Audit log screen shows them (2026-10-29): `schema.md`, "What the audit log records". |
 | ~~**The first account's username**~~ | **Done** (2026-10-30): the setup's page asks for it, starting as `admin`. `decisions.md`, Settled. |

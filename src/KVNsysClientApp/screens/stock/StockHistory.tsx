@@ -38,7 +38,7 @@ export function StockHistory({ item, onBack, onSignInAgain }: { item: StockItem;
       .catch((error: unknown): ProductStockResult => ({
         ok: false,
         reason: 'unreachable',
-        message: `Something went wrong on this register: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
       }))
       .then((answer) => {
         if (showing) setResult(answer);

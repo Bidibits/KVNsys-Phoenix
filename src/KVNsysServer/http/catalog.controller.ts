@@ -53,10 +53,10 @@ export class CatalogController {
     @Param('list') typed: string,
     @Body() body: unknown,
   ): Promise<CatalogEntryReply> {
-    const { book, person, register } = await this.allow(authorization, Accesses.ProductsManage);
+    const { book, person, machine } = await this.allow(authorization, Accesses.ProductsManage);
     const list = listFrom(typed);
     const fields = readFields(list, body);
-    return { entry: await saving(async () => book.create(list, checkCatalogEntry(list, fields), lineageOf(person, register))) };
+    return { entry: await saving(async () => book.create(list, checkCatalogEntry(list, fields), lineageOf(person, machine))) };
   }
 
   @Put(':id')
@@ -66,10 +66,10 @@ export class CatalogController {
     @Param('id') id: string,
     @Body() body: unknown,
   ): Promise<CatalogEntryReply> {
-    const { book, person, register } = await this.allow(authorization, Accesses.ProductsManage);
+    const { book, person, machine } = await this.allow(authorization, Accesses.ProductsManage);
     const list = listFrom(typed);
     const fields = readFields(list, body);
-    return { entry: await saving(async () => book.update(list, id, checkCatalogEntry(list, fields), lineageOf(person, register))) };
+    return { entry: await saving(async () => book.update(list, id, checkCatalogEntry(list, fields), lineageOf(person, machine))) };
   }
 
   /** The pass and the right, checked before anything else is even read. */
@@ -78,7 +78,7 @@ export class CatalogController {
     if (!parts) throw problem(503, NoDatabase);
     const verdict = await parts.authorizer.check(bearerToken(authorization), access);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
-    return { ...parts, person: verdict.person, register: verdict.register };
+    return { ...parts, person: verdict.person, machine: verdict.machine };
   }
 }
 

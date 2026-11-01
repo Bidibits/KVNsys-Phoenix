@@ -34,22 +34,22 @@ export function serverStatus(dataDir: string): Promise<ControlAnswer<ServerStatu
   return ask(dataDir, 'GET', StatusPath, undefined, ServerStatus);
 }
 
-/** Ends one person's sign-in. They find out at their register's next request. */
+/** Ends one person's sign-in. They find out at their machine's next request. */
 export function disconnectPerson(dataDir: string, id: string): Promise<ControlAnswer<true>> {
   return done(ask(dataDir, 'POST', DisconnectPath, { id }, ControlDone));
 }
 
-/** Gives the server a new password, typed twice. Registers must give it before anyone can sign in. */
+/** Gives the server a new password, typed twice. Machines must give it before anyone can sign in. */
 export function setServerPassword(dataDir: string, password: string, again: string): Promise<ControlAnswer<true>> {
   return done(ask(dataDir, 'POST', ServerPasswordPath, { password, again }, ControlDone));
 }
 
-/** Lets registers sign in without the server password again. */
+/** Lets machines sign in without the server password again. */
 export function turnOffServerPassword(dataDir: string): Promise<ControlAnswer<true>> {
   return done(ask(dataDir, 'POST', ServerPasswordOffPath, {}, ControlDone));
 }
 
-/** The port registers reach the server on, from its settings: what it will use when it's turned on. */
+/** The port machines reach the server on, from its settings: what it will use when it's turned on. */
 export function configuredPort(dataDir: string): number {
   const settings: NodeJS.ProcessEnv = {};
   try {

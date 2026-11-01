@@ -2,7 +2,7 @@ import { X509Certificate } from 'node:crypto';
 import { request } from 'node:https';
 import type { TLSSocket } from 'node:tls';
 
-/** What a register remembers about a server it trusts: its certificate, and that certificate's fingerprint. */
+/** What a machine remembers about a server it trusts: its certificate, and that certificate's fingerprint. */
 export interface ServerPin {
   fingerprint256: string;
   /** PEM. */
@@ -51,7 +51,7 @@ export function requestJson(options: {
   const { pin } = options;
   if (options.pass !== undefined && !pin) {
     // A pass proves who's signed in. Like a password, it never goes to a server that isn't trusted yet.
-    return Promise.reject(new Error('A sign-in pass is only ever sent to a server this register has pinned.'));
+    return Promise.reject(new Error('A sign-in pass is only ever sent to a server this machine has pinned.'));
   }
   const payload = options.body === undefined ? undefined : JSON.stringify(options.body);
 

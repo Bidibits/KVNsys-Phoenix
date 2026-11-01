@@ -41,8 +41,8 @@ export function ServerPasswordSection({ view, serverIsOn, onChanged }: { view: D
     close();
     toast(
       state === 'on'
-        ? 'The server password is changed. Registers ask for the new one the next time they connect.'
-        : 'The server password is on. Registers ask for it the next time they connect.',
+        ? 'The server password is changed. Machines ask for the new one the next time they connect.'
+        : 'The server password is on. Machines ask for it the next time they connect.',
     );
     onChanged();
   }
@@ -69,17 +69,17 @@ export function ServerPasswordSection({ view, serverIsOn, onChanged }: { view: D
       )}
       {state === 'off' && (
         <p className="text-[15px]">
-          <strong>Off.</strong> Any register on the shop's network can connect.
+          <strong>Off.</strong> Any machine on the shop's network can connect.
         </p>
       )}
       {state === 'on' && (
         <p className="text-[15px]">
-          <strong>On.</strong> A register has to give the server password before anyone can sign in there. Registers that are
+          <strong>On.</strong> A machine has to give the server password before anyone can sign in there. Machines that are
           already connected stay connected.
         </p>
       )}
       {state === 'damaged' && (
-        <Notice tone="problem">The server password's file is damaged, so no register can connect. Set a new server password.</Notice>
+        <Notice tone="problem">The server password's file is damaged, so no machine can connect. Set a new server password.</Notice>
       )}
 
       {problem && <Notice tone="problem">{problem}</Notice>}
@@ -103,7 +103,7 @@ export function ServerPasswordSection({ view, serverIsOn, onChanged }: { view: D
             onChange={(event) => setAgain(event.target.value)}
             autoComplete="new-password"
           />
-          <p className="mb-3 text-[14px] text-muted-foreground">At least 8 characters. Each register asks for it once, then remembers it.</p>
+          <p className="mb-3 text-[14px] text-muted-foreground">At least 8 characters. Each machine asks for it once, then remembers it.</p>
           <div className="flex gap-3">
             <Button type="submit" size="compact" disabled={saving}>
               {saving ? 'Saving…' : 'Save'}
@@ -131,7 +131,7 @@ export function ServerPasswordSection({ view, serverIsOn, onChanged }: { view: D
       {confirmOff && (
         <ConfirmDialog
           title="Turn the server password off?"
-          message="Any register on the shop's network will be able to connect, without it."
+          message="Any machine on the shop's network will be able to connect, without it."
           confirmLabel="Turn it off"
           onConfirm={() => void turnOff()}
           onCancel={() => setConfirmOff(false)}

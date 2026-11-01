@@ -196,7 +196,7 @@ function withoutUndefined(details: ProductDetails): ProductDetails {
 
 /**
  * A product's one picture. SCHEMA-PLAN keeps a single format, so nothing has to record how to
- * read it: a JPEG, shrunk on the register before it's sent (see ProductPictureLimit).
+ * read it: a JPEG, shrunk by the app before it's sent (see ProductPictureLimit).
  */
 export const ProductPictureLimit = 256 * 1024;
 

@@ -3,17 +3,17 @@ import { join } from 'node:path';
 import { readNewPassword, type PasswordHasher } from '@kvnsys/core';
 import { ServerPasswordFile } from '../setup/server-folder.js';
 
-/** Off: anyone on the shop's network may sign in. On: a register must give the server password first. */
+/** Off: anyone on the shop's network may sign in. On: a machine must give the server password first. */
 export type ServerPasswordState = 'off' | 'on' | 'damaged';
 
-/** What a register is told when it gave no server password, or the wrong one. */
+/** What a machine is told when it gave no server password, or the wrong one. */
 export const NeedsServerPassword = 'This server has a password. Type it to connect.';
 export const WrongServerPassword = "That isn't this server's password.";
 export const DamagedServerPassword =
   "KVNsys Server's password file is damaged, so nobody can connect. Set a new server password in KVNsys Server's dashboard.";
 
 /**
- * The server password. When the server has one, a register must give it before anyone can sign in
+ * The server password. When the server has one, a machine must give it before anyone can sign in
  * there; people already signed in stay signed in. It's set and turned off from the server's
  * dashboard.
  *
@@ -37,7 +37,7 @@ export class ServerPassword {
     return this.hash === null ? 'off' : 'on';
   }
 
-  /** Null when the register may go on, or what to tell it when it may not. */
+  /** Null when the machine may go on, or what to tell it when it may not. */
   async check(typed: string | undefined): Promise<string | null> {
     if (this.damaged) return DamagedServerPassword;
     if (this.hash === null) return null;

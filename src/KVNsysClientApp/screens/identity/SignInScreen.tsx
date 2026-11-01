@@ -3,7 +3,7 @@ import { Button, Notice, Panel, TextField } from '@kvnsys/ui';
 import { useState, type FormEvent } from 'react';
 import type { Connected } from '../connection/ConnectScreen';
 
-/** Who's using this register. Shown once it's connected to its server. */
+/** Who's using this machine. Shown once it's connected to its server. */
 export function SignInScreen({
   connected,
   onSignedIn,
@@ -45,10 +45,10 @@ export function SignInScreen({
   }
 
   return (
-    <Panel title="KVNsys POS & Inventory" subtitle="Sign in to use this register.">
+    <Panel title="KVNsys POS & Inventory" subtitle="Sign in to use this machine.">
       <Notice tone="good">
         Connected to KVNsys Server {server.version} at {server.address}.
-        {server.firstTrust && ' This register now trusts this server, and will refuse any other that tries to answer at this address.'}
+        {server.firstTrust && ' This machine now trusts this server, and will refuse any other that tries to answer at this address.'}
         {remembered === false && " This PC couldn't save the address, so you'll need to type it again next time."}
       </Notice>
       {/* Above the fields, so it can never fall off the bottom of a short window unseen. */}

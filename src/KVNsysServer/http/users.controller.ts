@@ -59,12 +59,12 @@ export class UsersController {
   @Post('users')
   @HttpCode(201)
   async add(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<UserReply> {
-    const { accounts, hasher, person, register } = await this.allow(authorization, Accesses.UsersManage);
+    const { accounts, hasher, person, machine } = await this.allow(authorization, Accesses.UsersManage);
     const fields = NewAccountFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
     const { password, ...details } = fields.data;
     const passwordHash = await hasher.hash(readPassword(password));
-    return { user: await saving(() => accounts.create(details, passwordHash, lineageOf(person, register))) };
+    return { user: await saving(() => accounts.create(details, passwordHash, lineageOf(person, machine))) };
   }
 
   @Put('users/:id')
@@ -73,11 +73,11 @@ export class UsersController {
     @Param('id') id: string,
     @Body() body: unknown,
   ): Promise<UserReply> {
-    const { accounts, sessions, person, register } = await this.allow(authorization, Accesses.UsersManage);
+    const { accounts, sessions, person, machine } = await this.allow(authorization, Accesses.UsersManage);
     const fields = AccountFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
-    const user = await saving(() => accounts.update(id, fields.data, lineageOf(person, register)));
-    // Switched off: their passes end now, on every register, not at their next request.
+    const user = await saving(() => accounts.update(id, fields.data, lineageOf(person, machine)));
+    // Switched off: their passes end now, on every machine, not at their next request.
     if (user.status !== 'Active') sessions.cancelFor(user.id);
     return { user };
   }
@@ -89,12 +89,12 @@ export class UsersController {
     @Param('id') id: string,
     @Body() body: unknown,
   ): Promise<PasswordResetReply> {
-    const { accounts, hasher, sessions, person, register } = await this.allow(authorization, Accesses.UsersManage);
+    const { accounts, hasher, sessions, person, machine } = await this.allow(authorization, Accesses.UsersManage);
     const fields = PasswordReset.safeParse(body);
     if (!fields.success) throw problem(400, "The new password didn't arrive in a form the server understands.");
     const passwordHash = await hasher.hash(readPassword(fields.data.password));
-    await saving(() => accounts.setPassword(id, passwordHash, lineageOf(person, register)));
-    // Whoever knew the old password, on whichever register, has to sign in again with the new one.
+    await saving(() => accounts.setPassword(id, passwordHash, lineageOf(person, machine)));
+    // Whoever knew the old password, on whichever machine, has to sign in again with the new one.
     sessions.cancelFor(id);
     return { passwordChanged: true };
   }
@@ -105,7 +105,7 @@ export class UsersController {
     if (!users) throw problem(503, NoDatabase);
     const verdict = await users.authorizer.check(bearerToken(authorization), access);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
-    return { ...users, person: verdict.person, register: verdict.register };
+    return { ...users, person: verdict.person, machine: verdict.machine };
   }
 }
 

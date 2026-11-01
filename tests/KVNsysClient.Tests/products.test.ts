@@ -161,7 +161,7 @@ describe('the product calls', () => {
     expect(await listProducts(server.address, pass, pinned())).toMatchObject({ ok: false, reason: 'not-kvnsys' });
   });
 
-  it('never shows the pass to a server this register has not pinned', async () => {
+  it('never shows the pass to a server this machine has not pinned', async () => {
     server = await fakeServer(certificate, 200, { products: [] });
     expect(await listProducts(server.address, pass, { pin: null })).toMatchObject({ ok: false, reason: 'not-connected' });
     expect(server.received).toEqual([]);
