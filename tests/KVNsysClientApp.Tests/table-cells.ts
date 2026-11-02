@@ -14,6 +14,17 @@ export function cellsUnder(table: Locator, headings: string[]): Promise<(string 
   }, headings);
 }
 
+/**
+ * A list's grid is compact, as Beta's were, so many rows and columns fit: 13px text, and no row
+ * (the headings' included) taller than 28px, whatever its cells hold (a picture, an Edit button).
+ */
+export async function expectCompact(table: Locator): Promise<void> {
+  expect(await table.evaluate((element) => getComputedStyle(element).fontSize)).toBe('13px');
+  const heights = await table.locator('tr').evaluateAll((rows) => rows.map((row) => row.getBoundingClientRect().height));
+  expect(heights.length).toBeGreaterThan(1);
+  expect(Math.max(...heights)).toBeLessThanOrEqual(28);
+}
+
 /** The headings, in order, as shown (a sorted column's arrow left out). */
 export function headingsOf(table: Locator): Promise<string[]> {
   return table.locator('thead th').evaluateAll((cells) => cells.map((cell) => (cell.textContent ?? '').replace(/[▲▼]/g, '')));

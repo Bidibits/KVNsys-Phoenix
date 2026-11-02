@@ -8,23 +8,23 @@ const ManageRight: AccessName = 'machines.manage';
 /** Every column of the machines table in the table's own order, its id first and its history last, as Beta's grids showed a table. */
 const Columns: Column<ListedMachine>[] = [
   idColumn<ListedMachine>(),
-  { heading: 'Code', width: '7rem', cell: (machine) => machine.code, sortBy: (machine) => machine.code },
+  { heading: 'Code', width: '7em', cell: (machine) => machine.code, sortBy: (machine) => machine.code },
   {
     heading: 'Name',
-    width: '17rem',
+    width: '17em',
     cell: (machine) => (
       <>
         {machine.name}
-        {machine.isServer && <span className="ml-2 text-[13px] text-muted-foreground">the server PC</span>}
+        {machine.isServer && <span className="ml-1.5 text-[11px] text-muted-foreground">the server PC</span>}
       </>
     ),
     sortBy: (machine) => machine.name,
   },
-  { heading: 'Hardware id', width: '21rem', cell: (machine) => <TextOrDash text={machine.hardwareId} />, sortBy: (machine) => machine.hardwareId },
-  { heading: 'Computer name', width: '11rem', cell: (machine) => <TextOrDash text={machine.computerName} />, sortBy: (machine) => machine.computerName },
-  { heading: 'Shop', width: '10rem', cell: (machine) => machine.shopName, sortBy: (machine) => machine.shopName },
-  { heading: 'Status', width: '8rem', cell: (machine) => <StatusLabel status={machine.status} />, sortBy: (machine) => machine.status },
-  { heading: 'Description', width: '16rem', cell: (machine) => <TextOrDash text={machine.description} />, sortBy: (machine) => machine.description },
+  { heading: 'Hardware id', width: '21em', cell: (machine) => <TextOrDash text={machine.hardwareId} />, sortBy: (machine) => machine.hardwareId },
+  { heading: 'Computer name', width: '11em', cell: (machine) => <TextOrDash text={machine.computerName} />, sortBy: (machine) => machine.computerName },
+  { heading: 'Shop', width: '10em', cell: (machine) => machine.shopName, sortBy: (machine) => machine.shopName },
+  { heading: 'Status', width: '8em', cell: (machine) => <StatusLabel status={machine.status} />, sortBy: (machine) => machine.status },
+  { heading: 'Description', width: '16em', cell: (machine) => <TextOrDash text={machine.description} />, sortBy: (machine) => machine.description },
   ...historyColumns<ListedMachine>((machine) => machine.history),
 ];
 
@@ -64,14 +64,14 @@ export function MachinesScreen({ user, search, onSignInAgain }: { user: SignedIn
           heading: 'Change',
           hiddenHeading: true,
           align: 'right',
-          width: '5.5rem',
+          width: '5em',
           pinned: true,
           cell: (machine) => (
             <Button
               type="button"
               variant="secondary"
               size="compact"
-              className="h-8 px-3"
+              className="h-6 px-2 text-[13px]"
               aria-label={`Edit ${machine.name}`}
               onClick={() => {
                 setEditing(machine);

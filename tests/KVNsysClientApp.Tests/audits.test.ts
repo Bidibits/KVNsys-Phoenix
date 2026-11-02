@@ -6,7 +6,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { cellsUnder, expectTableOrder, headingsOf } from './table-cells.js';
+import { cellsUnder, expectCompact, expectTableOrder, headingsOf } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -104,13 +104,14 @@ describeWithDatabase('the audit log in the real app', () => {
     expect(rows).toContainEqual(['KVNsys itself', 'Server', 'Kenlyn', 'Shops', 'Kenlyn', 'Name', 'Created', 'Automatic', '—', 'Kenlyn']);
   });
 
-  it('keeps every column its width, like a Beta grid: a long value is cut short, shown whole when pointed at, and the log scrolls sideways', async () => {
+  it('keeps every column its width, like a compact Beta grid: a long value is cut short, shown whole when pointed at, and the log scrolls sideways', async () => {
+    await expectCompact(table());
     const after = table().getByRole('cell', { name: Described, exact: true });
     expect(await after.evaluate((cell) => cell.scrollWidth > cell.clientWidth)).toBe(true);
     await after.hover();
     expect(await after.getAttribute('title')).toBe(Described);
-    // As wide as After was set, however long what's in it.
-    expect(await after.evaluate((cell) => cell.offsetWidth / parseFloat(getComputedStyle(document.documentElement).fontSize))).toBe(16);
+    // As wide as After was set (16em, in the grid's own text), however long what's in it.
+    expect(await after.evaluate((cell) => cell.offsetWidth / parseFloat(getComputedStyle(cell).fontSize))).toBe(16);
     expect(await table().locator('xpath=..').evaluate((box) => box.scrollWidth > box.clientWidth)).toBe(true);
     expect(await window.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
   });

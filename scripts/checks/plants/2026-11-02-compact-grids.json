@@ -1,0 +1,45 @@
+{
+  "step": "The lists' grids compact, as Beta's were: 13px text, rows 28px tall (2026-11-02)",
+  "plants": [
+    {
+      "name": "1 the grids' text back to 15px",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "const text = wide ? 'text-[13px]' :",
+      "new": "const text = wide ? 'text-[15px]' :",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "2 the grids' rows back to 44px",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "wide ? 'h-7 px-2 py-0' : 'h-11 px-4'",
+      "new": "wide ? 'h-11 px-4' : 'h-11 px-4'",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "3 a column's width not following the grid's text",
+      "file": "src/KVNsysClientApp/screens/audits/AuditLogScreen.tsx",
+      "old": "{ heading: 'After', width: '16em',",
+      "new": "{ heading: 'After', width: '16rem',",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "audits"]]
+    },
+    {
+      "name": "4 the Edit buttons back to their old height",
+      "file": "src/KVNsysClientApp/screens/machines/MachinesScreen.tsx",
+      "old": "className=\"h-6 px-2 text-[13px]\"",
+      "new": "className=\"h-8 px-3\"",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "5 the product pictures back to 40px",
+      "file": "src/KVNsysClientApp/screens/products/ProductThumbnail.tsx",
+      "old": "'flex size-6 items-center justify-center overflow-hidden rounded border border-border/60 bg-white' : 'size-6'",
+      "new": "'flex size-10 items-center justify-center overflow-hidden rounded border border-border/60 bg-white' : 'size-10'",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "product-list"]]
+    }
+  ]
+}

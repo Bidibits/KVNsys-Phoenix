@@ -11,13 +11,13 @@ const ManageRight: AccessName = 'users.manage';
  */
 const Columns: Column<Listed<Account>>[] = [
   idColumn<Listed<Account>>(),
-  { heading: 'Username', width: '10rem', cell: (account) => account.username, sortBy: (account) => account.username },
-  { heading: 'First name', width: '10rem', cell: (account) => account.firstName, sortBy: (account) => account.firstName },
-  { heading: 'Last name', width: '10rem', cell: (account) => account.lastName, sortBy: (account) => account.lastName },
-  { heading: 'Middle name', width: '9rem', cell: (account) => <TextOrDash text={account.middleName} />, sortBy: (account) => account.middleName },
-  { heading: 'Role', width: '11rem', cell: (account) => account.roleName, sortBy: (account) => account.roleName },
-  { heading: 'Status', width: '8rem', cell: (account) => <StatusLabel status={account.status} />, sortBy: (account) => account.status },
-  { heading: 'Description', width: '16rem', cell: (account) => <TextOrDash text={account.description} />, sortBy: (account) => account.description },
+  { heading: 'Username', width: '10em', cell: (account) => account.username, sortBy: (account) => account.username },
+  { heading: 'First name', width: '10em', cell: (account) => account.firstName, sortBy: (account) => account.firstName },
+  { heading: 'Last name', width: '10em', cell: (account) => account.lastName, sortBy: (account) => account.lastName },
+  { heading: 'Middle name', width: '9em', cell: (account) => <TextOrDash text={account.middleName} />, sortBy: (account) => account.middleName },
+  { heading: 'Role', width: '11em', cell: (account) => account.roleName, sortBy: (account) => account.roleName },
+  { heading: 'Status', width: '8em', cell: (account) => <StatusLabel status={account.status} />, sortBy: (account) => account.status },
+  { heading: 'Description', width: '16em', cell: (account) => <TextOrDash text={account.description} />, sortBy: (account) => account.description },
   ...historyColumns<Listed<Account>>((account) => account.history),
 ];
 
@@ -62,10 +62,10 @@ export function UsersScreen({ user, search, onSignInAgain }: { user: SignedInUse
           heading: 'Change',
           hiddenHeading: true,
           align: 'right',
-          width: '5.5rem',
+          width: '5em',
           pinned: true,
           cell: (account) => (
-            <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Edit ${account.displayName}`} onClick={() => open(account.id)}>
+            <Button type="button" variant="secondary" size="compact" className="h-6 px-2 text-[13px]" aria-label={`Edit ${account.displayName}`} onClick={() => open(account.id)}>
               Edit
             </Button>
           ),

@@ -6,7 +6,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { cellsUnder, expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
+import { cellsUnder, expectCompact, expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -117,6 +117,8 @@ describeWithDatabase('machines from the real app', () => {
     // Shown whole, never cut short: ids made the same minute begin alike.
     const id = table().getByRole('cell', { name: idOf['HQ-M01'], exact: true });
     expect(await id.evaluate((cell) => cell.scrollWidth <= cell.clientWidth)).toBe(true);
+    // Compact, its Edit buttons included.
+    await expectCompact(table());
     const hardwareId = (await db.machine.findFirstOrThrow({ where: { code: 'HQ-M01' } })).machineUuid;
     const who = ['Updated by', 'Updated machine', 'Updated shop', 'Created by', 'Created machine', 'Created shop'];
     expect(await cellsUnder(table(), ['Code', 'Hardware id', 'Shop', 'Status', 'Description', ...who])).toEqual([

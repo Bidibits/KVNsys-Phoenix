@@ -16,9 +16,10 @@ export interface Column<Row> {
    */
   wrap?: boolean;
   /**
-   * The column's width, such as "9rem". In a wide table every column keeps its width (10rem when
-   * it doesn't say). Otherwise it's for a table where columns that may hold long text would take
-   * the room the short ones need; the columns without one share what's left.
+   * The column's width. In a wide table give it in em, such as "9em": it follows the table's text,
+   * so the compact grid's columns are narrow too, and every column keeps its width (10em when it
+   * doesn't say). Otherwise, such as "9rem", it's for a table where columns that may hold long text
+   * would take the room the short ones need; the columns without one share what's left.
    */
   width?: string;
   /**
@@ -32,7 +33,7 @@ export interface Column<Row> {
 }
 
 /** A wide table's column without a width of its own. */
-const DefaultWidth = '10rem';
+const DefaultWidth = '10em';
 
 /** A wide table's cell too narrow for its text shows it whole when the pointer rests on it, as Beta's grids did. */
 function showWhole(event: MouseEvent<HTMLTableCellElement>) {
@@ -45,9 +46,10 @@ function showWhole(event: MouseEvent<HTMLTableCellElement>) {
  * stays put while the rows scroll. A heading with something to sort by sorts the rows when clicked.
  * The start of design-direction.md's shared list screen.
  *
- * A wide one works like Beta's grids: every column keeps its width, each cell stays on one line
- * (ending in … when its text is longer), and the table scrolls sideways when the columns don't all
- * fit. That's for lists that show every column of their records. Otherwise the columns share the
+ * A wide one works like Beta's grids: compact (13px text, rows 28px tall), every column keeps its
+ * width, each cell stays on one line (ending in … when its text is longer), and the table scrolls
+ * sideways when the columns don't all fit. That's for lists that show every column of their
+ * records, where seeing many rows and columns at once matters most. Otherwise the columns share the
  * box's width, as the selling screen wants.
  *
  * The box scrolls itself, both ways, so give it a height (in a flex column, it takes the room left).
@@ -96,7 +98,9 @@ export function RecordTable<Row>({
 
   const alignment = (column: Column<Row>) => (column.align === 'right' ? 'text-right' : 'text-left');
   // Large rows are taller, and a little narrower at the sides, so a selling screen's columns fit.
-  const cell = size === 'large' ? 'h-14 px-3' : 'h-11 px-4';
+  // A wide grid is compact, as Beta's were: smaller text, short rows and less room at the sides.
+  const cell = size === 'large' ? 'h-14 px-3' : wide ? 'h-7 px-2 py-0' : 'h-11 px-4';
+  const text = wide ? 'text-[13px]' : size === 'large' ? 'text-lg' : 'text-[15px]';
   // As wide as its columns, or as the box when they'd leave room over.
   const tableWidth = wide ? `max(100%, calc(${columns.map((column) => column.width ?? DefaultWidth).join(' + ')}))` : undefined;
   // A pinned column covers the cells that scroll under it, so it has the row's own colour, and a line on its left.
@@ -106,7 +110,7 @@ export function RecordTable<Row>({
     <div className={cn('min-h-0 overflow-auto rounded-lg border border-border bg-field', className)}>
       <table
         aria-label={label}
-        className={cn(wide ? 'table-fixed' : 'w-full', size === 'large' ? 'text-lg' : 'text-[15px]')}
+        className={cn(wide ? 'table-fixed' : 'w-full', text)}
         style={tableWidth ? { width: tableWidth } : undefined}
       >
         {wide && (

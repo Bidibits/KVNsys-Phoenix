@@ -70,16 +70,16 @@ export function CatalogListScreen({
   type Entry = Listed<CatalogEntry>;
   const columns: Column<Entry>[] = [
     idColumn<Entry>(),
-    { heading: 'Code', width: '9rem', cell: (entry) => entry.code, sortBy: (entry) => entry.code },
-    { heading: 'Name', width: '14rem', cell: (entry) => entry.name, sortBy: (entry) => entry.name },
+    { heading: 'Code', width: '9em', cell: (entry) => entry.code, sortBy: (entry) => entry.code },
+    { heading: 'Name', width: '14em', cell: (entry) => entry.name, sortBy: (entry) => entry.name },
     ...(shape.hasAddress
-      ? [{ heading: 'Address', width: '18rem', cell: (entry: Entry) => <TextOrDash text={entry.address} />, sortBy: (entry: Entry) => entry.address }]
+      ? [{ heading: 'Address', width: '18em', cell: (entry: Entry) => <TextOrDash text={entry.address} />, sortBy: (entry: Entry) => entry.address }]
       : []),
     ...(shape.hasParent
-      ? [{ heading: 'Inside', width: '14rem', cell: (entry: Entry) => <TextOrDash text={entry.parentName} />, sortBy: (entry: Entry) => entry.parentName }]
+      ? [{ heading: 'Inside', width: '14em', cell: (entry: Entry) => <TextOrDash text={entry.parentName} />, sortBy: (entry: Entry) => entry.parentName }]
       : []),
-    { heading: 'Status', width: '8rem', cell: (entry) => <StatusLabel status={entry.status} />, sortBy: (entry) => entry.status },
-    { heading: 'Description', width: '18rem', cell: (entry) => <TextOrDash text={entry.description} />, sortBy: (entry) => entry.description },
+    { heading: 'Status', width: '8em', cell: (entry) => <StatusLabel status={entry.status} />, sortBy: (entry) => entry.status },
+    { heading: 'Description', width: '18em', cell: (entry) => <TextOrDash text={entry.description} />, sortBy: (entry) => entry.description },
     ...historyColumns<Entry>((entry) => entry.history),
     ...(mayManage
       ? [
@@ -87,10 +87,10 @@ export function CatalogListScreen({
             heading: 'Change',
             hiddenHeading: true,
             align: 'right' as const,
-            width: '5.5rem',
+            width: '5em',
             pinned: true,
             cell: (entry: Entry) => (
-              <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Edit ${entry.name}`} onClick={() => setEditing({ id: entry.id })}>
+              <Button type="button" variant="secondary" size="compact" className="h-6 px-2 text-[13px]" aria-label={`Edit ${entry.name}`} onClick={() => setEditing({ id: entry.id })}>
                 Edit
               </Button>
             ),

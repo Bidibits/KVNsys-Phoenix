@@ -6,7 +6,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
+import { expectCompact, expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -162,6 +162,8 @@ describeWithDatabase("the Products list's pictures, categories and brands, in th
       },
       { notShown: ['warranty_months'] },
     );
+    // Compact, pictures and Edit buttons included.
+    await expectCompact(table());
     const name = table().getByRole('cell', { name: LongName, exact: true });
     expect(await name.evaluate((cell) => cell.scrollWidth > cell.clientWidth)).toBe(true);
     await name.hover();

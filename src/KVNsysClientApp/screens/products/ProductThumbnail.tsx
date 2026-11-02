@@ -53,7 +53,7 @@ export function ProductThumbnail({ id, name, hasPicture, generation }: { id: str
 
   // Without a picture the space is kept, empty, so the codes still line up.
   return (
-    <div ref={box} className={hasPicture ? 'flex size-10 items-center justify-center overflow-hidden rounded border border-border/60 bg-white' : 'size-10'}>
+    <div ref={box} className={hasPicture ? 'flex size-6 items-center justify-center overflow-hidden rounded border border-border/60 bg-white' : 'size-6'}>
       {picture && <img src={`data:image/jpeg;base64,${picture}`} alt={`Picture of ${name}`} className="size-full object-contain" />}
     </div>
   );

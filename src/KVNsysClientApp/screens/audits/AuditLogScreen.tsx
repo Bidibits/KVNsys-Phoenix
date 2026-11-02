@@ -65,10 +65,10 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
   // The audits table's columns in its own order: its id first, then what changed, and who, where and when last.
   const columns: Column<AuditLine>[] = [
     idColumn<AuditLine>(),
-    { heading: 'Table', width: '9rem', cell: (entry) => entry.tableLabel, sortBy: (entry) => entry.tableLabel },
+    { heading: 'Table', width: '9em', cell: (entry) => entry.tableLabel, sortBy: (entry) => entry.tableLabel },
     {
       heading: 'Record',
-      width: '15rem',
+      width: '15em',
       cell: (entry) => (
         <button
           type="button"
@@ -81,15 +81,15 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
       ),
       sortBy: (entry) => entry.recordName,
     },
-    { heading: 'Column', width: '12rem', cell: (entry) => <span className="font-semibold">{entry.columnLabel}</span>, sortBy: (entry) => entry.columnLabel },
-    { heading: 'Before', width: '16rem', cell: (entry) => <TextOrDash text={entry.before} />, sortBy: (entry) => entry.before },
-    { heading: 'After', width: '16rem', cell: (entry) => <TextOrDash text={entry.after} />, sortBy: (entry) => entry.after },
-    { heading: 'Change', width: '10rem', cell: (entry) => <StatusLabel status={entry.changeType} />, sortBy: (entry) => entry.changeType },
-    { heading: 'Source', width: '8rem', cell: (entry) => entry.source, sortBy: (entry) => entry.source },
-    { heading: 'By', width: '16rem', cell: (entry) => entry.userName ?? ByKVNsysItself, sortBy: (entry) => entry.userName ?? ByKVNsysItself },
-    { heading: 'Machine', width: '13rem', cell: (entry) => <TextOrDash text={entry.machineName} />, sortBy: (entry) => entry.machineName },
-    { heading: 'Shop', width: '10rem', cell: (entry) => <TextOrDash text={entry.shopName} />, sortBy: (entry) => entry.shopName },
-    { heading: 'At', width: '12rem', cell: (entry) => <ShopTime at={entry.at} />, sortBy: (entry) => entry.at },
+    { heading: 'Column', width: '12em', cell: (entry) => <span className="font-semibold">{entry.columnLabel}</span>, sortBy: (entry) => entry.columnLabel },
+    { heading: 'Before', width: '16em', cell: (entry) => <TextOrDash text={entry.before} />, sortBy: (entry) => entry.before },
+    { heading: 'After', width: '16em', cell: (entry) => <TextOrDash text={entry.after} />, sortBy: (entry) => entry.after },
+    { heading: 'Change', width: '10em', cell: (entry) => <StatusLabel status={entry.changeType} />, sortBy: (entry) => entry.changeType },
+    { heading: 'Source', width: '8em', cell: (entry) => entry.source, sortBy: (entry) => entry.source },
+    { heading: 'By', width: '16em', cell: (entry) => entry.userName ?? ByKVNsysItself, sortBy: (entry) => entry.userName ?? ByKVNsysItself },
+    { heading: 'Machine', width: '13em', cell: (entry) => <TextOrDash text={entry.machineName} />, sortBy: (entry) => entry.machineName },
+    { heading: 'Shop', width: '10em', cell: (entry) => <TextOrDash text={entry.shopName} />, sortBy: (entry) => entry.shopName },
+    { heading: 'At', width: '12em', cell: (entry) => <ShopTime at={entry.at} />, sortBy: (entry) => entry.at },
   ];
 
   const tables = result?.ok ? result.tables : [];

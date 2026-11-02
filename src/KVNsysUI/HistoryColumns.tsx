@@ -21,7 +21,7 @@ export function TextOrDash({ text }: { text: string | null | undefined }) {
  * poorly.
  */
 export function idColumn<Row extends { id: string }>(): Column<Row> {
-  return { heading: 'Id', width: '21rem', cell: (row) => row.id, sortBy: (row) => row.id };
+  return { heading: 'Id', width: '21em', cell: (row) => row.id, sortBy: (row) => row.id };
 }
 
 /**
@@ -37,24 +37,24 @@ export function historyColumns<Row>(history: (row: Row) => RecordHistory): Colum
   return [
     {
       heading: 'Updated by',
-      width: '16rem',
+      width: '16em',
       cell: (row) => <TextOrDash text={updated(row, (h) => person(h.updatedBy))} />,
       sortBy: (row) => updated(row, (h) => person(h.updatedBy)),
     },
-    { heading: 'Updated machine', width: '13rem', cell: (row) => <TextOrDash text={updated(row, (h) => h.updatedMachine)} />, sortBy: (row) => updated(row, (h) => h.updatedMachine) },
-    { heading: 'Updated shop', width: '10rem', cell: (row) => <TextOrDash text={updated(row, (h) => h.updatedShop)} />, sortBy: (row) => updated(row, (h) => h.updatedShop) },
+    { heading: 'Updated machine', width: '13em', cell: (row) => <TextOrDash text={updated(row, (h) => h.updatedMachine)} />, sortBy: (row) => updated(row, (h) => h.updatedMachine) },
+    { heading: 'Updated shop', width: '10em', cell: (row) => <TextOrDash text={updated(row, (h) => h.updatedShop)} />, sortBy: (row) => updated(row, (h) => h.updatedShop) },
     {
       heading: 'Updated at',
-      width: '12rem',
+      width: '12em',
       cell: (row) => {
         const at = history(row).updatedAt;
         return at === null ? <Dash /> : <ShopTime at={at} />;
       },
       sortBy: (row) => history(row).updatedAt,
     },
-    { heading: 'Created by', width: '16rem', cell: (row) => person(history(row).createdBy), sortBy: (row) => person(history(row).createdBy) },
-    { heading: 'Created machine', width: '13rem', cell: (row) => <TextOrDash text={history(row).createdMachine} />, sortBy: (row) => history(row).createdMachine },
-    { heading: 'Created shop', width: '10rem', cell: (row) => <TextOrDash text={history(row).createdShop} />, sortBy: (row) => history(row).createdShop },
-    { heading: 'Created at', width: '12rem', cell: (row) => <ShopTime at={history(row).createdAt} />, sortBy: (row) => history(row).createdAt },
+    { heading: 'Created by', width: '16em', cell: (row) => person(history(row).createdBy), sortBy: (row) => person(history(row).createdBy) },
+    { heading: 'Created machine', width: '13em', cell: (row) => <TextOrDash text={history(row).createdMachine} />, sortBy: (row) => history(row).createdMachine },
+    { heading: 'Created shop', width: '10em', cell: (row) => <TextOrDash text={history(row).createdShop} />, sortBy: (row) => history(row).createdShop },
+    { heading: 'Created at', width: '12em', cell: (row) => <ShopTime at={history(row).createdAt} />, sortBy: (row) => history(row).createdAt },
   ];
 }

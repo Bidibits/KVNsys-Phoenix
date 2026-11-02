@@ -156,7 +156,7 @@ calm. "Modern" changes how it feels, not what it is:
 | Forms | A side panel or a pop-up window | A panel that slides in from the right while the list stays visible |
 | Notices | Rounded pop-up notices, in the middle of the screen unless told otherwise | Pop-up notices in a corner, and themed dialogs for decisions |
 | Movement | None | A little: the short fades and slides shadcn's parts come with, nothing bouncy |
-| Size | One size | **Two:** back-office lists compact, so many rows fit, as in Beta; the selling screen large, with big buttons and type, for speed (and for fingers, if the machines have touch screens) |
+| Size | One size | **Two:** back-office lists compact, so many rows fit, as in Beta; the selling screen large, with big buttons and type, for speed (and for fingers, if the machines have touch screens). Since 2026-11-02 the lists' grids are: 13px text, rows 28px tall, columns sized in the grid's own text. |
 
 On the selling screen the keyboard comes first: the barcode box always has the cursor, and a
 scan or Enter adds the item. The keys for payment and discount get decided with the cashiers.

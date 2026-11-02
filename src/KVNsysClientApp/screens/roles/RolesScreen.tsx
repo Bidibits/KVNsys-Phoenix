@@ -12,12 +12,12 @@ const ManageRight: AccessName = 'roles.manage';
  */
 const Columns: Column<ListedRole>[] = [
   idColumn<ListedRole>(),
-  { heading: 'Code', width: '9rem', cell: (role) => role.code, sortBy: (role) => role.code },
-  { heading: 'Name', width: '12rem', cell: (role) => role.name, sortBy: (role) => role.name },
-  { heading: 'Status', width: '8rem', cell: (role) => <StatusLabel status={role.status} />, sortBy: (role) => role.status },
-  { heading: 'Description', width: '16rem', cell: (role) => <TextOrDash text={role.description} />, sortBy: (role) => role.description },
-  { heading: 'Rights', width: '26rem', cell: (role) => role.rightsInWords, sortBy: (role) => role.rightsInWords },
-  { heading: 'Accounts', width: '7rem', align: 'right', cell: (role) => role.userCount, sortBy: (role) => role.userCount },
+  { heading: 'Code', width: '9em', cell: (role) => role.code, sortBy: (role) => role.code },
+  { heading: 'Name', width: '12em', cell: (role) => role.name, sortBy: (role) => role.name },
+  { heading: 'Status', width: '8em', cell: (role) => <StatusLabel status={role.status} />, sortBy: (role) => role.status },
+  { heading: 'Description', width: '16em', cell: (role) => <TextOrDash text={role.description} />, sortBy: (role) => role.description },
+  { heading: 'Rights', width: '26em', cell: (role) => role.rightsInWords, sortBy: (role) => role.rightsInWords },
+  { heading: 'Accounts', width: '7em', align: 'right', cell: (role) => role.userCount, sortBy: (role) => role.userCount },
   ...historyColumns<ListedRole>((role) => role.history),
 ];
 
@@ -62,10 +62,10 @@ export function RolesScreen({ user, search, onSignInAgain }: { user: SignedInUse
           heading: 'Change',
           hiddenHeading: true,
           align: 'right',
-          width: '5.5rem',
+          width: '5em',
           pinned: true,
           cell: (role) => (
-            <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Edit ${role.name}`} onClick={() => open(role.id)}>
+            <Button type="button" variant="secondary" size="compact" className="h-6 px-2 text-[13px]" aria-label={`Edit ${role.name}`} onClick={() => open(role.id)}>
               Edit
             </Button>
           ),
