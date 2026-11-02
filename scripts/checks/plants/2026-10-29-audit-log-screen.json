@@ -1,0 +1,69 @@
+{
+  "step": "The Audit log screen: every change, by table, record, person and day (2026-10-29)",
+  "plants": [
+    {
+      "name": "1 the server checks the wrong right",
+      "file": "src/KVNsysServer/http/audits.controller.ts",
+      "old": "Accesses.AuditsView",
+      "new": "Accesses.ProductsView",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "audits-database"]]
+    },
+    {
+      "name": "2 the table filter ignored",
+      "file": "src/KVNsysPostgres/audits/prisma-audit-log.ts",
+      "old": "...(filter.table ? { tableName: filter.table } : {}),",
+      "new": "",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"], ["KVNsysServer.Tests", "audits-database"]]
+    },
+    {
+      "name": "3 \"KVNsys itself\" read as anyone",
+      "file": "src/KVNsysPostgres/audits/prisma-audit-log.ts",
+      "old": "filter.person === ByKVNsys ? { implementedByUser: null } : filter.person",
+      "new": "filter.person === ByKVNsys ? {} : filter.person",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"], ["KVNsysServer.Tests", "audits-database"]]
+    },
+    {
+      "name": "4 ids shown, not names",
+      "file": "src/KVNsysCore/audits/audit-log-book.ts",
+      "old": "if (column in AuditReferences) return names.get(value) ?? value;",
+      "new": "",
+      "build": ["@kvnsys/core", "@kvnsys/postgres"],
+      "tests": [["KVNsysCore.Tests", "audit-trail"], ["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "5 oldest first",
+      "file": "src/KVNsysPostgres/audits/prisma-audit-log.ts",
+      "old": "orderBy: [{ implementedAtDate: 'desc' }, { id: 'asc' }]",
+      "new": "orderBy: [{ implementedAtDate: 'asc' }, { id: 'asc' }]",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "6 never says there are more",
+      "file": "src/KVNsysPostgres/audits/prisma-audit-log.ts",
+      "old": "more: rows.length > AuditLimit,",
+      "new": "more: false,",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "7 the last day left out",
+      "file": "src/KVNsysCore/audits/audit-log-book.ts",
+      "old": "shopDay(text(typed.to)).to",
+      "new": "shopDay(text(typed.to)).from",
+      "build": ["@kvnsys/core"],
+      "tests": [["KVNsysCore.Tests", "audit-trail"]]
+    },
+    {
+      "name": "8 clicking a record doesn't follow it",
+      "file": "src/KVNsysClientApp/screens/audits/AuditLogScreen.tsx",
+      "old": "change({ record: entry.recordId, table: '' });",
+      "new": "change({ table: '' });",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "audits"]]
+    }
+  ]
+}

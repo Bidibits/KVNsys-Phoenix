@@ -1,0 +1,93 @@
+{
+  "step": "Every save records its changes in the audit log, column by column (2026-10-28)",
+  "plants": [
+    {
+      "name": "1 a new product isn't logged",
+      "file": "src/KVNsysPostgres/catalog/prisma-product-catalog.ts",
+      "old": "      await recordCreated(tx, audited(row.id, lineage), { ...auditValues(row), image: picture === null ? null : pictureText(picture) });",
+      "new": "",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "2 a change to a catalogue list isn't logged",
+      "file": "src/KVNsysPostgres/catalog/prisma-catalog-book.ts",
+      "old": "      await recordChanged(tx, audited(list, id, lineage), auditValues(existing), auditValues(row));",
+      "new": "",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "3 a role's rights aren't logged",
+      "file": "src/KVNsysPostgres/identity/prisma-role-catalog.ts",
+      "old": "accesses: rightsText(row.accesses.map((a) => a.access)) });",
+      "new": "});",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "4 a new password isn't logged",
+      "file": "src/KVNsysPostgres/identity/prisma-user-accounts.ts",
+      "old": "      // The log says the password changed, never what either one was (HiddenColumns).\n      await recordChanged(tx, audited(id, lineage), auditValues(existing), auditValues(row));",
+      "new": "",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "5 the password shown in the log",
+      "file": "src/KVNsysCore/shared/audit-trail.ts",
+      "old": "new Set(['password_hash'])",
+      "new": "new Set<string>([])",
+      "build": ["@kvnsys/core", "@kvnsys/postgres"],
+      "tests": [["KVNsysCore.Tests", "audit-trail"], ["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "6 a PC renamed in Windows logged as a person's change",
+      "file": "src/KVNsysPostgres/locations/prisma-machine-book.ts",
+      "old": "audited(known.id, lineage, 'Automatic')",
+      "new": "audited(known.id, lineage, 'Manual')",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "7 the setup's rights aren't logged",
+      "file": "src/KVNsysPostgres/setup/prisma-setup-store.ts",
+      "old": "    await recordChanged(this.db, audited('roles', row.roleId, lineage), { accesses: rightsText(before) }, { accesses: rightsText(await rights()) });",
+      "new": "",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "8 switching off logged as an update",
+      "file": "src/KVNsysCore/shared/audit-trail.ts",
+      "old": "column === 'status' && value === SwitchedOff ? 'Decommissioned' : 'Updated'",
+      "new": "'Updated'",
+      "build": ["@kvnsys/core", "@kvnsys/postgres"],
+      "tests": [["KVNsysCore.Tests", "audit-trail"], ["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "9 who, where and when logged as changes",
+      "file": "src/KVNsysPostgres/audits/audit-log.ts",
+      "old": "    if (LineageFields.has(field)) continue;",
+      "new": "    if (field === 'id') continue;",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "10 the log written outside the save",
+      "file": "src/KVNsysPostgres/catalog/prisma-product-catalog.ts",
+      "old": "      await refuseClashes(tx, product, id);\n      await refuseGoneChoices(tx, product);\n      const row = await tx.product.update({",
+      "new": "      await this.db.audit.create({ data: { id: newId(), tableName: 'products', recordId: id, changeType: 'Updated', changeSource: 'Manual' } });\n      await refuseClashes(tx, product, id);\n      await refuseGoneChoices(tx, product);\n      const row = await tx.product.update({",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    },
+    {
+      "name": "11 a picture left alone logged as removed",
+      "file": "src/KVNsysPostgres/catalog/prisma-product-catalog.ts",
+      "old": "{ ...auditValues(row), ...pictures(picture) }",
+      "new": "{ ...auditValues(row), ...pictures(picture ?? null) }",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "audit-log"]]
+    }
+  ]
+}

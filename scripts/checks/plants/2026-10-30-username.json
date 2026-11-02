@@ -1,0 +1,69 @@
+{
+  "step": "The setup asks for the first account's username, beside its password (2026-10-30)",
+  "plants": [
+    {
+      "name": "1 a username judged as typed, not in lowercase",
+      "file": "src/KVNsysCore/identity/accounts.ts",
+      "old": "const username = normalizeUsername(typed);",
+      "new": "const username = typed;",
+      "build": ["@kvnsys/core"],
+      "tests": [["KVNsysCore.Tests", "accounts"], ["KVNsysServer.Tests", "first-shop"]]
+    },
+    {
+      "name": "2 the setup keeps the username as typed",
+      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "old": "else username = normalizeUsername(typed || DefaultAdminUsername);",
+      "new": "else username = typed || DefaultAdminUsername;",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "first-shop"]]
+    },
+    {
+      "name": "3 Enter doesn't give admin",
+      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "old": "const problem = usernameProblem(typed || DefaultAdminUsername);",
+      "new": "const problem = usernameProblem(typed);",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "first-shop"]]
+    },
+    {
+      "name": "4 the setup file's username not checked",
+      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "old": "if (usernameIssue) return { ok: false, message: `KVNSYS_ADMIN_USERNAME: ${usernameIssue}` };",
+      "new": "",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "first-shop"]]
+    },
+    {
+      "name": "5 the setup file's answers in the wrong order",
+      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "old": "const named = [shopName, username];",
+      "new": "const named = [username, shopName];",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "first-shop"]]
+    },
+    {
+      "name": "6 the last line names admin, not the username chosen",
+      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "old": "On any machine, sign in as \"${username}\" with that password.",
+      "new": "On any machine, sign in as \"${DefaultAdminUsername}\" with that password.",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "first-shop"]]
+    },
+    {
+      "name": "7 the seed takes any username",
+      "file": "src/KVNsysServer/setup/install-seed.ts",
+      "old": "if (usernameIssue) throw new Refusal('invalid', `KVNSYS_ADMIN_USERNAME: ${usernameIssue}`);",
+      "new": "",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "install-seed"]]
+    },
+    {
+      "name": "8 the seed keeps capitals",
+      "file": "src/KVNsysServer/setup/install-seed.ts",
+      "old": "const adminUsername = normalizeUsername(input.adminUsername);",
+      "new": "const adminUsername = input.adminUsername;",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "install-seed"]]
+    }
+  ]
+}

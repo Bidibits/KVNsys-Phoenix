@@ -16,6 +16,8 @@
     "start:app": "pnpm --filter @kvnsys/client-app start",
     "start:dashboard": "pnpm --filter @kvnsys/server-app start",
     "package": "pnpm build && node scripts/package.mjs",
+    "check:plants": "node scripts/checks/plant-mistakes.mjs",
+    "check:package": "pnpm --filter @kvnsys/client-app-tests exec vitest run --config vitest.check.config.ts",
     "install:here": "node scripts/install-here.mjs",
     "fetch:installer-parts": "node scripts/fetch-installer-parts.mjs"
   },

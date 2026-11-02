@@ -1,0 +1,117 @@
+{
+  "step": "Every list is a Beta-style grid with each record's history (2026-10-30)",
+  "plants": [
+    {
+      "name": "1 the machine it was made on read from the one it was updated on",
+      "file": "src/KVNsysPostgres/audits/record-history.ts",
+      "old": "createdMachine: name(row.createdAtMachine),",
+      "new": "createdMachine: name(row.updatedAtMachine),",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "record-history"]]
+    },
+    {
+      "name": "2 a name this server doesn't have reads as nobody",
+      "file": "src/KVNsysPostgres/audits/record-history.ts",
+      "old": "(names.get(id) ?? NotOnThisServer)",
+      "new": "(names.get(id) ?? null)",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "record-history"]]
+    },
+    {
+      "name": "3 never updated shows when it was made",
+      "file": "src/KVNsysPostgres/audits/record-history.ts",
+      "old": "updatedAt: row.updatedAtDate?.toISOString() ?? null,",
+      "new": "updatedAt: (row.updatedAtDate ?? row.createdAtDate).toISOString(),",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "record-history"]]
+    },
+    {
+      "name": "4 the histories land on the wrong rows",
+      "file": "src/KVNsysPostgres/audits/record-history.ts",
+      "old": "history: histories[i]!",
+      "new": "history: histories[records.length - 1 - i]!",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "record-history"]]
+    },
+    {
+      "name": "5 the machines list names the shop by its code",
+      "file": "src/KVNsysServer/http/machines.controller.ts",
+      "old": "shopName: shop.name",
+      "new": "shopName: shop.code",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "machines-database"]]
+    },
+    {
+      "name": "6 the supplier named from the brands",
+      "file": "src/KVNsysClient/catalog/product-list.ts",
+      "old": "nameIn(suppliers.entries)",
+      "new": "nameIn(brands.entries)",
+      "build": ["@kvnsys/client"],
+      "tests": [["KVNsysClient.Tests", "products"]]
+    },
+    {
+      "name": "7 clicking a heading again doesn't turn the order round",
+      "file": "src/KVNsysUI/lib/sort-rows.ts",
+      "old": "return (descending ? -order : order) || a.at - b.at;",
+      "new": "return order || a.at - b.at;",
+      "build": [],
+      "tests": [["KVNsysUI.Tests", "sort-rows"]]
+    },
+    {
+      "name": "8 empty values sort first",
+      "file": "src/KVNsysUI/lib/sort-rows.ts",
+      "old": "Number(isEmpty(a.value)) - Number(isEmpty(b.value))",
+      "new": "Number(isEmpty(b.value)) - Number(isEmpty(a.value))",
+      "build": [],
+      "tests": [["KVNsysUI.Tests", "sort-rows"]]
+    },
+    {
+      "name": "9 a third click keeps sorting",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "current.descending ? null : { heading, descending: true }",
+      "new": "{ heading, descending: !current.descending }",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "10 the Edit buttons not kept in view",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "const pinned = 'sticky right-0 shadow-[inset_1px_0_0_var(--border)]';",
+      "new": "const pinned = 'shadow-[inset_1px_0_0_var(--border)]';",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "11 a long value widens its column",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "className={cn(wide ? 'table-fixed' : 'w-full'",
+      "new": "className={cn(wide ? '' : 'w-full'",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "audits"]]
+    },
+    {
+      "name": "12 a value cut short never shows whole",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "cell.title = cell.scrollWidth > cell.clientWidth ? (cell.textContent ?? '') : '';",
+      "new": "cell.title = '';",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "product-list"]]
+    },
+    {
+      "name": "13 \"KVNsys itself\" left blank",
+      "file": "src/KVNsysUI/HistoryColumns.tsx",
+      "old": "const person = (who: string | null) => who ?? ByKVNsysItself;",
+      "new": "const person = (who: string | null) => who ?? '';",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "14 the cost shown to a cashier",
+      "file": "src/KVNsysClientApp/screens/products/ProductsScreen.tsx",
+      "old": "    : columnsFor(reloads, false);",
+      "new": "    : columnsFor(reloads, true);",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "frame"]]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "step": "Machines, not registers: on screen and in the code (2026-11-02)",
+  "plants": [
+    {
+      "name": "1 new machines coded with R again",
+      "file": "src/KVNsysCore/locations/machines.ts",
+      "old": "return `${shopCode}-M${",
+      "new": "return `${shopCode}-R${",
+      "build": ["@kvnsys/core"],
+      "tests": [["KVNsysCore.Tests", "machines"]]
+    },
+    {
+      "name": "2 the next number counted from the old R codes",
+      "file": "src/KVNsysPostgres/locations/prisma-machine-book.ts",
+      "old": "const prefix = `${shop.code}-M`;",
+      "new": "const prefix = `${shop.code}-R`;",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "machine-book"]]
+    },
+    {
+      "name": "3 the server still answers at /api/registers",
+      "file": "src/KVNsysServer/http/machines.controller.ts",
+      "old": "@Controller('machines')",
+      "new": "@Controller('registers')",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "machines-database"]]
+    },
+    {
+      "name": "4 the app sends its PC under the old name",
+      "file": "src/KVNsysClient/identity/sign-in.ts",
+      "old": "...(options.machine ? { machine: options.machine } : {}),",
+      "new": "...(options.machine ? { register: options.machine } : {}),",
+      "build": ["@kvnsys/client"],
+      "tests": [["KVNsysClient.Tests", "sign-in"], ["KVNsysServer.Tests", "machines-database"]]
+    },
+    {
+      "name": "5 the Home tile still says Registers",
+      "file": "src/KVNsysClientApp/screens/home/HomeScreen.tsx",
+      "old": "    title: 'Machines',",
+      "new": "    title: 'Registers',",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "6 the title bar drops the machine",
+      "file": "src/KVNsysClientApp/screens/SignedIn.tsx",
+      "old": "machine: user.machine?.name ?? null }}",
+      "new": "machine: null }}",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "sign-in"]]
+    },
+    {
+      "name": "7 the receipt says Register",
+      "file": "src/KVNsysClientApp/screens/selling/ReceiptPaper.tsx",
+      "old": "Machine: {machine}",
+      "new": "Register: {machine}",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "sell"]]
+    },
+    {
+      "name": "8 the dashboard's column says Register",
+      "file": "src/KVNsysServerApp/screens/Dashboard.tsx",
+      "old": "{ heading: 'Machine', wrap: true,",
+      "new": "{ heading: 'Register', wrap: true,",
+      "build": ["@kvnsys/server-app"],
+      "tests": [["KVNsysServerApp.Tests", "dashboard"]]
+    }
+  ]
+}

@@ -261,7 +261,11 @@ column, its index, and the comments written for the browser design.
   inside every project, so two people rarely touch the same file.
 - **A check that can't fail isn't a check.** Make every rule and test fail once on purpose. A
   structure check written for an earlier version of Phoenix passed while three of its five rules
-  could never fire.
+  could never fire. Since 2026-11-02 that's `pnpm check:plants`, with each step's mistakes listed in
+  `scripts/checks/plants/`.
+- **Every check is in the code base.** Whatever a change was checked with (the tests, the planted
+  mistakes, running the built programs with `pnpm check:package`) is committed, so whoever has the
+  repo can run all of it (`handover.md`, "How a change is checked").
 - **A test that can't run shows as skipped, never as passed.**
 - **Assert the rule, not today's number.** A test pinned the protocol at exactly 2, and broke the
   moment sessions rightly raised it. It now checks that sign-in came with 2 or later.

@@ -1,0 +1,69 @@
+{
+  "step": "Every list's columns in its table's order, the id first and the history last (2026-11-02)",
+  "plants": [
+    {
+      "name": "1 Machines: the id after the code",
+      "file": "src/KVNsysClientApp/screens/machines/MachinesScreen.tsx",
+      "old": "  idColumn<ListedMachine>(),\n  { heading: 'Code', width: '7rem', cell: (machine) => machine.code, sortBy: (machine) => machine.code },",
+      "new": "  { heading: 'Code', width: '7rem', cell: (machine) => machine.code, sortBy: (machine) => machine.code },\n  idColumn<ListedMachine>(),",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "2 Machines: the computer name back before the hardware id",
+      "file": "src/KVNsysClientApp/screens/machines/MachinesScreen.tsx",
+      "old": "  { heading: 'Hardware id', width: '21rem', cell: (machine) => <TextOrDash text={machine.hardwareId} />, sortBy: (machine) => machine.hardwareId },\n  { heading: 'Computer name', width: '11rem', cell: (machine) => <TextOrDash text={machine.computerName} />, sortBy: (machine) => machine.computerName },",
+      "new": "  { heading: 'Computer name', width: '11rem', cell: (machine) => <TextOrDash text={machine.computerName} />, sortBy: (machine) => machine.computerName },\n  { heading: 'Hardware id', width: '21rem', cell: (machine) => <TextOrDash text={machine.hardwareId} />, sortBy: (machine) => machine.hardwareId },",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "3 Users: the middle name back before the last name",
+      "file": "src/KVNsysClientApp/screens/users/UsersScreen.tsx",
+      "old": "  { heading: 'Last name', width: '10rem', cell: (account) => account.lastName, sortBy: (account) => account.lastName },\n  { heading: 'Middle name', width: '9rem', cell: (account) => <TextOrDash text={account.middleName} />, sortBy: (account) => account.middleName },",
+      "new": "  { heading: 'Middle name', width: '9rem', cell: (account) => <TextOrDash text={account.middleName} />, sortBy: (account) => account.middleName },\n  { heading: 'Last name', width: '10rem', cell: (account) => account.lastName, sortBy: (account) => account.lastName },",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "users"]]
+    },
+    {
+      "name": "4 Roles: rights and accounts before the table's own status and description",
+      "file": "src/KVNsysClientApp/screens/roles/RolesScreen.tsx",
+      "old": "  { heading: 'Status', width: '8rem', cell: (role) => <StatusLabel status={role.status} />, sortBy: (role) => role.status },\n  { heading: 'Description', width: '16rem', cell: (role) => <TextOrDash text={role.description} />, sortBy: (role) => role.description },\n  { heading: 'Rights', width: '26rem', cell: (role) => role.rightsInWords, sortBy: (role) => role.rightsInWords },\n  { heading: 'Accounts', width: '7rem', align: 'right', cell: (role) => role.userCount, sortBy: (role) => role.userCount },",
+      "new": "  { heading: 'Rights', width: '26rem', cell: (role) => role.rightsInWords, sortBy: (role) => role.rightsInWords },\n  { heading: 'Accounts', width: '7rem', align: 'right', cell: (role) => role.userCount, sortBy: (role) => role.userCount },\n  { heading: 'Status', width: '8rem', cell: (role) => <StatusLabel status={role.status} />, sortBy: (role) => role.status },\n  { heading: 'Description', width: '16rem', cell: (role) => <TextOrDash text={role.description} />, sortBy: (role) => role.description },",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "roles"]]
+    },
+    {
+      "name": "5 Audit log: when before who, as it was",
+      "file": "src/KVNsysClientApp/screens/audits/AuditLogScreen.tsx",
+      "old": "    { heading: 'By', width: '16rem', cell: (entry) => entry.userName ?? ByKVNsysItself, sortBy: (entry) => entry.userName ?? ByKVNsysItself },\n    { heading: 'Machine', width: '13rem', cell: (entry) => <TextOrDash text={entry.machineName} />, sortBy: (entry) => entry.machineName },\n    { heading: 'Shop', width: '10rem', cell: (entry) => <TextOrDash text={entry.shopName} />, sortBy: (entry) => entry.shopName },\n    { heading: 'At', width: '12rem', cell: (entry) => <ShopTime at={entry.at} />, sortBy: (entry) => entry.at },",
+      "new": "    { heading: 'At', width: '12rem', cell: (entry) => <ShopTime at={entry.at} />, sortBy: (entry) => entry.at },\n    { heading: 'By', width: '16rem', cell: (entry) => entry.userName ?? ByKVNsysItself, sortBy: (entry) => entry.userName ?? ByKVNsysItself },\n    { heading: 'Machine', width: '13rem', cell: (entry) => <TextOrDash text={entry.machineName} />, sortBy: (entry) => entry.machineName },\n    { heading: 'Shop', width: '10rem', cell: (entry) => <TextOrDash text={entry.shopName} />, sortBy: (entry) => entry.shopName },",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "audits"]]
+    },
+    {
+      "name": "6 Products: the picture back before the name",
+      "file": "src/KVNsysClientApp/screens/products/ProductsScreen.tsx",
+      "old": "  { heading: 'Name', width: '16rem', cell: (product) => product.name, sortBy: (product) => product.name },\n  {\n    heading: 'Picture',\n    width: '6rem',\n    cell: (product) => <ProductThumbnail id={product.id} name={product.name} hasPicture={product.hasPicture} generation={generation} />,\n  },",
+      "new": "  {\n    heading: 'Picture',\n    width: '6rem',\n    cell: (product) => <ProductThumbnail id={product.id} name={product.name} hasPicture={product.hasPicture} generation={generation} />,\n  },\n  { heading: 'Name', width: '16rem', cell: (product) => product.name, sortBy: (product) => product.name },",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "product-list"]]
+    },
+    {
+      "name": "7 The four catalogue lists without their id",
+      "file": "src/KVNsysClientApp/screens/catalog/CatalogListScreen.tsx",
+      "old": "    idColumn<Entry>(),\n",
+      "new": "",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "catalog"]]
+    },
+    {
+      "name": "8 The id cut short",
+      "file": "src/KVNsysUI/HistoryColumns.tsx",
+      "old": "return { heading: 'Id', width: '21rem',",
+      "new": "return { heading: 'Id', width: '8rem',",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    }
+  ]
+}

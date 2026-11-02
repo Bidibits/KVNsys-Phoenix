@@ -328,7 +328,9 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm install` | Installs every project's dependencies |
 | `pnpm build` | Runs the guard, then compiles every project, inner ones first |
 | `pnpm check:structure` | Runs only the guard |
-| `pnpm test` | Runs every test project (after `pnpm build`) |
+| `pnpm test` | Runs every test project (after `pnpm build`). With `KVNSYS_SCREENSHOTS` set to a folder, the window tests keep a picture of each step there |
+| `pnpm check:plants` | Puts the known mistakes in `scripts/checks/plants/` into the code one at a time and checks the tests notice each one, putting every file back after (`docs/handover.md`, "How a change is checked") |
+| `pnpm check:package` | Runs the programs `pnpm package` made in `out/` together on a throwaway database: the server's set-up, the server, and the app signing in and going through Home, Machines and the Audit log |
 | `pnpm db:deploy` | Creates or updates the tables in the database named in `.env` |
 | `pnpm seed` | Prepares a new install's database. Safe to run again. |
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's username and password; any other database must already be KVNsys's, or it refuses to start. |

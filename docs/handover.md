@@ -73,6 +73,29 @@ shows the receipt. Back on Sell, End shift and count the drawer. Machines shows 
 **Tests:** `pnpm test`, after `pnpm build`. The database tests need `KVNSYS_TEST_POSTGRES_URL` in
 `.env`; without it they show as skipped, not passed.
 
+## How a change is checked
+
+Every check is in the code base, so whoever has the repo can run all of them. Each step of work has
+been checked these four ways before it was committed:
+
+1. **`pnpm test`** (after `pnpm build`): every test project. The window tests open the real app.
+   Set `KVNSYS_SCREENSHOTS` to a folder first to keep a picture of each step they take, then look
+   at them: pictures have caught things every test passed, such as a message below the fold.
+2. **`pnpm check:plants`**: puts known mistakes into the code, one at a time, builds what they
+   touch and runs the tests that should notice; each file is put back after. A mistake the tests
+   miss means a test doesn't check what it claims to. The mistakes are listed per step in
+   `scripts/checks/plants/` (a file, a piece of its text and what to put there instead); a step's
+   new work comes with a new list. `pnpm check:plants <list>` runs one list, `--dry-run` only
+   checks each mistake's text is still in its file. Run it with nothing else building: it takes
+   about a minute a mistake, and the window tests open the app again and again.
+3. **`pnpm check:package`** (after `pnpm package`): runs the programs in `out/` together, as the
+   setup files will install them, on a throwaway database. The server sets a new shop up the way
+   its setup file does, then serves on a spare port; the built app connects, signs in with the
+   username the setup chose, and goes through Home, Machines and the Audit log. It checks the
+   server speaks the protocol the code says, so an `out/` older than the code is noticed. It never
+   touches an installed KVNsys.
+4. **Both repos match:** the replay and the tree check below.
+
 ## Two repos, kept the same
 
 Phoenix is in two places on GitHub, and both hold the same thing:
