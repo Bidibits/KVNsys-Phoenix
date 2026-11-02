@@ -177,6 +177,21 @@ each list and form from one description.
 | ~~**An audits screen,** to see each change by table, record and column~~ | **Done.** Every save writes its changes (2026-10-28) and the Audit log screen shows them (2026-10-29): `schema.md`, "What the audit log records". |
 | ~~**The first account's username**~~ | **Done** (2026-10-30): the setup's page asks for it, starting as `admin`. `decisions.md`, Settled. |
 
+**To do, agreed with the user on 2026-11-02 after they looked through the app,** one step at a time.
+None of it needs a change to the database's tables.
+
+| To do | What it takes |
+|---|---|
+| ~~**Lines between columns, dragged to resize**~~ | **Done** (2026-11-02, protocol 21): double-click fits; each person's widths kept on the server (`decisions.md`, Settled). |
+| **"Shop" becomes "Location"**, on screen and in the code; "Address" for where it is | A rename like the Machines one. The database already says `locations` and `*_at_location`. |
+| **The place tables in use** | PSA's list of regions, provinces, cities and municipalities and barangays checked and loaded at setup (SCHEMA-PLAN, "Still open" 1), and a Locations screen that picks each, narrowing the next, then the street. Each branch's own code is set there; today every install is `HQ`. |
+| **What the setup makes is credited to the admin it makes** | The location, the server PC, the Administrator role and the admin account say they were made by that admin, not "KVNsys itself"; anything still made by nobody shows a dash. |
+| **"Stock" becomes "Inventory"** | Screens, code and the rights (`stock.view` becomes `inventory.view`, and so on). The tables are already `inventory` and `inventory_logs`. |
+| **Home: seven tiles** | Transact, Sales, Products, Inventory, Users, Machines, Audit log. Suppliers, Brands, Manufacturers and Categories are buttons inside Products (as Beta's Products dashboard had them); Roles is inside Users. |
+| **Inventory Logs** | The History button on each row goes; an Inventory Logs button at the top of Inventory shows every product's movements, as a grid. |
+| **"Sell" becomes "Transact"** | The selling screen's name. Its records stay `receipts`. |
+| **Sales as a full grid** | Every column of `receipts` in its order, then its three events, opened, settled and voided, in place of created and updated (settled is who rang it up and took the money, where and when). |
+
 ## Continuing with Claude Code
 
 Open Claude Code in the Phoenix folder and start with:

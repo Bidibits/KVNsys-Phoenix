@@ -236,6 +236,7 @@ column, its index, and the comments written for the browser design.
 
 | Question | Who decides |
 |---|---|
+| **The list of sales: "Sales" or "Receipts"?** Its records are `receipts` (SCHEMA-PLAN's name), and at HQ "sales" already names the branches' summaries (`sales_imports`, `consolidated_sales`). Recommended (2026-11-02): the screen becomes **Receipts** and the table keeps its name; renaming the table would change every part of selling for nothing gained. Raised by the user; they haven't chosen yet. | The user |
 | A written ownership agreement between the partners | Both partners, before shared code exists |
 | Can HQ set different prices per branch? | The owners |
 | Which branch goes first, and on what date | The partners, with the branch manager |
