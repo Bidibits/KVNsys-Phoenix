@@ -1,10 +1,18 @@
-import type { AccessName, ProductRow, ProductRowsResult, SignedInUser } from '@kvnsys/client';
+import type { AccessName, CatalogList, ProductRow, ProductRowsResult, SignedInUser } from '@kvnsys/client';
 import { Button, historyColumns, idColumn, Notice, Pesos, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { ProductFormPanel } from './ProductFormPanel';
 import { ProductThumbnail } from './ProductThumbnail';
 
 const ManageRight: AccessName = 'products.manage';
+
+/** The catalogue's four lists, in the order Beta's Products dashboard had them. */
+const CatalogButtons: [CatalogList, string][] = [
+  ['brands', 'Brands'],
+  ['categories', 'Categories'],
+  ['manufacturers', 'Manufacturers'],
+  ['suppliers', 'Suppliers'],
+];
 
 /** An amount, or a dash for none. */
 const PesosOrDash = ({ centavos }: { centavos: number | null }) => (centavos === null ? <TextOrDash text={null} /> : <Pesos centavos={centavos} />);
@@ -80,7 +88,18 @@ const searchText = (product: ProductRow) =>
  * again, so it shows what the server has. The list is asked for after the screen is on show, never
  * while it's being built, so a server that's slow or down can't freeze the window.
  */
-export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+export function ProductsScreen({
+  user,
+  search,
+  onSignInAgain,
+  onOpenList,
+}: {
+  user: SignedInUser;
+  search: string;
+  onSignInAgain: () => void;
+  /** Opens one of the catalogue's four lists, which live inside Products. */
+  onOpenList: (list: CatalogList) => void;
+}) {
   const toast = useToast();
   const mayManage = user.rights.includes(ManageRight);
   const [result, setResult] = useState<ProductRowsResult | null>(null);
@@ -152,8 +171,16 @@ export function ProductsScreen({ user, search, onSignInAgain }: { user: SignedIn
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center gap-4">
         <p className="text-[15px] text-muted-foreground">{count === 0 ? 'No products yet.' : count === 1 ? '1 product' : `${count} products`}</p>
+        {/* The catalogue's lists, as Beta's Products dashboard had them: needing only to see products. */}
+        <span className="ml-auto flex gap-2">
+          {CatalogButtons.map(([list, title]) => (
+            <Button key={list} type="button" variant="secondary" size="compact" onClick={() => onOpenList(list)}>
+              {title}
+            </Button>
+          ))}
+        </span>
         {mayManage && (
-          <Button type="button" size="compact" className="ml-auto" onClick={() => open(null)}>
+          <Button type="button" size="compact" onClick={() => open(null)}>
             Add product
           </Button>
         )}

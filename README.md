@@ -54,8 +54,9 @@ and everything a user sees, is called KVNsys.
   can also add and change them. Rights are checked on every request, so taking one away, or
   switching an account off, works at once.
 - **The window frame, Home, and the products list.** Once signed in, the app shows a dark grey
-  title bar (Home, the screen's name, who's signed in, Sign out) over Home: one tile per area,
-  greyed out, with the reason, where the role lacks the right. The Products tile opens every
+  title bar (Home, the screen's name, who's signed in, Sign out) over Home's seven tiles (Transact,
+  Sales, Products, Inventory, Users, Machines, Audit log), each greyed out, with the reason, where
+  the role lacks the right. The Products tile opens every
   product in a table, with prices in pesos and statuses as coloured labels. The screens follow
   Beta's Standard colours ([`docs/design-direction.md`](docs/design-direction.md)).
 - **Adding and changing products.** Someone whose role may manage products gets Add product
@@ -106,7 +107,7 @@ and everything a user sees, is called KVNsys.
   "Set new password", which signs that person out wherever they are. Switching an account off
   signs it out at once too. Usernames ignore capitals ("Ana" is ana). No change may leave nobody
   able to manage users, so nobody can lock the business out, themselves included.
-- **Roles.** The Roles tile lists every role with its code, its rights in a few words and how many
+- **Roles.** Roles, a button at the top of Users, lists every role with its code, its rights in a few words and how many
   accounts have it. Someone whose role may change roles gets Add role and Edit: a name, Active or switched
   off, and a tick box per right, grouped by area (Machines, Products, Users, Roles). Ticking
   "change" ticks "see" with it. A change counts at once; switching a role off signs out everyone
@@ -185,7 +186,8 @@ and everything a user sees, is called KVNsys.
   from exactly one supplier or location to exactly one. Most of the new tables have no screens yet.
   [`docs/schema.md`](docs/schema.md) lists every table, what uses it, and where Phoenix differs from
   the plan and why.
-- **Suppliers, brands, manufacturers and categories.** A tile for each on Home lists its entries
+- **Suppliers, brands, manufacturers and categories.** A button for each at the top of Products, as
+  Beta's Products dashboard had them, lists its entries
   by name: code, name, status, a supplier's address, and the category a category sits inside.
   Someone whose role may change products gets Add and Edit, in one panel: code, name, Active or
   Inactive, a description, and for a supplier its address, for a category the one it sits inside.

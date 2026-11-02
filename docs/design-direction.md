@@ -63,9 +63,10 @@ Alt+Right, also work.
 Capstone 3Re, counting Log Out). A button you have no right to is switched off.
 
 **In Phoenix:**
-- Home shows one tile per area. At launch: Sell, Shifts, Sales, Products, People and
-  Machines. Inventory, Settings and the rest join as they're built. (Sell, Products, Inventory, Users
-  and Roles are there now.)
+- Home shows seven tiles (since 2026-11-03): Transact, Sales, Products, Inventory, Users, Machines
+  and the Audit log. Brands, Categories, Manufacturers and Suppliers open from buttons at the top
+  of Products, as Beta's Products dashboard had them, Roles from one at the top of Users, and the
+  inventory log from one at the top of Inventory.
 - A tile you may not use is greyed out, with a note saying why.
 - The server still checks every request. The greyed tile only saves a pointless click.
 

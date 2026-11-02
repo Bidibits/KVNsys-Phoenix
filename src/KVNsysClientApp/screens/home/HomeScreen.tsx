@@ -1,8 +1,11 @@
 import type { AccessName, SignedInUser } from '@kvnsys/client';
 import { Tile } from '@kvnsys/ui';
 
-/** The areas Home can open. Each joins as it's built (design-direction.md, rule 4). */
-export type Area = 'transact' | 'sales' | 'products' | 'suppliers' | 'brands' | 'manufacturers' | 'categories' | 'inventory' | 'users' | 'roles' | 'machines' | 'audits';
+/**
+ * The areas Home opens: seven tiles. The catalogue's four lists open from inside Products, and Roles
+ * from inside Users, as Beta's Products dashboard had them (design-direction.md, rule 4).
+ */
+export type Area = 'transact' | 'sales' | 'products' | 'inventory' | 'users' | 'machines' | 'audits';
 
 const Areas: { area: Area; title: string; description: string; right: AccessName; cannot: string }[] = [
   {
@@ -22,37 +25,9 @@ const Areas: { area: Area; title: string; description: string; right: AccessName
   {
     area: 'products',
     title: 'Products',
-    description: 'Every product, with its code, barcode and price.',
+    description: 'Every product, with its code, barcode and price, and the brands, categories, manufacturers and suppliers.',
     right: 'products.view',
     cannot: "Your role can't see products. Ask a manager.",
-  },
-  {
-    area: 'suppliers',
-    title: 'Suppliers',
-    description: 'Who the business buys from, and where they are.',
-    right: 'products.view',
-    cannot: "Your role can't see the product lists. Ask a manager.",
-  },
-  {
-    area: 'brands',
-    title: 'Brands',
-    description: 'The brands products are sold under.',
-    right: 'products.view',
-    cannot: "Your role can't see the product lists. Ask a manager.",
-  },
-  {
-    area: 'manufacturers',
-    title: 'Manufacturers',
-    description: 'Who makes the products.',
-    right: 'products.view',
-    cannot: "Your role can't see the product lists. Ask a manager.",
-  },
-  {
-    area: 'categories',
-    title: 'Categories',
-    description: 'How products are grouped, one group inside another.',
-    right: 'products.view',
-    cannot: "Your role can't see the product lists. Ask a manager.",
   },
   {
     area: 'inventory',
@@ -64,16 +39,9 @@ const Areas: { area: Area; title: string; description: string; right: AccessName
   {
     area: 'users',
     title: 'Users',
-    description: 'Who can sign in, and with which role.',
+    description: 'Who can sign in, with which role, and what each role may do.',
     right: 'users.view',
     cannot: "Your role can't see users. Ask a manager.",
-  },
-  {
-    area: 'roles',
-    title: 'Roles',
-    description: 'What each kind of account may do.',
-    right: 'roles.view',
-    cannot: "Your role can't see roles. Ask a manager.",
   },
   {
     area: 'machines',

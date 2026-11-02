@@ -1,0 +1,21 @@
+{
+  "step": "Home's seven tiles: the catalogue's lists inside Products, Roles inside Users (2026-11-03)",
+  "plants": [
+    {
+      "name": "1 no Suppliers button at the top of Products",
+      "file": "src/KVNsysClientApp/screens/products/ProductsScreen.tsx",
+      "old": "  ['suppliers', 'Suppliers'],",
+      "new": "  ['suppliers', 'Supplier list'],",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "catalog"]]
+    },
+    {
+      "name": "2 the Roles button shown only to someone who may not see roles",
+      "file": "src/KVNsysClientApp/screens/users/UsersScreen.tsx",
+      "old": "          {user.rights.includes(RolesRight) && (",
+      "new": "          {!user.rights.includes(RolesRight) && (",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "roles"]]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import type { AddressInfo } from 'node:net';
+import { join } from 'node:path';
 import { AllAccesses } from '@kvnsys/core';
 import { createPrismaClient, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHasher } from '@kvnsys/server';
@@ -11,6 +12,12 @@ import { createThrowawayDatabase, describeWithDatabase } from './throwaway-datab
 const AdminPassword = 'test-admin-password';
 const SeeProducts = 'See the products and their prices';
 const ChangeProducts = 'Add products, and change their details and prices';
+
+/** Set KVNSYS_SCREENSHOTS to a folder to keep a picture of each step, for a person to look at. */
+async function picture(window: Page, name: string) {
+  const folder = process.env.KVNSYS_SCREENSHOTS;
+  if (folder) await window.screenshot({ path: join(folder, `${name}.png`), animations: 'disabled' });
+}
 
 describeWithDatabase('making roles from the real app', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
@@ -58,15 +65,24 @@ describeWithDatabase('making roles from the real app', () => {
     await window.getByRole('navigation', { name: 'Areas' }).waitFor();
   }
 
-  const rolesTile = () => window.getByRole('button', { name: /^Roles/ });
+  const onHome = (title: RegExp) => window.getByRole('navigation', { name: 'Areas' }).getByRole('button', { name: title });
+  /** Roles opens from inside Users. */
+  async function openRoles() {
+    await window.getByRole('button', { name: 'Home', exact: true }).click();
+    await window.getByRole('button', { name: /^Users/ }).click();
+    await window.getByRole('button', { name: 'Roles', exact: true }).click();
+  }
   const panel = (title: string) => window.getByRole('dialog', { name: title });
   const box = (form: ReturnType<typeof panel>, label: string) => form.getByRole('checkbox', { name: label, exact: true });
   const rowsShown = () => cellsUnder(window.getByRole('table', { name: 'Roles' }), ['Name', 'Rights', 'Accounts', 'Status']);
 
-  it('shows an administrator the Roles tile, and a new install has only the Administrator, with every right', async () => {
+  it('opens Roles from inside Users, not from Home, and a new install has only the Administrator, with every right', async () => {
     await signIn('admin', AdminPassword);
-    expect(await rolesTile().isEnabled()).toBe(true);
-    await rolesTile().click();
+    expect(await onHome(/^Roles/).count()).toBe(0);
+    await window.getByRole('button', { name: /^Users/ }).click();
+    await window.getByRole('table', { name: 'Users' }).waitFor();
+    await picture(window, 'users-with-roles');
+    await openRoles();
     await window.getByRole('table', { name: 'Roles' }).waitFor();
     expect(await rowsShown()).toEqual([['Administrator', 'Every right', '1', 'Active']]);
     // The table's columns in its order (its level only sorts the list), then the rights and the
@@ -122,7 +138,7 @@ describeWithDatabase('making roles from the real app', () => {
     expect(await db.role.count()).toBe(2);
   });
 
-  it('offers the new role for accounts, and someone with it finds Roles greyed out', async () => {
+  it('offers the new role for accounts, and someone with it can reach neither Users nor the Roles inside it', async () => {
     await window.getByRole('button', { name: 'Home' }).click();
     await window.getByRole('button', { name: /^Users/ }).click();
     await window.getByRole('button', { name: 'Add user' }).click();
@@ -139,8 +155,9 @@ describeWithDatabase('making roles from the real app', () => {
     await window.getByRole('button', { name: 'Sign out' }).click();
     await window.getByLabel('Username').waitFor();
     await signIn('ana', 'a-good-password');
-    expect(await rolesTile().isDisabled()).toBe(true);
-    expect(await window.getByText("Your role can't see roles. Ask a manager.").isVisible()).toBe(true);
+    expect(await onHome(/^Users/).isDisabled()).toBe(true);
+    expect(await window.getByText("Your role can't see users. Ask a manager.").isVisible()).toBe(true);
+    expect(await onHome(/^Roles/).count()).toBe(0);
     expect(await window.getByRole('button', { name: /^Products/ }).isEnabled()).toBe(true);
   });
 });

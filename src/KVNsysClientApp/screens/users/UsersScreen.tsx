@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { UserFormPanel } from './UserFormPanel';
 
 const ManageRight: AccessName = 'users.manage';
+/** Roles live inside Users; seeing them needs their own right. */
+const RolesRight: AccessName = 'roles.view';
 
 /**
  * Every column of the users table but the password, in the table's own order, its id first and its
@@ -26,7 +28,18 @@ const Columns: Column<Listed<Account>>[] = [
  * open the account panel; after a save the list is asked for again. Like the products list, it's
  * asked for after the screen is on show, never while it's being built.
  */
-export function UsersScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+export function UsersScreen({
+  user,
+  search,
+  onSignInAgain,
+  onOpenRoles,
+}: {
+  user: SignedInUser;
+  search: string;
+  onSignInAgain: () => void;
+  /** Opens Roles, which lives inside Users. */
+  onOpenRoles: () => void;
+}) {
   const toast = useToast();
   const mayManage = user.rights.includes(ManageRight);
   const [result, setResult] = useState<UserListResult | null>(null);
@@ -98,8 +111,15 @@ export function UsersScreen({ user, search, onSignInAgain }: { user: SignedInUse
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center gap-4">
         <p className="text-[15px] text-muted-foreground">{count === 1 ? '1 account' : `${count} accounts`}</p>
+        <span className="ml-auto flex gap-2">
+          {user.rights.includes(RolesRight) && (
+            <Button type="button" variant="secondary" size="compact" onClick={onOpenRoles}>
+              Roles
+            </Button>
+          )}
+        </span>
         {mayManage && (
-          <Button type="button" size="compact" className="ml-auto" onClick={() => open(null)}>
+          <Button type="button" size="compact" onClick={() => open(null)}>
             Add user
           </Button>
         )}

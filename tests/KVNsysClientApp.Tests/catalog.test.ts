@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
+import { join } from 'node:path';
 import { createPrismaClient, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHasher } from '@kvnsys/server';
 import type { ElectronApplication, Page } from 'playwright-core';
@@ -10,6 +11,12 @@ import { createThrowawayDatabase, describeWithDatabase } from './throwaway-datab
 
 const AdminPassword = 'test-admin-password';
 const Password = 'a-good-password';
+
+/** Set KVNSYS_SCREENSHOTS to a folder to keep a picture of each step, for a person to look at. */
+async function picture(window: Page, name: string) {
+  const folder = process.env.KVNSYS_SCREENSHOTS;
+  if (folder) await window.screenshot({ path: join(folder, `${name}.png`), animations: 'disabled' });
+}
 
 describeWithDatabase("the catalogue's lists in the real app", () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
@@ -69,15 +76,28 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
   }
   const tile = (title: string) => window.getByRole('button', { name: new RegExp(`^${title}`) });
   const goHome = () => window.getByRole('button', { name: 'Home', exact: true }).click();
+  const onHome = (title: string) => window.getByRole('navigation', { name: 'Areas' }).getByRole('button', { name: new RegExp(`^${title}`) });
+  /** The four lists open from inside Products, as Beta's Products dashboard had them. */
+  async function openList(title: string) {
+    await goHome();
+    await tile('Products').click();
+    await window.getByRole('button', { name: title, exact: true }).click();
+  }
   const panel = (title: string) => window.getByRole('dialog', { name: title });
   const field = (form: ReturnType<typeof panel>, label: string) => form.getByLabel(label, { exact: true });
   /** Each row's own columns, by heading; the history columns are checked apart. */
   const rowsOf = (table: string, headings: string[]) => cellsUnder(window.getByRole('table', { name: table }), headings);
 
-  it('shows the four lists on Home, and an empty one says so', async () => {
+  it('opens the four lists from inside Products, not from Home, and an empty one says so', async () => {
     await signIn('admin', AdminPassword);
-    for (const title of ['Suppliers', 'Brands', 'Manufacturers', 'Categories']) expect(await tile(title).isEnabled()).toBe(true);
-    await tile('Suppliers').click();
+    for (const title of ['Suppliers', 'Brands', 'Manufacturers', 'Categories']) expect(await onHome(title).count()).toBe(0);
+    await picture(window, 'home');
+    await tile('Products').click();
+    for (const title of ['Brands', 'Categories', 'Manufacturers', 'Suppliers']) {
+      expect(await window.getByRole('button', { name: title, exact: true }).isEnabled()).toBe(true);
+    }
+    await picture(window, 'products-with-its-lists');
+    await window.getByRole('button', { name: 'Suppliers', exact: true }).click();
     await window.getByText('No suppliers yet.').waitFor();
   });
 
@@ -107,8 +127,7 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
   });
 
   it('puts a category inside another, and the list says where each sits', async () => {
-    await goHome();
-    await tile('Categories').click();
+    await openList('Categories');
     await window.getByRole('button', { name: 'Add category' }).click();
     let form = panel('New category');
     await field(form, 'Code').fill('CAT-APP');
@@ -152,8 +171,7 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
   });
 
   it('refuses a brand code already taken, ignoring capitals, naming whose it is', async () => {
-    await goHome();
-    await tile('Brands').click();
+    await openList('Brands');
     await window.getByRole('button', { name: 'Add brand' }).click();
     let form = panel('New brand');
     await field(form, 'Code').fill('BR-001');
@@ -173,7 +191,7 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
   it('lets someone who may only see products look, without Add or Edit', async () => {
     await signOut();
     await signIn('viewer', Password);
-    await tile('Brands').click();
+    await openList('Brands');
     await window.getByRole('table', { name: 'Brands' }).waitFor();
     expect(await window.getByRole('button', { name: 'Add brand' }).count()).toBe(0);
     expect(await window.getByRole('button', { name: 'Edit Hanabishi' }).count()).toBe(0);
@@ -188,10 +206,11 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
     });
   });
 
-  it("greys the four out for someone who may not see products", async () => {
+  it("keeps the four lists from someone who may not see products: Products, which holds them, is greyed out", async () => {
     await signOut();
     await signIn('cashier', Password);
-    for (const title of ['Suppliers', 'Brands', 'Manufacturers', 'Categories']) expect(await tile(title).isDisabled()).toBe(true);
-    expect(await window.getByText("Your role can't see the product lists. Ask a manager.").first().isVisible()).toBe(true);
+    expect(await tile('Products').isDisabled()).toBe(true);
+    expect(await window.getByText("Your role can't see products. Ask a manager.").isVisible()).toBe(true);
+    for (const title of ['Suppliers', 'Brands', 'Manufacturers', 'Categories']) expect(await onHome(title).count()).toBe(0);
   });
 });

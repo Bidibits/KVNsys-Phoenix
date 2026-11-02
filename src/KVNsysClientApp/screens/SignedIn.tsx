@@ -1,4 +1,4 @@
-import type { SignedInUser } from '@kvnsys/client';
+import type { CatalogList, SignedInUser } from '@kvnsys/client';
 import { AppFrame, ToastProvider } from '@kvnsys/ui';
 import { useState } from 'react';
 import { AuditLogScreen } from './audits/AuditLogScreen';
@@ -14,8 +14,11 @@ import { InventoryLogsScreen } from './inventory/InventoryLogsScreen';
 import { InventoryScreen } from './inventory/InventoryScreen';
 import { UsersScreen } from './users/UsersScreen';
 
-/** Home, an area, or a screen opened from one: the inventory log, from Inventory. */
-type Place = Area | 'home' | 'inventory-logs';
+/**
+ * Home, an area, or a screen opened from inside one: the catalogue's four lists from Products,
+ * Roles from Users, the inventory log from Inventory.
+ */
+type Place = Area | 'home' | CatalogList | 'roles' | 'inventory-logs';
 
 const Titles: Record<Place, string> = {
   home: 'Home',
@@ -105,13 +108,13 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
             {/* The server has already ended this pass, so there's nothing left to sign out of. */}
             {place === 'transact' && <TransactScreen onSignInAgain={onSignedOut} />}
             {place === 'sales' && <SalesScreen {...screen} />}
-            {place === 'products' && <ProductsScreen user={user} {...screen} />}
+            {place === 'products' && <ProductsScreen user={user} {...screen} onOpenList={open} />}
             {(place === 'suppliers' || place === 'brands' || place === 'manufacturers' || place === 'categories') && (
               <CatalogListScreen list={place} user={user} {...screen} />
             )}
             {place === 'inventory' && <InventoryScreen user={user} {...screen} onOpenLogs={() => open('inventory-logs')} />}
             {place === 'inventory-logs' && <InventoryLogsScreen {...screen} />}
-            {place === 'users' && <UsersScreen user={user} {...screen} />}
+            {place === 'users' && <UsersScreen user={user} {...screen} onOpenRoles={() => open('roles')} />}
             {place === 'roles' && <RolesScreen user={user} {...screen} />}
             {place === 'machines' && <MachinesScreen user={user} {...screen} />}
             {place === 'audits' && <AuditLogScreen {...screen} />}
