@@ -1,0 +1,21 @@
+{
+  "step": "The selling screen is Transact (2026-11-03)",
+  "plants": [
+    {
+      "name": "1 the Home tile called Sell again",
+      "file": "src/KVNsysClientApp/screens/home/HomeScreen.tsx",
+      "old": "    area: 'transact',\n    title: 'Transact',\n",
+      "new": "    area: 'transact',\n    title: 'Sell',\n",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "sell.test"]]
+    },
+    {
+      "name": "2 the greyed-out tile's reason saying sell again",
+      "file": "src/KVNsysClientApp/screens/home/HomeScreen.tsx",
+      "old": "    cannot: \"Your role can't ring up sales. Ask a manager.\",",
+      "new": "    cannot: \"Your role can't sell. Ask a manager.\",",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "sell.test"]]
+    }
+  ]
+}

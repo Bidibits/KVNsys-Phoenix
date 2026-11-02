@@ -100,7 +100,7 @@ describeWithDatabase('selling from the real app: scan, discount, pay, receipt', 
 
   it('asks for the cash in the drawer first, then opens the till with the cursor in the code box', async () => {
     await signIn('ana');
-    await window.getByRole('button', { name: /^Sell/ }).click();
+    await window.getByRole('button', { name: /^Transact/ }).click();
     const start = window.getByRole('region', { name: 'Start your shift' });
     await start.waitFor();
     expect(await isFocused(start.getByLabel('Cash in the drawer'))).toBe(true);
@@ -237,8 +237,8 @@ describeWithDatabase('selling from the real app: scan, discount, pay, receipt', 
 
   it('greys out Sell for a role without the right to sell, and says why', async () => {
     await signIn('ben');
-    expect(await window.getByRole('button', { name: /^Sell/ }).isDisabled()).toBe(true);
-    expect(await window.getByText("Your role can't sell. Ask a manager.").isVisible()).toBe(true);
+    expect(await window.getByRole('button', { name: /^Transact/ }).isDisabled()).toBe(true);
+    expect(await window.getByText("Your role can't ring up sales. Ask a manager.").isVisible()).toBe(true);
     await signOut();
   });
 });

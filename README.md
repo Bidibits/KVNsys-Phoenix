@@ -81,7 +81,7 @@ and everything a user sees, is called KVNsys.
   pulls every picture over the network.
 - **The till charges promo and wholesale prices.** Each line is charged the cheapest price the
   customer qualifies for: the promo price while there is one, and the wholesale price once the
-  line reaches its pieces (one more and it switches, one fewer and it switches back). The Sell
+  line reaches its pieces (one more and it switches, one fewer and it switches back). The Transact
   screen says "Promo price" or "Wholesale price" under the price, the receipt says it beside the
   price, and each receipt line keeps which price it was. With a senior/PWD discount, a line gets
   the better of its promo or wholesale price and 20% off the shelf price, not both: a stand-in
@@ -141,13 +141,13 @@ and everything a user sees, is called KVNsys.
   its pieces out of stock, all in one go or not at all. Receipts are numbered per location, HQ-000001
   and up, with no gaps, even when machines sell at once. Each line keeps the code, name and price
   as sold. The database refuses to change or delete a receipt.
-- **Selling over the network.** A role with the new "Sell" right can find a product by what was
+- **Selling over the network.** A role with the right to ring up sales can find a product by what was
   scanned or typed, and record a sale paid in cash. The machine keeps the cart and prices it with
   the same rules as the server; the server prices it again from its catalog as it is now, and
   refuses the sale if a price changed since it was rung up, so nobody is charged what the cashier
   didn't see. The sale is always at the server's own location, and the receipt comes back with the
   location's name and the cashier's.
-- **The selling screen.** A Sell tile on Home opens it, with the cursor already in the code box: a
+- **The selling screen, Transact.** A Transact tile on Home opens it (called Sell until 2026-11-03), with the cursor already in the code box: a
   scan, or a code and Enter, adds one; scanning it again adds another. Scans that come quickly,
   one after another, each count, in the order they came. Each line has − and + and
   a × to remove it. The senior/PWD discount takes the ID number and the name on the ID. Pay takes

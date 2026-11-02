@@ -67,7 +67,7 @@ describeWithDatabase('scanning fast at the till, in the real app: no scan is los
     await window.getByLabel('Username').fill('admin');
     await window.getByLabel('Password').fill(Password);
     await window.getByRole('button', { name: 'Sign in' }).click();
-    await window.getByRole('button', { name: /^Sell/ }).click();
+    await window.getByRole('button', { name: /^Transact/ }).click();
     const start = window.getByRole('region', { name: 'Start your shift' });
     await start.getByLabel('Cash in the drawer').fill('1000');
     await start.getByLabel('Cash in the drawer').press('Enter');

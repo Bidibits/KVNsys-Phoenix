@@ -124,6 +124,6 @@ describeWithDatabase("a day's sales from the real app", () => {
     await signIn('ana');
     expect(await window.getByRole('button', { name: /^Sales/ }).isDisabled()).toBe(true);
     expect(await window.getByText("Your role can't see sales. Ask a manager.").isVisible()).toBe(true);
-    expect(await window.getByRole('button', { name: /^Sell/ }).isDisabled()).toBe(false);
+    expect(await window.getByRole('button', { name: /^Transact/ }).isDisabled()).toBe(false);
   });
 });

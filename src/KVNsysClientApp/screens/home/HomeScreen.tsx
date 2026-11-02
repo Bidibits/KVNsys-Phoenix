@@ -2,15 +2,15 @@ import type { AccessName, SignedInUser } from '@kvnsys/client';
 import { Tile } from '@kvnsys/ui';
 
 /** The areas Home can open. Each joins as it's built (design-direction.md, rule 4). */
-export type Area = 'sell' | 'sales' | 'products' | 'suppliers' | 'brands' | 'manufacturers' | 'categories' | 'inventory' | 'users' | 'roles' | 'machines' | 'audits';
+export type Area = 'transact' | 'sales' | 'products' | 'suppliers' | 'brands' | 'manufacturers' | 'categories' | 'inventory' | 'users' | 'roles' | 'machines' | 'audits';
 
 const Areas: { area: Area; title: string; description: string; right: AccessName; cannot: string }[] = [
   {
-    area: 'sell',
-    title: 'Sell',
+    area: 'transact',
+    title: 'Transact',
     description: 'Ring up a sale: scan, discount, take cash, give change.',
     right: 'sales.sell',
-    cannot: "Your role can't sell. Ask a manager.",
+    cannot: "Your role can't ring up sales. Ask a manager.",
   },
   {
     area: 'sales',

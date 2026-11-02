@@ -12,7 +12,7 @@ in this round:
 
 - Inventory over the network, and the **Inventory** screen (called Stock until 2026-11-03): stock on hand, a product's history, receiving a
   delivery, putting a count right
-- Sales in the database, selling over the network, and the **Sell** screen: scan, quantity, the
+- Sales in the database, selling over the network, and the **Transact** screen (called Sell until 2026-11-03): scan, quantity, the
   senior/PWD discount, cash, change, the receipt on screen
 - **Sales**: the day's receipts and totals, any day, any receipt again
 - **Machines** (called Registers until 2026-11-02): each PC records itself at sign-in, and every
@@ -67,8 +67,8 @@ PC's real ones, run `set KVNSYS_APP_DATA=%USERPROFILE%\Desktop\Phoenix-test\app`
 first (Windows cmd).
 
 **A walk through it:** Products, add one with a price. Inventory, Receive delivery, scan or type its code,
-the pieces, Save delivery. Sell, Start shift with the cash in the drawer, scan the code, Pay. Sales
-shows the receipt. Back on Sell, End shift and count the drawer. Machines shows this PC.
+the pieces, Save delivery. Transact, Start shift with the cash in the drawer, scan the code, Pay. Sales
+shows the receipt. Back on Transact, End shift and count the drawer. Machines shows this PC.
 
 **Tests:** `pnpm test`, after `pnpm build`. The database tests need `KVNSYS_TEST_POSTGRES_URL` in
 `.env`; without it they show as skipped, not passed.
@@ -189,7 +189,7 @@ None of it needs a change to the database's tables.
 | ~~**"Stock" becomes "Inventory"**~~ | **Done** (2026-11-03, protocol 23): the tile and screen, Receive delivery and Adjust count, the rights (`inventory.view`, `inventory.receive`, `inventory.adjust`), `/api/inventory`, and in the code the ledger (`InventoryLedger`) and the calls. "Stock" stays where it means a product's count: the `stock` column, "In stock", `tracksStock`. |
 | **Home: seven tiles** | Transact, Sales, Products, Inventory, Users, Machines, Audit log. Suppliers, Brands, Manufacturers and Categories are buttons inside Products (as Beta's Products dashboard had them); Roles is inside Users. |
 | ~~**Inventory Logs**~~ | **Done** (2026-11-03, protocol 24): each row's History is gone; Inventory logs at the top of Inventory opens every product's movements, newest 500 first, as a grid with every column of `inventory_logs`. |
-| **"Sell" becomes "Transact"** | The selling screen's name. Its records stay `receipts`. |
+| ~~**"Sell" becomes "Transact"**~~ | **Done** (2026-11-03): the tile, the screen and the right's label ("Transact (ring up sales)"). Its records stay `receipts`, and the right stays `sales.sell`, since selling is what it does. |
 | **Sales as a full grid** | Every column of `receipts` in its order, then its three events, opened, settled and voided, in place of created and updated (settled is who rang it up and took the money, where and when). |
 
 ## Continuing with Claude Code

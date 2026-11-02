@@ -99,7 +99,7 @@ export const RightGroups: readonly RightGroup[] = [
   {
     area: 'Selling',
     rights: [
-      { access: 'sales.sell', label: 'Sell' },
+      { access: 'sales.sell', label: 'Transact (ring up sales)' },
       { access: 'sales.view', label: 'See sales' },
     ],
   },

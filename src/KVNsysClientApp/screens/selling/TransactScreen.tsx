@@ -19,10 +19,11 @@ const somethingWentWrong = (error: unknown) => ({
 type Paid = Extract<SaleResult, { ok: true }>;
 
 /**
- * Selling, behind the cashier's shift: without one open, Start shift comes first (the cash in the
- * drawer); with one, the till, and End shift, which counts the drawer and shows the shift's report.
+ * Transact: selling, behind the cashier's shift. Without one open, Start shift comes first (the cash
+ * in the drawer); with one, the till, and End shift, which counts the drawer and shows the shift's
+ * report. What it records are receipts.
  */
-export function SellScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
+export function TransactScreen({ onSignInAgain }: { onSignInAgain: () => void }) {
   const [shift, setShift] = useState<CurrentShiftResult | null>(null);
   const [ended, setEnded] = useState<ShiftView | null>(null);
 

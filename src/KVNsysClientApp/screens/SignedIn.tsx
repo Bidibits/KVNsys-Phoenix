@@ -9,7 +9,7 @@ import { ProductsScreen } from './products/ProductsScreen';
 import { MachinesScreen } from './machines/MachinesScreen';
 import { RolesScreen } from './roles/RolesScreen';
 import { SalesScreen } from './selling/SalesScreen';
-import { SellScreen } from './selling/SellScreen';
+import { TransactScreen } from './selling/TransactScreen';
 import { InventoryLogsScreen } from './inventory/InventoryLogsScreen';
 import { InventoryScreen } from './inventory/InventoryScreen';
 import { UsersScreen } from './users/UsersScreen';
@@ -19,7 +19,7 @@ type Place = Area | 'home' | 'inventory-logs';
 
 const Titles: Record<Place, string> = {
   home: 'Home',
-  sell: 'Sell',
+  transact: 'Transact',
   sales: 'Sales',
   products: 'Products',
   suppliers: 'Suppliers',
@@ -34,7 +34,7 @@ const Titles: Record<Place, string> = {
   audits: 'Audit log',
 };
 
-/** The screens with a list the title bar's search box filters. Sell has its own code box. */
+/** The screens with a list the title bar's search box filters. Transact has its own code box. */
 const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'inventory', 'inventory-logs', 'users', 'roles', 'machines', 'audits']);
 
 /**
@@ -103,7 +103,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
           <div key={history.visit} className="contents">
             {place === 'home' && <HomeScreen user={user} onOpen={open} />}
             {/* The server has already ended this pass, so there's nothing left to sign out of. */}
-            {place === 'sell' && <SellScreen onSignInAgain={onSignedOut} />}
+            {place === 'transact' && <TransactScreen onSignInAgain={onSignedOut} />}
             {place === 'sales' && <SalesScreen {...screen} />}
             {place === 'products' && <ProductsScreen user={user} {...screen} />}
             {(place === 'suppliers' || place === 'brands' || place === 'manufacturers' || place === 'categories') && (
