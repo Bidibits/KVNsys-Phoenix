@@ -122,8 +122,8 @@ describeWithDatabase('machines from the real app', () => {
     const hardwareId = (await db.machine.findFirstOrThrow({ where: { code: 'HQ-M01' } })).machineUuid;
     const who = ['Updated by', 'Updated machine', 'Updated location', 'Created by', 'Created machine', 'Created location'];
     expect(await cellsUnder(table(), ['Code', 'Hardware id', 'Location', 'Status', 'Description', ...who])).toEqual([
-      // Set up by KVNsys itself, on the server PC, and never changed.
-      ['HQ-SRV', 'test-hardware-id', 'Head Office', 'Active', '—', '—', '—', '—', 'KVNsys itself', 'Server', 'Head Office'],
+      // Set up by the administrator the setup made, on the server PC, and never changed.
+      ['HQ-SRV', 'test-hardware-id', 'Head Office', 'Active', '—', '—', '—', '—', 'System Administrator (admin)', 'Server', 'Head Office'],
       // Recorded when the administrator first signed in at it, then renamed by them, at it.
       ['HQ-M01', hardwareId, 'Head Office', 'Active', '—', 'System Administrator (admin)', 'Counter 1', 'Head Office', 'System Administrator (admin)', '—', 'Head Office'],
     ]);

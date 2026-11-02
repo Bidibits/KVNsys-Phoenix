@@ -161,7 +161,7 @@ describeWithDatabase('the built programs in out\\, run together on a throwaway l
       Description: 'description',
       ...HistoryColumnsShown,
     });
-    // The server PC, set up by KVNsys itself: the only machine, since the app runs on that PC too.
+    // The server PC, set up with the location: the only machine, since the app runs on that PC too.
     await machines.getByRole('button', { name: 'Edit Server' }).click();
     const form = window.getByRole('dialog', { name: 'Edit machine' });
     await form.getByLabel('Name', { exact: true }).fill('Front counter');

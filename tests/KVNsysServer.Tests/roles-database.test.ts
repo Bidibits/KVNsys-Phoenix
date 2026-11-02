@@ -77,10 +77,10 @@ describeWithDatabase('roles over HTTPS, through the client engine, against a rea
           userCount: 1,
           fixed: true,
           description: null,
-          // Made by KVNsys itself when the location was set up, on the server PC; never changed.
+          // Made when the location was set up, credited to the administrator it made, on the server PC; never changed.
           history: {
             createdAt: expect.stringMatching(/^\d{4}-\d\d-\d\dT/),
-            createdBy: null,
+            createdBy: 'System Administrator (admin)',
             createdMachine: 'Server',
             createdLocation: 'Head Office',
             updatedAt: null,

@@ -73,14 +73,23 @@ describe('InstallSeed', () => {
     });
   });
 
-  it('stamps every row as written by nobody, on this PC, at this location', async () => {
+  it('credits every row to the administrator it makes, the administrator included, on this PC, at this location', async () => {
     const { store, seed } = setup();
     await seed.run(input);
     const location = store.rows.find((r) => r.table === 'locations')!;
     const machine = store.rows.find((r) => r.table === 'machines')!;
+    const admin = store.rows.find((r) => r.table === 'users')!;
     for (const row of store.rows) {
-      expect(row.lineage).toEqual({ userId: null, machineId: machine.id, locationId: location.id });
+      expect(row.lineage).toEqual({ userId: admin.id, machineId: machine.id, locationId: location.id });
     }
+  });
+
+  it('credits what a later run adds to nobody, since it makes no administrator', async () => {
+    const { store, seed } = setup();
+    await seed.run(input);
+    store.rows = store.rows.filter((r) => r.table !== 'locations');
+    await seed.run({ ...input, adminPassword: undefined });
+    expect(store.rows.find((r) => r.table === 'locations')!.lineage).toMatchObject({ userId: null });
   });
 
   it('can run again without creating anything twice', async () => {

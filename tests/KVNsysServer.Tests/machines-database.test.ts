@@ -117,14 +117,15 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
       ['HQ-M01', false, 'COUNTER-PC'],
       ['HQ-M02', false, 'OFFICE-PC'],
     ]);
-    // Each with its hardware id and location, and its history: the server PC set up by KVNsys itself on itself,
+    // Each with its hardware id and location, and its history: the server PC set up with the location, credited
+    // to the administrator the setup made, on itself;
     // each machine recorded by whoever first signed in at it.
     expect(listed.machines.map((r) => [r.code, r.hardwareId, r.locationName])).toEqual([
       ['HQ-SRV', 'test-hardware-id', 'Head Office'],
       ['HQ-M01', 'counter-pc-guid', 'Head Office'],
       ['HQ-M02', 'back-office-guid', 'Head Office'],
     ]);
-    expect(listed.machines[0]!.history).toMatchObject({ createdBy: null, createdMachine: 'Server', createdLocation: 'Head Office', updatedAt: null });
+    expect(listed.machines[0]!.history).toMatchObject({ createdBy: 'System Administrator (admin)', createdMachine: 'Server', createdLocation: 'Head Office', updatedAt: null });
     expect(listed.machines[1]!.history).toMatchObject({ createdBy: expect.stringMatching(/ \(\w+\)$/), createdMachine: null, createdLocation: 'Head Office' });
     const m01 = listed.machines[1]!;
     expect(await changeMachine(address, admin.session, m01.id, { name: ' Counter 1 ', status: 'Active' }, { pin })).toMatchObject({ ok: true, machine: { name: 'Counter 1' } });

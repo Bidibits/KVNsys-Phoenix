@@ -115,8 +115,8 @@ describeWithDatabase('managing user accounts from the real app', () => {
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Ana Cruz.').waitFor();
     await expect.poll(() => rowsShown()).toContainEqual(['Ana Cruz', 'ana', 'Cashier', 'Active']);
-    // Made by the administrator, and not changed since; the administrator was made by KVNsys itself.
-    expect(await historyShown()).toEqual({ ana: ['System Administrator (admin)', '—'], admin: ['KVNsys itself', '—'] });
+    // Made by the administrator, and not changed since; the administrator, by the setup, is credited to itself.
+    expect(await historyShown()).toEqual({ ana: ['System Administrator (admin)', '—'], admin: ['System Administrator (admin)', '—'] });
   });
 
   it('refuses mismatched passwords in the panel, and saves nothing', async () => {

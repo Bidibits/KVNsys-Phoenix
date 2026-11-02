@@ -86,7 +86,7 @@ export function shownValue(column: string | null, value: string | null, names: R
 /** The newest this many changes are shown; the filters find older ones. */
 export const AuditLimit = 500;
 
-/** Stands for "nobody": the changes KVNsys made itself, setting a location up or recording a PC. */
+/** Stands for "no one": changes made while nobody was signed in, such as on a database set up before 2026-11-03. */
 export const ByKVNsys = 'kvnsys';
 
 /** What to look for. Each part left empty means any. `to` is the end of the last day, not included. */
@@ -136,7 +136,7 @@ export interface AuditEntry {
   after: string | null;
   changeType: ChangeType;
   source: ChangeSource;
-  /** Null when KVNsys made the change itself. */
+  /** Null when nobody was signed in. */
   userId: string | null;
   userName: string | null;
   machineName: string | null;
@@ -156,7 +156,7 @@ export interface AuditPage {
   more: boolean;
   /** Everyone who has made a change, by name. */
   people: AuditPerson[];
-  /** Whether KVNsys itself has made any. */
+  /** Whether any were made while nobody was signed in. */
   byKVNsys: boolean;
 }
 

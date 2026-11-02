@@ -1,0 +1,45 @@
+{
+  "step": "What the setup makes is credited to the administrator it makes, and nobody shows as a dash (2026-11-03)",
+  "plants": [
+    {
+      "name": "1 the setup's records made by nobody again",
+      "file": "src/KVNsysServer/setup/install-seed.ts",
+      "old": "const lineage: Lineage = { userId: adminId, machineId, locationId };",
+      "new": "const lineage: Lineage = { userId: null, machineId, locationId };",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "install-seed"], ["KVNsysServer.Tests", "machines-database"]]
+    },
+    {
+      "name": "2 the administrator not the person its records name",
+      "file": "src/KVNsysServer/setup/install-seed.ts",
+      "old": "        id: adminId,\n        username: adminUsername,",
+      "new": "        id: newId(),\n        username: adminUsername,",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "install-seed"], ["KVNsysServer.Tests", "roles-database"]]
+    },
+    {
+      "name": "3 a later run making an administrator where people already are",
+      "file": "src/KVNsysServer/setup/install-seed.ts",
+      "old": "const adminId = (await tx.countUsers()) === 0 ? newId() : null;",
+      "new": "const adminId = newId();",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "install-seed"]]
+    },
+    {
+      "name": "4 Created by left blank whoever made the record",
+      "file": "src/KVNsysUI/HistoryColumns.tsx",
+      "old": "cell: (row) => <TextOrDash text={history(row).createdBy} />",
+      "new": "cell: (row) => <TextOrDash text={null} />",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "users"]]
+    },
+    {
+      "name": "5 the Audit log's By left blank for everyone",
+      "file": "src/KVNsysClientApp/screens/audits/AuditLogScreen.tsx",
+      "old": "cell: (entry) => <TextOrDash text={entry.userName} />",
+      "new": "cell: (entry) => <TextOrDash text={null} />",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "audits"]]
+    }
+  ]
+}

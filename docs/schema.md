@@ -55,7 +55,7 @@ save**: a change is never kept without its record, and a refused save leaves non
 |---|---|
 | `products`, `brands`, `manufacturers`, `suppliers`, `categories`, `users`, `roles` | Manual: a person, through a screen |
 | `machines` | Automatic when a PC records itself at sign-in or its Windows name changed; Manual from the list's Edit |
-| `locations`, `machines`, `roles`, `users` made when a location is set up | Automatic, by nobody (`implemented_by_user` empty) |
+| `locations`, `machines`, `roles`, `users` made when a location is set up | Automatic, by the administrator the setup makes (by nobody, `implemented_by_user` empty, before 2026-11-03) |
 
 - **One row per column that changed.** A save that changed nothing writes nothing. Values are text:
   money to the centavo (`1450.50`), true/false, ids as they are.
@@ -76,7 +76,7 @@ save**: a change is never kept without its record, and a refused save leaves non
 
 **Reading it back (since 2026-10-29):** the Audit log tile (right `audits.view`; the Administrator
 has it) shows the newest 500 changes that match, newest save first, each save's columns in its
-table's order. It narrows by table, person (or KVNsys itself), and days by the business's clock; a
+table's order. It narrows by table, person (or no one, for changes made while nobody was signed in), and days by the business's clock; a
 record's name shows only that record's history. Names stand in for ids: the record, the person, the
 PC, the location, and a column holding another record's id (a product's category, a user's role). A
 record no longer there shows as such. `GET /api/audits` (protocol 18); Core `audits/audit-log-book.ts`,

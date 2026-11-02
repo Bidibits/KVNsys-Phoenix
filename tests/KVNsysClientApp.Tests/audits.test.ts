@@ -96,12 +96,12 @@ describeWithDatabase('the audit log in the real app', () => {
     const rows = await rowsShown();
     // This PC recorded itself when the administrator signed in, so that's the newest.
     expect(rows[0]!.slice(3, 5)).toEqual(['Machines', expect.stringMatching(/^New machine/)]);
-    // The product's last save, its columns in the form's order; setting the location up was KVNsys's.
+    // The product's last save, its columns in the form's order; setting the location up was the administrator's.
     expect(rows.filter((row) => row[RecordAt] === 'Stand fan (PRD-0100)').slice(0, 2)).toEqual([
       ['System Administrator (admin)', 'Server', 'Kenlyn', 'Products', 'Stand fan (PRD-0100)', 'Category', 'Updated', 'Manual', '—', 'Appliances'],
       ['System Administrator (admin)', 'Server', 'Kenlyn', 'Products', 'Stand fan (PRD-0100)', 'Price', 'Updated', 'Manual', '1899.00', '1799.00'],
     ]);
-    expect(rows).toContainEqual(['KVNsys itself', 'Server', 'Kenlyn', 'Locations', 'Kenlyn', 'Name', 'Created', 'Automatic', '—', 'Kenlyn']);
+    expect(rows).toContainEqual(['System Administrator (admin)', 'Server', 'Kenlyn', 'Locations', 'Kenlyn', 'Name', 'Created', 'Automatic', '—', 'Kenlyn']);
   });
 
   it('keeps every column its width, like a compact Beta grid: a long value is cut short, shown whole when pointed at, and the log scrolls sideways', async () => {
@@ -164,9 +164,11 @@ describeWithDatabase('the audit log in the real app', () => {
     await rowsBecome('Table', 'Categories');
     expect((await rowsShown()).every((row) => row[3] === 'Categories')).toBe(true);
     await window.getByLabel('What').selectOption('');
-    await window.getByLabel('Who').selectOption({ label: 'KVNsys itself' });
-    await rowsBecome('By', 'KVNsys itself');
-    expect((await rowsShown()).every((row) => row[0]!.startsWith('KVNsys itself'))).toBe(true);
-    await picture(window, 'audit-log-by-kvnsys');
+    // Every change here has a person, the setting up included, so there's no "No one" to pick.
+    expect(await window.getByLabel('Who').locator('option', { hasText: 'No one' }).count()).toBe(0);
+    await window.getByLabel('Who').selectOption({ label: 'System Administrator (admin)' });
+    await rowsBecome('By', 'System Administrator (admin)');
+    expect((await rowsShown()).every((row) => row[0] === 'System Administrator (admin)')).toBe(true);
+    await picture(window, 'audit-log-by-person');
   });
 });

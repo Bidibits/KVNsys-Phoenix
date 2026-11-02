@@ -16,8 +16,9 @@ and everything a user sees, is called KVNsys.
 
 **So far:**
 - **The seed:** the one-time setup that makes a new install usable. It creates the first location,
-  this PC as its first machine, one role (Administrator, with every right) and the first admin.
-  Every other role is made by hand.
+  this PC as its first machine, one role (Administrator, with every right) and the first admin,
+  and credits all of them to that admin, who is whoever set the location up. Every other role is
+  made by hand.
 - **KVNsys Server starts and answers on the local network.** Other PCs can ask it what it is,
   which version it is, and which protocol it speaks. On a location's server PC it installs from one
   setup file, with a nightly backup and a dashboard that turns it on and off (see "For the server

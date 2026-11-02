@@ -5,7 +5,7 @@ export { BusinessTime } from './BusinessTime.js';
 export { ColumnWidthsProvider, type KeptColumnWidths } from './ColumnWidths.js';
 export { ConfirmDialog } from './ConfirmDialog.js';
 export { FormPanel } from './FormPanel.js';
-export { ByKVNsysItself, Dash, historyColumns, idColumn, TextOrDash } from './HistoryColumns.js';
+export { Dash, historyColumns, idColumn, TextOrDash } from './HistoryColumns.js';
 export { Notice } from './Notice.js';
 export { Panel } from './Panel.js';
 export { Pesos } from './Pesos.js';

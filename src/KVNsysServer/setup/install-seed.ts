@@ -61,8 +61,11 @@ export class InstallSeed {
       const locationId = location?.id ?? newId();
       const machineId = server?.id ?? newId();
 
-      // Seeded rows are written by nobody (no one is signed in), on this PC, at this location.
-      const lineage: Lineage = { userId: null, machineId, locationId };
+      // Everything set up here is credited to the administrator this run makes, on this PC, at this
+      // location: whoever sets the location up types that account's username and password. A run on a
+      // database that already has people makes no administrator, so anything it adds is by nobody.
+      const adminId = (await tx.countUsers()) === 0 ? newId() : null;
+      const lineage: Lineage = { userId: adminId, machineId, locationId };
 
       if (location) {
         report.unchanged.push(`Location ${input.locationCode} already exists.`);
@@ -103,7 +106,7 @@ export class InstallSeed {
         if (existing && missing.length === 0) report.unchanged.push(`Role ${role.code} is up to date.`);
       }
 
-      if ((await tx.countUsers()) > 0) {
+      if (adminId === null) {
         report.unchanged.push('Users already exist, so no administrator was created.');
         return report;
       }
@@ -117,8 +120,9 @@ export class InstallSeed {
       const usernameIssue = usernameProblem(input.adminUsername);
       if (usernameIssue) throw new Refusal('invalid', `KVNSYS_ADMIN_USERNAME: ${usernameIssue}`);
       const adminUsername = normalizeUsername(input.adminUsername);
+      // Made by itself: the administrator is who set the location up.
       await tx.createUser({
-        id: newId(),
+        id: adminId,
         username: adminUsername,
         firstName: 'System',
         lastName: 'Administrator',

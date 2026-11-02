@@ -8,7 +8,7 @@ import { z } from 'zod';
  *   GET  /api/audits?table=&record=&person=&from=&to=   the newest changes that match, newest first
  *
  * Every part of the question may be left out: table is a table's database name (products, users…),
- * record a record's id, person someone's id or "kvnsys" for the changes KVNsys made itself, and
+ * record a record's id, person someone's id or "kvnsys" for changes made while nobody was signed in, and
  * from and to are business days ("2026-10-28"), both included. A refusal is a ProblemReply (see products.ts).
  */
 export const AuditsPath = '/api/audits';

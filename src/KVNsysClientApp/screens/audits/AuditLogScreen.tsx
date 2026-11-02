@@ -1,8 +1,8 @@
 import type { AuditFilterForm, AuditLine, AuditListResult } from '@kvnsys/client';
-import { BusinessTime, Button, ByKVNsysItself, idColumn, Notice, RecordTable, StatusLabel, TextOrDash, type Column } from '@kvnsys/ui';
+import { BusinessTime, Button, idColumn, Notice, RecordTable, StatusLabel, TextOrDash, type Column } from '@kvnsys/ui';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 
-/** Stands for "nobody": the changes KVNsys made itself (the server's ByKVNsys). */
+/** Stands for "no one": changes made while nobody was signed in (the server's ByKVNsys). */
 const ByKVNsys = 'kvnsys';
 
 const Everything: AuditFilterForm = { table: '', record: '', person: '', from: '', to: '' };
@@ -86,7 +86,7 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
     { heading: 'After', width: '16em', cell: (entry) => <TextOrDash text={entry.after} />, sortBy: (entry) => entry.after },
     { heading: 'Change', width: '10em', cell: (entry) => <StatusLabel status={entry.changeType} />, sortBy: (entry) => entry.changeType },
     { heading: 'Source', width: '8em', cell: (entry) => entry.source, sortBy: (entry) => entry.source },
-    { heading: 'By', width: '16em', cell: (entry) => entry.userName ?? ByKVNsysItself, sortBy: (entry) => entry.userName ?? ByKVNsysItself },
+    { heading: 'By', width: '16em', cell: (entry) => <TextOrDash text={entry.userName} />, sortBy: (entry) => entry.userName },
     { heading: 'Machine', width: '13em', cell: (entry) => <TextOrDash text={entry.machineName} />, sortBy: (entry) => entry.machineName },
     { heading: 'Location', width: '10em', cell: (entry) => <TextOrDash text={entry.locationName} />, sortBy: (entry) => entry.locationName },
     { heading: 'At', width: '12em', cell: (entry) => <BusinessTime at={entry.at} />, sortBy: (entry) => entry.at },
@@ -120,7 +120,7 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
                   {person.name}
                 </option>
               ))}
-              {byKVNsys && <option value={ByKVNsys}>KVNsys itself</option>}
+              {byKVNsys && <option value={ByKVNsys}>No one</option>}
             </select>
           )}
         </Labelled>
@@ -190,7 +190,7 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
             rowKey={(entry) => entry.id}
             filter={search}
             searchText={(entry) =>
-              [entry.userName ?? ByKVNsysItself, entry.machineName ?? '', entry.locationName ?? '', entry.tableLabel, entry.recordName ?? '', entry.columnLabel, entry.before ?? '', entry.after ?? ''].join(' ')
+              [entry.userName ?? '', entry.machineName ?? '', entry.locationName ?? '', entry.tableLabel, entry.recordName ?? '', entry.columnLabel, entry.before ?? '', entry.after ?? ''].join(' ')
             }
           />
         </>

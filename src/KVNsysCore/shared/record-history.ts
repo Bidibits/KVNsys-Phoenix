@@ -6,7 +6,7 @@
 export interface RecordHistory {
   /** When it was made, by the server's clock: an ISO date and time. */
   createdAt: string;
-  /** Who made it: their name and username. Null when KVNsys made it itself, setting the location up or recording a PC. */
+  /** Who made it: their name and username. Null when nobody was signed in (a database set up before 2026-11-03). */
   createdBy: string | null;
   /** The machine it was made on, by name. */
   createdMachine: string | null;

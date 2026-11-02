@@ -45,12 +45,12 @@ describeWithDatabase('the seed, against a real database', () => {
     expect(admin.passwordHash).toMatch(/^scrypt\$/);
   });
 
-  it('stamps what it wrote as by nobody, on this PC, at this location', async () => {
+  it('credits what it wrote to the administrator it made, the administrator included, on this PC, at this location', async () => {
     const location = await db.location.findUniqueOrThrow({ where: { code: 'HQ' } });
     const machine = await db.machine.findUniqueOrThrow({ where: { code: 'HQ-SRV' } });
     const admin = await db.user.findUniqueOrThrow({ where: { username: 'admin' } });
     for (const row of [location, machine, admin]) {
-      expect([row.createdByUser, row.createdAtMachine, row.createdAtLocation]).toEqual([null, machine.id, location.id]);
+      expect([row.createdByUser, row.createdAtMachine, row.createdAtLocation]).toEqual([admin.id, machine.id, location.id]);
     }
   });
 

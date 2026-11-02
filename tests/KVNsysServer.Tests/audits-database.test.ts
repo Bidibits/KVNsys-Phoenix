@@ -53,7 +53,7 @@ describeWithDatabase('the audit log over HTTPS, through the client engine, again
     await database?.drop();
   });
 
-  it("shows the Administrator every change, with who, where and the location's own setup as KVNsys's", async () => {
+  it("shows the Administrator every change, with who and where, the location's own setup credited to the administrator it made", async () => {
     const admin = await signInAt('admin');
     const added = await addProduct(address, admin.session, { code: 'PRD-0007', barcode: null, name: 'Sardines 155g', retailPrice: 2575, status: 'Active', description: null }, { pin });
     if (!added.ok) throw new Error(added.message);
@@ -61,15 +61,21 @@ describeWithDatabase('the audit log over HTTPS, through the client engine, again
     const log = await listAudits(address, admin.session, any, { pin });
     if (!log.ok) throw new Error(log.message);
     expect(log.entries[0]).toMatchObject({ tableLabel: 'Products', recordName: 'Sardines 155g (PRD-0007)', userName: 'System Administrator (admin)', machineName: 'New machine (COUNTER-PC)', locationName: 'Kenlyn' });
-    expect(log.entries).toContainEqual(expect.objectContaining({ table: 'locations', columnLabel: 'Name', after: 'Kenlyn', source: 'Automatic', userName: null }));
-    expect(log.byKVNsys).toBe(true);
+    expect(log.entries).toContainEqual(expect.objectContaining({ table: 'locations', columnLabel: 'Name', after: 'Kenlyn', source: 'Automatic', userName: 'System Administrator (admin)' }));
+    expect(log.byKVNsys).toBe(false);
     expect(log.people.map((p) => p.name)).toContain('System Administrator (admin)');
     expect(log.tables).toContainEqual({ name: 'machines', label: 'Machines' });
 
     const products = await listAudits(address, admin.session, { ...any, table: 'products' }, { pin });
     expect(products.ok && products.entries.every((entry) => entry.table === 'products')).toBe(true);
-    const bySetup = await listAudits(address, admin.session, { ...any, person: 'kvnsys' }, { pin });
-    expect(bySetup.ok && bySetup.entries.length > 0 && bySetup.entries.every((entry) => entry.userId === null)).toBe(true);
+    // A line nobody signed in made, as a database set up before 2026-11-03 holds: "no one" finds it alone.
+    const location = await db.location.findUniqueOrThrow({ where: { code: 'HQ' } });
+    await db.audit.create({
+      data: { id: randomUUID(), tableName: 'locations', recordId: location.id, columnName: 'description', valueAfter: 'Set up long ago', changeType: 'Updated', changeSource: 'Automatic' },
+    });
+    const byNoOne = await listAudits(address, admin.session, { ...any, person: 'kvnsys' }, { pin });
+    expect(byNoOne.ok && byNoOne.byKVNsys).toBe(true);
+    expect(byNoOne.ok && byNoOne.entries.map((entry) => [entry.userId, entry.after])).toEqual([[null, 'Set up long ago']]);
   });
 
   it("refuses someone whose role can't see the log, and a question it doesn't understand", async () => {
