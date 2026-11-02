@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { priceSale, takeCash, type PricedSale, type SaleProduct } from '@kvnsys/core';
-import { createPrismaClient, PrismaSalesJournal, PrismaStockLedger, type PrismaClient } from '@kvnsys/postgres';
+import { createPrismaClient, PrismaSalesJournal, PrismaInventoryLedger, type PrismaClient } from '@kvnsys/postgres';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
@@ -8,7 +8,7 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
   let journal: PrismaSalesJournal;
-  let ledger: PrismaStockLedger;
+  let ledger: PrismaInventoryLedger;
   let hq: string;
   let branch: string;
   let sardines: SaleProduct;
@@ -29,7 +29,7 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     database = await createThrowawayDatabase();
     db = createPrismaClient(database.url);
     journal = new PrismaSalesJournal(db);
-    ledger = new PrismaStockLedger(db);
+    ledger = new PrismaInventoryLedger(db);
     hq = await location('HQ');
     branch = await location('GUMACA');
     sardines = await product('PRD-0007', 'Sardines 155g', 2575);

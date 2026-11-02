@@ -1,4 +1,4 @@
-import type { ProductStockResult, RecordStockResult, StockItem } from '@kvnsys/client';
+import type { ProductInventoryResult, RecordMovementsResult, InventoryItem } from '@kvnsys/client';
 import { Button, FormPanel, Notice, Pieces, TextField } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 
@@ -19,7 +19,7 @@ export function CountPanel({
   onSaved,
   onSignInAgain,
 }: {
-  item: StockItem;
+  item: InventoryItem;
   onClose: () => void;
   /** The stock after the count was saved. */
   onSaved: (stock: number) => void;
@@ -35,8 +35,8 @@ export function CountPanel({
   useEffect(() => {
     let showing = true;
     window.kvnsys
-      .productStock(productId)
-      .catch((error: unknown): ProductStockResult => somethingWentWrong(error))
+      .productInventory(productId)
+      .catch((error: unknown): ProductInventoryResult => somethingWentWrong(error))
       .then((answer) => {
         if (!showing) return;
         if (answer.ok) setOnHand(answer.stock);
@@ -52,8 +52,8 @@ export function CountPanel({
     setSaving(true);
     setProblem(null);
     const answer = await window.kvnsys
-      .countStock({ productId, onHand, counted, reason })
-      .catch((error: unknown): RecordStockResult => somethingWentWrong(error));
+      .recordCount({ productId, onHand, counted, reason })
+      .catch((error: unknown): RecordMovementsResult => somethingWentWrong(error));
     setSaving(false);
     if (answer.ok) onSaved(answer.movements[0]!.resultingOnHand);
     else setProblem({ message: answer.message, ended: answer.reason === 'ended' });
@@ -61,7 +61,7 @@ export function CountPanel({
 
   return (
     <FormPanel
-      title="Adjust stock"
+      title="Adjust count"
       onClose={onClose}
       onSubmit={() => void save()}
       actions={

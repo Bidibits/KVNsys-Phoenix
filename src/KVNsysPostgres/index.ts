@@ -4,7 +4,7 @@ export { applyDatabaseUpdates, createDatabaseIfMissing, isEmptyDatabase } from '
 export { createPrismaClient, type PrismaClient } from './connection.js';
 export { PrismaCatalogBook } from './catalog/prisma-catalog-book.js';
 export { PrismaProductCatalog } from './catalog/prisma-product-catalog.js';
-export { PrismaStockLedger } from './inventory/prisma-stock-ledger.js';
+export { PrismaInventoryLedger } from './inventory/prisma-inventory-ledger.js';
 export { PrismaLocationDirectory } from './locations/prisma-location-directory.js';
 export { PrismaMachineBook } from './locations/prisma-machine-book.js';
 export { PrismaSalesJournal } from './selling/prisma-sales-journal.js';

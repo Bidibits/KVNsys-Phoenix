@@ -1,5 +1,5 @@
 import { Refusal } from '../shared/refusal.js';
-import { StockLimits } from './stock-ledger.js';
+import { InventoryLimits } from './inventory-ledger.js';
 
 /**
  * A change a person records by hand: goods in from a supplier, or a count put right. The location is
@@ -39,7 +39,7 @@ export function readPieces(typed: string): number {
   if (!text) refuse('Type how many pieces, like 24.');
   if (!/^(\d+|\d{1,3}(,\d{3})+)$/.test(text)) refuse(`"${text}" isn't a number of pieces. Type a whole number, like 24.`);
   const pieces = Number(text.replaceAll(',', ''));
-  if (pieces > StockLimits.quantity) refuse(`That's more than ${StockLimits.quantity.toLocaleString('en-US')} pieces. Check the number.`);
+  if (pieces > InventoryLimits.quantity) refuse(`That's more than ${InventoryLimits.quantity.toLocaleString('en-US')} pieces. Check the number.`);
   return pieces;
 }
 

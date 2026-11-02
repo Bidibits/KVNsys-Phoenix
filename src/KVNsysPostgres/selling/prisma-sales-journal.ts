@@ -14,7 +14,7 @@ import {
   type ReceiptSummary,
 } from '@kvnsys/core';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
-import { recordStockIn } from '../inventory/prisma-stock-ledger.js';
+import { recordMovementsIn } from '../inventory/prisma-inventory-ledger.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NoSuchLocation = "That location isn't known here.";
@@ -128,7 +128,7 @@ export class PrismaSalesJournal extends SalesJournal {
       if (products.length !== productIds.length) throw new Refusal('not-found', NotInCatalog);
       const tracked = new Set(products.filter((product) => product.tracksStock).map((product) => product.id));
 
-      await recordStockIn(
+      await recordMovementsIn(
         tx,
         sale.lines.filter((line) => tracked.has(line.productId)).map((line) => ({
           locationId,

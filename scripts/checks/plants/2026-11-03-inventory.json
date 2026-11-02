@@ -1,0 +1,45 @@
+{
+  "step": "\"Stock\" is \"Inventory\": the screen, the rights, the calls and the code (2026-11-03)",
+  "plants": [
+    {
+      "name": "1 the Home tile called Stock again",
+      "file": "src/KVNsysClientApp/screens/home/HomeScreen.tsx",
+      "old": "    title: 'Inventory',",
+      "new": "    title: 'Stock',",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "navigation"]]
+    },
+    {
+      "name": "2 the rights grouped as Stock again",
+      "file": "src/KVNsysCore/identity/accesses.ts",
+      "old": "    area: 'Inventory',",
+      "new": "    area: 'Stock',",
+      "build": ["@kvnsys/core"],
+      "tests": [["KVNsysClient.Tests", "roles"]]
+    },
+    {
+      "name": "3 Receive delivery called Receive stock again",
+      "file": "src/KVNsysClientApp/screens/inventory/InventoryScreen.tsx",
+      "old": "            Receive delivery\n",
+      "new": "            Receive stock\n",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "inventory"]]
+    },
+    {
+      "name": "4 the count panel titled Adjust stock again",
+      "file": "src/KVNsysClientApp/screens/inventory/CountPanel.tsx",
+      "old": "      title=\"Adjust count\"",
+      "new": "      title=\"Adjust stock\"",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "inventory"]]
+    },
+    {
+      "name": "5 the inventory list shown without the right to see it",
+      "file": "src/KVNsysServer/http/inventory.controller.ts",
+      "old": "    const { parts, location } = await this.allow(authorization, [Accesses.InventoryView]);\n    const [products, levels] = await Promise.all([parts.catalog.list(), parts.ledger.levels(location.id)]);",
+      "new": "    const { parts, location } = await this.allow(authorization, []);\n    const [products, levels] = await Promise.all([parts.catalog.list(), parts.ledger.levels(location.id)]);",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "inventory-database"]]
+    }
+  ]
+}

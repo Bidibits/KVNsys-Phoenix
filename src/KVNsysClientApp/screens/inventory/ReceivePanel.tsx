@@ -1,4 +1,4 @@
-import type { RecordStockResult, StockItem, StockItemResult } from '@kvnsys/client';
+import type { RecordMovementsResult, InventoryItem, InventoryItemResult } from '@kvnsys/client';
 import { Button, ConfirmDialog, FormPanel, Notice, Pieces, TextField } from '@kvnsys/ui';
 import { useRef, useState, type KeyboardEvent } from 'react';
 
@@ -10,7 +10,7 @@ const somethingWentWrong = (error: unknown) => ({
 
 interface Line {
   key: number;
-  item: StockItem;
+  item: InventoryItem;
   /** As typed: the client engine reads it when the delivery is saved. */
   pieces: string;
 }
@@ -32,7 +32,7 @@ export function ReceivePanel({
   onSignInAgain: () => void;
 }) {
   const [code, setCode] = useState('');
-  const [found, setFound] = useState<StockItem | null>(null);
+  const [found, setFound] = useState<InventoryItem | null>(null);
   const [pieces, setPieces] = useState('');
   const [lines, setLines] = useState<Line[]>([]);
   const [note, setNote] = useState('');
@@ -44,9 +44,9 @@ export function ReceivePanel({
   const nextKey = useRef(0);
 
   /** Finds what's in the code box, at the server. */
-  async function look(): Promise<StockItem | null> {
+  async function look(): Promise<InventoryItem | null> {
     setBusy(true);
-    const answer = await window.kvnsys.findStockItem(code).catch((error: unknown): StockItemResult => somethingWentWrong(error));
+    const answer = await window.kvnsys.findInventoryItem(code).catch((error: unknown): InventoryItemResult => somethingWentWrong(error));
     setBusy(false);
     if (!answer.ok) {
       setFound(null);
@@ -81,7 +81,7 @@ export function ReceivePanel({
     setBusy(true);
     setProblem(null);
     const sent = lines.map((line) => ({ productId: line.item.product.id, name: line.item.product.name, pieces: line.pieces }));
-    const answer = await window.kvnsys.receiveStock(sent, note).catch((error: unknown): RecordStockResult => somethingWentWrong(error));
+    const answer = await window.kvnsys.receiveDelivery(sent, note).catch((error: unknown): RecordMovementsResult => somethingWentWrong(error));
     setBusy(false);
     if (answer.ok) onSaved(answer.movements.length);
     else setProblem({ message: answer.message, ended: answer.reason === 'ended' });
@@ -108,7 +108,7 @@ export function ReceivePanel({
 
   return (
     <FormPanel
-      title="Receive stock"
+      title="Receive delivery"
       onClose={close}
       onSubmit={() => void save()}
       actions={

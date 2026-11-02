@@ -153,16 +153,16 @@ export {
 } from './catalog/catalog-lists.js';
 
 export {
-  checkStockChange,
+  checkInventoryChange,
   MovementTypes,
   rightToRecordByHand,
-  StockLedger,
-  StockLimits,
+  InventoryLedger,
+  InventoryLimits,
   type MovementType,
-  type StockChange,
-  type StockLevel,
-  type StockMovement,
-} from './inventory/stock-ledger.js';
+  type InventoryChange,
+  type InventoryLevel,
+  type InventoryMovement,
+} from './inventory/inventory-ledger.js';
 export {
   readCount,
   readDelivery,
@@ -170,7 +170,7 @@ export {
   type CountForm,
   type DeliveryLineForm,
   type HandMovement,
-} from './inventory/stock-forms.js';
+} from './inventory/inventory-forms.js';
 
 export {
   checkDiscount,

@@ -57,20 +57,20 @@ export { CatalogLists } from '@kvnsys/core';
 /** How big a product's picture may be, for the desktop side to shrink one to. */
 export { ProductPictureLimit } from '@kvnsys/core';
 export {
-  findStockItem,
-  getProductStock,
-  listStock,
-  recordStock,
+  findInventoryItem,
+  getProductInventory,
+  listInventory,
+  recordMovements,
   saveCount,
   saveDelivery,
   type Location,
-  type ProductStockResult,
+  type ProductInventoryResult,
   type RecordedMovement,
-  type RecordStockResult,
-  type StockItem,
-  type StockItemResult,
-  type StockListResult,
-} from './inventory/stock.js';
+  type RecordMovementsResult,
+  type InventoryItem,
+  type InventoryItemResult,
+  type InventoryListResult,
+} from './inventory/inventory.js';
 export {
   listUsers,
   loadUserForm,

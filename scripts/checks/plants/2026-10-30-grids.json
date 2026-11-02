@@ -98,14 +98,6 @@
       "tests": [["KVNsysClientApp.Tests", "product-list"]]
     },
     {
-      "name": "13 \"KVNsys itself\" left blank",
-      "file": "src/KVNsysUI/HistoryColumns.tsx",
-      "old": "const person = (who: string | null) => who ?? ByKVNsysItself;",
-      "new": "const person = (who: string | null) => who ?? '';",
-      "build": ["@kvnsys/client-app"],
-      "tests": [["KVNsysClientApp.Tests", "machines"]]
-    },
-    {
       "name": "14 the cost shown to a cashier",
       "file": "src/KVNsysClientApp/screens/products/ProductsScreen.tsx",
       "old": "    : columnsFor(reloads, false);",

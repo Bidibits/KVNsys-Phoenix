@@ -66,7 +66,7 @@ describeWithDatabase('selling over HTTPS, through the client engine, against a r
     });
     hqId = (await db.location.findUniqueOrThrow({ where: { code: 'HQ' } })).id;
     await addRole('CASHIER', ['sales.sell']);
-    await addRole('STOCKMAN', ['stock.view', 'stock.receive', 'products.view']);
+    await addRole('STOCKMAN', ['inventory.view', 'inventory.receive', 'products.view']);
     await addRole('OWNER', ['sales.view']);
     await addUser('ana', 'Ana', 'CASHIER');
     await addUser('ben', 'Ben', 'STOCKMAN');

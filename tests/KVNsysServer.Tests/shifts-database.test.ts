@@ -41,7 +41,7 @@ describeWithDatabase('shifts over HTTPS, through the client engine, against a re
     });
     await addUser('ana', 'CASHIER', ['sales.sell']);
     await addUser('ben', 'CASHIER2', ['sales.sell']);
-    await addUser('cora', 'STOCKMAN', ['stock.view']);
+    await addUser('cora', 'STOCKMAN', ['inventory.view']);
     const id = randomUUID();
     await db.product.create({ data: { id, code: 'PRD-0007', name: 'Sardines 155g', retailPrice: '25.00' } });
     sardines = { id, code: 'PRD-0007', name: 'Sardines 155g', retailPrice: 2500, status: 'Active' };

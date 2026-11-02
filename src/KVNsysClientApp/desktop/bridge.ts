@@ -20,10 +20,10 @@ import type {
   TillResult,
   CountForm,
   DeliveryLineForm,
-  ProductStockResult,
-  RecordStockResult,
-  StockItemResult,
-  StockListResult,
+  ProductInventoryResult,
+  RecordMovementsResult,
+  InventoryItemResult,
+  InventoryListResult,
   ProductForm,
   ProductFormResult,
   PasswordResult,
@@ -124,15 +124,15 @@ export interface KvnsysBridge {
   /** Saves what was typed and ticked, as a new role (null) or over the one with that id. */
   saveRole(id: string | null, form: RoleForm): Promise<RoleResult>;
   /** Every product, by name, with how many this location has, if the signed-in person may see stock. */
-  listStock(): Promise<StockListResult>;
+  listInventory(): Promise<InventoryListResult>;
   /** One product, by what was typed or scanned (its code or its barcode), with its stock here. */
-  findStockItem(codeOrBarcode: string): Promise<StockItemResult>;
+  findInventoryItem(codeOrBarcode: string): Promise<InventoryItemResult>;
   /** One product's stock as the server has it now, and its newest movements. */
-  productStock(productId: string): Promise<ProductStockResult>;
+  productInventory(productId: string): Promise<ProductInventoryResult>;
   /** Saves a delivery: each line's pieces as typed, and one note for all of it. All saved, or none. */
-  receiveStock(lines: DeliveryLineForm[], note: string): Promise<RecordStockResult>;
+  receiveDelivery(lines: DeliveryLineForm[], note: string): Promise<RecordMovementsResult>;
   /** Puts a product's count right, from what was counted and what KVNsys showed when it was typed. */
-  countStock(form: CountForm): Promise<RecordStockResult>;
+  recordCount(form: CountForm): Promise<RecordMovementsResult>;
   /** The sale being rung up on this machine, priced. A new sign-in starts with an empty one. */
   till(): Promise<TillResult>;
   /** Finds what was scanned or typed and adds one to the sale. */
@@ -187,11 +187,11 @@ export const ResetPasswordChannel = 'kvnsys:reset-password';
 export const ListRolesChannel = 'kvnsys:list-roles';
 export const RoleFormChannel = 'kvnsys:role-form';
 export const SaveRoleChannel = 'kvnsys:save-role';
-export const ListStockChannel = 'kvnsys:list-stock';
-export const FindStockItemChannel = 'kvnsys:find-stock-item';
-export const ProductStockChannel = 'kvnsys:product-stock';
-export const ReceiveStockChannel = 'kvnsys:receive-stock';
-export const CountStockChannel = 'kvnsys:count-stock';
+export const ListInventoryChannel = 'kvnsys:list-inventory';
+export const FindInventoryItemChannel = 'kvnsys:find-inventory-item';
+export const ProductInventoryChannel = 'kvnsys:product-inventory';
+export const ReceiveDeliveryChannel = 'kvnsys:receive-delivery';
+export const RecordCountChannel = 'kvnsys:record-count';
 export const TillChannel = 'kvnsys:till';
 export const ScanForSaleChannel = 'kvnsys:scan-for-sale';
 export const SetSaleQuantityChannel = 'kvnsys:set-sale-quantity';

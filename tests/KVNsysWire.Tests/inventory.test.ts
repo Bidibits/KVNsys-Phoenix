@@ -1,15 +1,15 @@
 import {
-  FindStockItemPath,
+  FindInventoryItemPath,
   MovementOnWire,
   MovementsShown,
-  ProductStockReply,
-  productStockPath,
+  ProductInventoryReply,
+  productInventoryPath,
   ProtocolVersion,
-  StockListReply,
-  StockMovementsPath,
-  StockMovementsRequest,
-  StockItemReply,
-  StockPath,
+  InventoryListReply,
+  InventoryMovementsPath,
+  InventoryMovementsRequest,
+  InventoryItemReply,
+  InventoryPath,
 } from '@kvnsys/wire';
 import { describe, expect, it } from 'vitest';
 
@@ -51,21 +51,21 @@ const received = { productId: product.id, type: 'from_supplier', quantityChange:
 
 describe('the stock calls', () => {
   // The rule, not today's number: stock arrived with protocol 8, and it only goes up.
-  it('live under /api/stock, and came with protocol 8', () => {
-    expect(StockPath).toBe('/api/stock');
-    expect(StockMovementsPath).toBe('/api/stock/movements');
-    expect(FindStockItemPath).toBe('/api/stock/find');
-    expect(productStockPath('a/b')).toBe('/api/stock/a%2Fb');
+  it('live under /api/inventory, and came with protocol 8', () => {
+    expect(InventoryPath).toBe('/api/inventory');
+    expect(InventoryMovementsPath).toBe('/api/inventory/movements');
+    expect(FindInventoryItemPath).toBe('/api/inventory/find');
+    expect(productInventoryPath('a/b')).toBe('/api/inventory/a%2Fb');
     expect(ProtocolVersion).toBeGreaterThanOrEqual(8);
   });
 
   it("answer with the location and every product's stock, or one product's stock and newest lines", () => {
-    expect(StockListReply.safeParse({ location, items: [{ product, stock: 24 }] }).success).toBe(true);
-    expect(StockListReply.safeParse({ location, items: [{ product, stock: 2.5 }] }).success).toBe(false);
-    expect(ProductStockReply.safeParse({ location, product, stock: 24, movements: [line], more: false }).success).toBe(true);
-    expect(ProductStockReply.safeParse({ location, product, stock: 24, movements: [line] }).success).toBe(false);
+    expect(InventoryListReply.safeParse({ location, items: [{ product, stock: 24 }] }).success).toBe(true);
+    expect(InventoryListReply.safeParse({ location, items: [{ product, stock: 2.5 }] }).success).toBe(false);
+    expect(ProductInventoryReply.safeParse({ location, product, stock: 24, movements: [line], more: false }).success).toBe(true);
+    expect(ProductInventoryReply.safeParse({ location, product, stock: 24, movements: [line] }).success).toBe(false);
     expect(MovementsShown).toBeGreaterThan(0);
-    expect(StockItemReply.safeParse({ location, product, stock: -3 }).success).toBe(true);
+    expect(InventoryItemReply.safeParse({ location, product, stock: -3 }).success).toBe(true);
   });
 
   it("carry who saved a line, with no name when their account isn't on this server, or nobody", () => {
@@ -75,11 +75,11 @@ describe('the stock calls', () => {
   });
 
   it('send one line or a delivery of many, but never none and never an unknown kind', () => {
-    expect(StockMovementsRequest.safeParse({ movements: [received] }).success).toBe(true);
-    expect(StockMovementsRequest.safeParse({ movements: Array(500).fill(received) }).success).toBe(true);
-    expect(StockMovementsRequest.safeParse({ movements: Array(501).fill(received) }).success).toBe(false);
-    expect(StockMovementsRequest.safeParse({ movements: [] }).success).toBe(false);
-    expect(StockMovementsRequest.safeParse({ movements: [{ ...received, type: 'transfer' }] }).success).toBe(false);
-    expect(StockMovementsRequest.safeParse({ movements: [{ ...received, quantityChange: '24' }] }).success).toBe(false);
+    expect(InventoryMovementsRequest.safeParse({ movements: [received] }).success).toBe(true);
+    expect(InventoryMovementsRequest.safeParse({ movements: Array(500).fill(received) }).success).toBe(true);
+    expect(InventoryMovementsRequest.safeParse({ movements: Array(501).fill(received) }).success).toBe(false);
+    expect(InventoryMovementsRequest.safeParse({ movements: [] }).success).toBe(false);
+    expect(InventoryMovementsRequest.safeParse({ movements: [{ ...received, type: 'transfer' }] }).success).toBe(false);
+    expect(InventoryMovementsRequest.safeParse({ movements: [{ ...received, quantityChange: '24' }] }).success).toBe(false);
   });
 });

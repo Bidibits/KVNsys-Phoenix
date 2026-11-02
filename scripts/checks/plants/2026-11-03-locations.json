@@ -27,19 +27,19 @@
     },
     {
       "name": "4 the stock list naming the location by its code",
-      "file": "src/KVNsysClient/inventory/stock.ts",
+      "file": "src/KVNsysClient/inventory/inventory.ts",
       "old": "return { ok: true, location: answer.reply.location, items };",
       "new": "return { ok: true, location: { ...answer.reply.location, name: answer.reply.location.code }, items };",
       "build": ["@kvnsys/client", "@kvnsys/client-app"],
-      "tests": [["KVNsysClient.Tests", "stock"], ["KVNsysClientApp.Tests", "stock"]]
+      "tests": [["KVNsysClient.Tests", "inventory"], ["KVNsysClientApp.Tests", "inventory"]]
     },
     {
       "name": "5 the Stock screen saying the location's code",
-      "file": "src/KVNsysClientApp/screens/stock/StockScreen.tsx",
+      "file": "src/KVNsysClientApp/screens/inventory/InventoryScreen.tsx",
       "old": "at ${result.location.name}`}",
       "new": "at ${result.location.code}`}",
       "build": ["@kvnsys/client-app"],
-      "tests": [["KVNsysClientApp.Tests", "stock"]]
+      "tests": [["KVNsysClientApp.Tests", "inventory"]]
     },
     {
       "name": "6 the first start asking for the shop's name again",

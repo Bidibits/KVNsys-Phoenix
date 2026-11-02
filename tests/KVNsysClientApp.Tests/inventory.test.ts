@@ -39,8 +39,8 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
       adminPassword: Password,
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
-    await addRole('RECEIVER', ['stock.view', 'stock.receive']);
-    await addRole('LOOKER', ['stock.view']);
+    await addRole('RECEIVER', ['inventory.view', 'inventory.receive']);
+    await addRole('LOOKER', ['inventory.view']);
     await addRole('CASHIER', ['products.view']);
     await addUser('receiver', 'RECEIVER');
     await addUser('looker', 'LOOKER');
@@ -78,7 +78,7 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
   }
 
   async function openStock() {
-    await window.getByRole('button', { name: /^Stock/ }).click();
+    await window.getByRole('button', { name: /^Inventory/ }).click();
     await table().waitFor();
   }
 
@@ -88,8 +88,8 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
   }
 
   const panel = (title: string) => window.getByRole('dialog', { name: title });
-  const table = () => window.getByRole('table', { name: 'Stock' });
-  const rowsShown = (name = 'Stock') =>
+  const table = () => window.getByRole('table', { name: 'Inventory' });
+  const rowsShown = (name = 'Inventory') =>
     window
       .getByRole('table', { name })
       .locator('tbody tr')
@@ -105,13 +105,13 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
       ['Sack of rice 25kg', '0'],
       ['Sardines 155g', '0'],
     ]);
-    expect(await window.getByRole('button', { name: 'Receive stock' }).isVisible()).toBe(true);
+    expect(await window.getByRole('button', { name: 'Receive delivery' }).isVisible()).toBe(true);
     expect(await window.getByRole('button', { name: 'Adjust Sardines 155g' }).isVisible()).toBe(true);
   });
 
   it('takes in a delivery by scanning: Enter finds the product, then Enter adds its pieces, and nothing saves until asked', async () => {
-    await window.getByRole('button', { name: 'Receive stock' }).click();
-    const form = panel('Receive stock');
+    await window.getByRole('button', { name: 'Receive delivery' }).click();
+    const form = panel('Receive delivery');
     const code = form.getByLabel('Code or barcode');
     const pieces = form.getByLabel('Pieces', { exact: true });
     expect(await isFocused(code)).toBe(true);
@@ -161,8 +161,8 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
   });
 
   it("says when a code isn't any product's, and names the line whose pieces aren't a number, keeping what was typed", async () => {
-    await window.getByRole('button', { name: 'Receive stock' }).click();
-    const form = panel('Receive stock');
+    await window.getByRole('button', { name: 'Receive delivery' }).click();
+    const form = panel('Receive delivery');
     await form.getByLabel('Code or barcode').fill('PRD-9999');
     await form.getByLabel('Code or barcode').press('Enter');
     await form.getByText('No product has the code or barcode PRD-9999.').waitFor();
@@ -184,7 +184,7 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
 
   it('puts a count right from what was counted, with the reason', async () => {
     await window.getByRole('button', { name: 'Adjust Sardines 155g' }).click();
-    const form = panel('Adjust stock');
+    const form = panel('Adjust count');
     await form.getByText('KVNsys has 30 here.', { exact: false }).waitFor();
     await form.getByLabel('Pieces counted').fill('30');
     await form.getByLabel("Why it's different").fill('2 torn, thrown away');
@@ -207,30 +207,30 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
       ['Received', '+6', '30', 'System Administrator', 'DR 10234'],
       ['Received', '+24', '24', 'System Administrator', 'DR 10234'],
     ]);
-    await window.getByRole('button', { name: 'Back to stock' }).click();
+    await window.getByRole('button', { name: 'Back to inventory' }).click();
     await table().waitFor();
     await signOut();
   });
 
-  it('gives someone who may only receive goods Receive stock but no Adjust, and someone who may only look neither', async () => {
+  it('gives someone who may only receive goods Receive delivery but no Adjust, and someone who may only look neither', async () => {
     await signIn('receiver');
     await openStock();
-    expect(await window.getByRole('button', { name: 'Receive stock' }).isVisible()).toBe(true);
+    expect(await window.getByRole('button', { name: 'Receive delivery' }).isVisible()).toBe(true);
     expect(await window.getByRole('button', { name: 'History of Sardines 155g' }).isVisible()).toBe(true);
     expect(await window.getByRole('button', { name: /^Adjust / }).count()).toBe(0);
     await signOut();
 
     await signIn('looker');
     await openStock();
-    expect(await window.getByRole('button', { name: 'Receive stock' }).count()).toBe(0);
+    expect(await window.getByRole('button', { name: 'Receive delivery' }).count()).toBe(0);
     expect(await window.getByRole('button', { name: /^Adjust / }).count()).toBe(0);
     await signOut();
   });
 
-  it('greys out the Stock tile for a role without the right to see stock, and says why', async () => {
+  it('greys out the Inventory tile for a role without the right to see it, and says why', async () => {
     await signIn('cashier');
-    expect(await window.getByRole('button', { name: /^Stock/ }).isDisabled()).toBe(true);
-    expect(await window.getByText("Your role can't see stock. Ask a manager.").isVisible()).toBe(true);
+    expect(await window.getByRole('button', { name: /^Inventory/ }).isDisabled()).toBe(true);
+    expect(await window.getByText("Your role can't see the inventory. Ask a manager.").isVisible()).toBe(true);
     await signOut();
   });
 });

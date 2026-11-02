@@ -119,15 +119,15 @@ and everything a user sees, is called KVNsys.
   reading stock is quick and the two never disagree. A line is never changed or deleted, and the
   database itself refuses to; a mistake is put right by another line. Many sales at once never
   lose a piece.
-- **Stock over the network.** A signed-in machine can see the location's stock (every product, with
+- **Inventory over the network.** A signed-in machine can see the location's inventory (every product, with
   how many are here), one product's stock with its newest movements and who made each, and can
   record goods in from a supplier or put a count right with the reason, one line or a whole
-  delivery at once, all saved or none. Each needs its own right: see stock, receive stock, adjust
-  stock. Goods out to a customer can't be typed in; only a sale will record them. The stock is
+  delivery at once, all saved or none. Each needs its own right: see inventory, receive deliveries,
+  adjust counts. Goods out to a customer can't be typed in; only a sale will record them. The stock is
   always the server's own location's, since each branch has its own server.
-- **The Stock screen.** A Stock tile on Home opens every product with how many the location has (below
+- **The Inventory screen.** An Inventory tile on Home opens every product with how many the location has (below
   zero shows in red). History on a row shows that product's movements, newest first: when, what,
-  how many, the stock after, who, and the note. Receive stock takes in a whole delivery: scan or
+  how many, the stock after, who, and the note. Receive delivery takes in a whole delivery: scan or
   type each code or barcode, then its pieces, add the line, and save it all at once with one note,
   such as the supplier's DR number; a scanner's Enter never saves it half-done. Adjust on a row
   puts a count right: the pieces counted on the shelf and why they're different. Each button only

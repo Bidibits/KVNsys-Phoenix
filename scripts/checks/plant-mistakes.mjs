@@ -8,7 +8,8 @@
 // Every file is put back exactly as it was, after each mistake and when a run is stopped (Ctrl+C).
 // Run it with nothing else building or testing: while a mistake is in, it's in what `pnpm build`
 // makes too. The window tests open the app's window, again and again, for as long as it runs.
-// --dry-run only checks that each mistake's text is still in its file, once, and changes nothing.
+// --dry-run only checks that each mistake's text is still in its file, once, and that a test file
+// answers to each of its tests' names; it changes nothing.
 import { spawn } from 'node:child_process';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
@@ -43,6 +44,32 @@ function run(command, cwd) {
 async function build(packages) {
   for (const name of packages) if (!(await run(`pnpm --filter ${name} build`, root))) return false;
   return true;
+}
+
+/** The test files in a test project, wherever vitest would find them. */
+function testFiles(project) {
+  const found = [];
+  const walk = (folder) => {
+    for (const entry of readdirSync(folder, { withFileTypes: true })) {
+      if (entry.name === 'node_modules') continue;
+      const path = join(folder, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (entry.name.endsWith('.test.ts')) found.push(path.replaceAll('\\', '/'));
+    }
+  };
+  walk(join(root, 'tests', project));
+  return found;
+}
+
+/**
+ * Why a plant's tests can't be run, or null. A name no test file answers to (one renamed since the
+ * list was written) makes vitest fail for finding nothing, which would read as the mistake noticed.
+ */
+function missingTests(tests) {
+  for (const [project, filter] of tests) {
+    if (!testFiles(project).some((path) => path.includes(filter))) return `no test file in ${project} answers to "${filter}"`;
+  }
+  return null;
 }
 
 /** True when at least one of the tests fails: the mistake was noticed. */
@@ -80,6 +107,12 @@ for (const listFile of listFiles) {
     if (found !== 1) {
       results.SKIPPED += 1;
       console.log(`  SKIPPED  ${plant.name}: its text is in ${plant.file} ${found} times, not once`);
+      continue;
+    }
+    const cannotTest = missingTests(plant.tests);
+    if (cannotTest) {
+      results.SKIPPED += 1;
+      console.log(`  SKIPPED  ${plant.name}: ${cannotTest}`);
       continue;
     }
     if (dryRun) {

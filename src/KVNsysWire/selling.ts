@@ -1,6 +1,6 @@
 import { DiscountKinds, PaymentTypes, PriceBases, ProductStatuses } from '@kvnsys/core';
 import { z } from 'zod';
-import { LocationOnWire } from './stock.js';
+import { LocationOnWire } from './inventory.js';
 
 /**
  * The selling calls. Every one needs a signed-in pass, and a role with sales.sell. The app

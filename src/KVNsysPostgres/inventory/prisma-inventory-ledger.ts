@@ -1,13 +1,13 @@
 import {
-  checkStockChange,
+  checkInventoryChange,
   newId,
   Refusal,
-  StockLedger,
+  InventoryLedger,
   type Lineage,
   type MovementType,
-  type StockChange,
-  type StockLevel,
-  type StockMovement,
+  type InventoryChange,
+  type InventoryLevel,
+  type InventoryMovement,
 } from '@kvnsys/core';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 
@@ -17,7 +17,7 @@ const NoSuchLocation = "That location isn't known here.";
 
 type Row = Prisma.InventoryLogGetPayload<object>;
 
-function toMovement(row: Row): StockMovement {
+function toMovement(row: Row): InventoryMovement {
   return {
     id: row.id,
     locationId: row.locationId,
@@ -37,15 +37,15 @@ function toMovement(row: Row): StockMovement {
  * of each (location, product). Both are written in one transaction, so they never disagree, and the
  * database itself refuses to change or delete a line (see the baseline migration).
  */
-export class PrismaStockLedger extends StockLedger {
+export class PrismaInventoryLedger extends InventoryLedger {
   constructor(private readonly db: PrismaClient) {
     super();
   }
 
-  async record(changes: StockChange[], lineage: Lineage): Promise<StockMovement[]> {
+  async record(changes: InventoryChange[], lineage: Lineage): Promise<InventoryMovement[]> {
     const checked = checkAll(changes);
     if (checked.length === 0) return [];
-    return this.db.$transaction((tx) => recordStock(tx, checked, lineage));
+    return this.db.$transaction((tx) => recordMovements(tx, checked, lineage));
   }
 
   async onHand(locationId: string, productId: string): Promise<number> {
@@ -54,12 +54,12 @@ export class PrismaStockLedger extends StockLedger {
     return row?.stock ?? 0;
   }
 
-  async levels(locationId: string): Promise<StockLevel[]> {
+  async levels(locationId: string): Promise<InventoryLevel[]> {
     if (!Uuid.test(locationId)) return [];
     return this.db.inventory.findMany({ where: { locationId }, select: { productId: true, stock: true }, orderBy: { product: { name: 'asc' } } });
   }
 
-  async movements(locationId: string, productId: string, limit?: number): Promise<StockMovement[]> {
+  async movements(locationId: string, productId: string, limit?: number): Promise<InventoryMovement[]> {
     if (!Uuid.test(locationId) || !Uuid.test(productId)) return [];
     // Lines saved together share the database's clock, so the id (which counts up) settles the order.
     const rows = await this.db.inventoryLog.findMany({
@@ -72,8 +72,8 @@ export class PrismaStockLedger extends StockLedger {
 }
 
 /** The rules every change meets, and ids that are KVNsys's, before anything is saved. */
-function checkAll(changes: StockChange[]): StockChange[] {
-  const checked = changes.map(checkStockChange);
+function checkAll(changes: InventoryChange[]): InventoryChange[] {
+  const checked = changes.map(checkInventoryChange);
   for (const change of checked) {
     if (!Uuid.test(change.locationId)) throw new Refusal('not-found', NoSuchLocation);
     if (!Uuid.test(change.productId)) throw new Refusal('not-found', NoSuchProduct);
@@ -86,12 +86,12 @@ function checkAll(changes: StockChange[]): StockChange[] {
  * Saves stock changes inside a transaction someone else opened, such as a sale's, so the document
  * and the stock it moves are saved together or not at all. Checks them first, as record() does.
  */
-export async function recordStockIn(tx: Prisma.TransactionClient, changes: StockChange[], lineage: Lineage): Promise<StockMovement[]> {
+export async function recordMovementsIn(tx: Prisma.TransactionClient, changes: InventoryChange[], lineage: Lineage): Promise<InventoryMovement[]> {
   const checked = checkAll(changes);
-  return checked.length === 0 ? [] : recordStock(tx, checked, lineage);
+  return checked.length === 0 ? [] : recordMovements(tx, checked, lineage);
 }
 
-async function recordStock(tx: Prisma.TransactionClient, checked: StockChange[], lineage: Lineage): Promise<StockMovement[]> {
+async function recordMovements(tx: Prisma.TransactionClient, checked: InventoryChange[], lineage: Lineage): Promise<InventoryMovement[]> {
   // Two changes to the same stock wait for each other on its inventory row. Taking those rows in
   // one fixed order (location, then product) means two batches that share products can never each hold
   // a row the other is waiting for. Changes to the same stock keep the order they were given.
@@ -100,7 +100,7 @@ async function recordStock(tx: Prisma.TransactionClient, checked: StockChange[],
     .sort((a, b) => a.change.locationId.localeCompare(b.change.locationId) || a.change.productId.localeCompare(b.change.productId) || a.index - b.index);
 
   await requireKnown(tx, checked);
-  const saved: StockMovement[] = new Array<StockMovement>(checked.length);
+  const saved: InventoryMovement[] = new Array<InventoryMovement>(checked.length);
   for (const { change, index } of order) {
     // Adds the change to the running total, or starts it, and hands back the total after it,
     // all in one statement: the row stays locked until this transaction ends.
@@ -137,7 +137,7 @@ async function recordStock(tx: Prisma.TransactionClient, checked: StockChange[],
 }
 
 /** Every location and product a batch names exists, or nothing in it is saved. */
-async function requireKnown(tx: Prisma.TransactionClient, changes: StockChange[]) {
+async function requireKnown(tx: Prisma.TransactionClient, changes: InventoryChange[]) {
   const locationIds = [...new Set(changes.map((change) => change.locationId))];
   const productIds = [...new Set(changes.map((change) => change.productId))];
   if ((await tx.location.count({ where: { id: { in: locationIds } } })) !== locationIds.length) throw new Refusal('not-found', NoSuchLocation);

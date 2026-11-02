@@ -34,8 +34,10 @@ import { z } from 'zod';
  * 22: shops are called locations: the stock, sales and receipt replies say `location` where they
  *     said `shop`, the machine list and the audit log `locationName` for `shopName`, and a record's
  *     history `createdLocation` and `updatedLocation`.
+ * 23: the Stock area is the inventory: /api/stock became /api/inventory, and the rights stock.view,
+ *     stock.receive and stock.adjust became inventory.view, inventory.receive and inventory.adjust.
  */
-export const ProtocolVersion = 22;
+export const ProtocolVersion = 23;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

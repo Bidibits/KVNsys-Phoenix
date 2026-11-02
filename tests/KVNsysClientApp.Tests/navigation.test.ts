@@ -83,8 +83,8 @@ describeWithDatabase('getting around the real app: Back and Forward, the search 
     await tile('Products').click();
     await arrive('Products');
     await window.getByRole('button', { name: 'Home' }).click();
-    await tile('Stock').click();
-    await arrive('Stock');
+    await tile('Inventory').click();
+    await arrive('Inventory');
     await back().click();
     await arrive('Home');
     await back().click();
@@ -93,7 +93,7 @@ describeWithDatabase('getting around the real app: Back and Forward, the search 
     await forward().click();
     await arrive('Home');
     await forward().click();
-    await arrive('Stock');
+    await arrive('Inventory');
     expect(await forward().isDisabled()).toBe(true);
   });
 
@@ -101,11 +101,11 @@ describeWithDatabase('getting around the real app: Back and Forward, the search 
     await window.keyboard.press('Alt+ArrowLeft');
     await arrive('Home');
     await window.keyboard.press('Alt+ArrowRight');
-    await arrive('Stock');
+    await arrive('Inventory');
     await window.evaluate(() => window.dispatchEvent(new MouseEvent('mouseup', { button: 3 })));
     await arrive('Home');
     await window.evaluate(() => window.dispatchEvent(new MouseEvent('mouseup', { button: 4 })));
-    await arrive('Stock');
+    await arrive('Inventory');
   });
 
   it("doesn't pile up copies of a screen opened again", async () => {
@@ -113,7 +113,7 @@ describeWithDatabase('getting around the real app: Back and Forward, the search 
     await arrive('Home');
     await window.getByRole('button', { name: 'Home' }).click();
     await back().click();
-    await arrive('Stock');
+    await arrive('Inventory');
   });
 
   it('filters the list on screen by every word typed, says when nothing matches, and starts empty on the next screen', async () => {
@@ -133,7 +133,7 @@ describeWithDatabase('getting around the real app: Back and Forward, the search 
     await window.getByText('Nothing here matches “lamp”.').waitFor();
     await window.getByRole('button', { name: 'Home' }).click();
     expect(await searchBox().count()).toBe(0);
-    await tile('Stock').click();
+    await tile('Inventory').click();
     expect(await searchBox().inputValue()).toBe('');
   });
 
@@ -152,9 +152,9 @@ describeWithDatabase('getting around the real app: Back and Forward, the search 
 
   it("asks before throwing away a delivery that hasn't been saved, whether by Esc or Cancel", async () => {
     await window.getByRole('button', { name: 'Home' }).click();
-    await tile('Stock').click();
-    await window.getByRole('button', { name: 'Receive stock' }).click();
-    const form = window.getByRole('dialog', { name: 'Receive stock' });
+    await tile('Inventory').click();
+    await window.getByRole('button', { name: 'Receive delivery' }).click();
+    const form = window.getByRole('dialog', { name: 'Receive delivery' });
     await form.getByLabel('Code or barcode').fill('PRD-0007');
     await form.getByLabel('Pieces', { exact: true }).fill('12');
     await form.getByRole('button', { name: 'Add to delivery' }).click();

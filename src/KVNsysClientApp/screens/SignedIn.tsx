@@ -10,7 +10,7 @@ import { MachinesScreen } from './machines/MachinesScreen';
 import { RolesScreen } from './roles/RolesScreen';
 import { SalesScreen } from './selling/SalesScreen';
 import { SellScreen } from './selling/SellScreen';
-import { StockScreen } from './stock/StockScreen';
+import { InventoryScreen } from './inventory/InventoryScreen';
 import { UsersScreen } from './users/UsersScreen';
 
 type Place = Area | 'home';
@@ -24,7 +24,7 @@ const Titles: Record<Place, string> = {
   brands: 'Brands',
   manufacturers: 'Manufacturers',
   categories: 'Categories',
-  stock: 'Stock',
+  inventory: 'Inventory',
   users: 'Users',
   roles: 'Roles',
   machines: 'Machines',
@@ -32,7 +32,7 @@ const Titles: Record<Place, string> = {
 };
 
 /** The screens with a list the title bar's search box filters. Sell has its own code box. */
-const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'stock', 'users', 'roles', 'machines', 'audits']);
+const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'inventory', 'users', 'roles', 'machines', 'audits']);
 
 /**
  * Every screen opened, in order, and where Back and Forward have got to (design-direction.md,
@@ -106,7 +106,7 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
             {(place === 'suppliers' || place === 'brands' || place === 'manufacturers' || place === 'categories') && (
               <CatalogListScreen list={place} user={user} {...screen} />
             )}
-            {place === 'stock' && <StockScreen user={user} {...screen} />}
+            {place === 'inventory' && <InventoryScreen user={user} {...screen} />}
             {place === 'users' && <UsersScreen user={user} {...screen} />}
             {place === 'roles' && <RolesScreen user={user} {...screen} />}
             {place === 'machines' && <MachinesScreen user={user} {...screen} />}

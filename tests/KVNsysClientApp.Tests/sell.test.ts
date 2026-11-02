@@ -39,7 +39,7 @@ describeWithDatabase('selling from the real app: scan, discount, pay, receipt', 
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
     await addRole('CASHIER', ['sales.sell']);
-    await addRole('STOCKMAN', ['stock.view']);
+    await addRole('STOCKMAN', ['inventory.view']);
     await addUser('ana', 'Ana', 'CASHIER');
     await addUser('ben', 'Ben', 'STOCKMAN');
     const product = (code: string, barcode: string | null, name: string, retailPrice: string) =>

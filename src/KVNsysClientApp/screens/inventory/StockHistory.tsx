@@ -1,4 +1,4 @@
-import type { MovementType, ProductStockResult, RecordedMovement, StockItem } from '@kvnsys/client';
+import type { MovementType, ProductInventoryResult, RecordedMovement, InventoryItem } from '@kvnsys/client';
 import { BusinessTime, Button, Notice, Pieces, RecordTable, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 
@@ -26,16 +26,16 @@ const Columns: Column<RecordedMovement>[] = [
   { heading: 'Note', cell: (line) => <span className="block max-w-[320px] py-2 leading-snug">{line.note ?? ''}</span> },
 ];
 
-/** One product's stock and its movements, newest first, in place of the list until Back to stock. */
-export function StockHistory({ item, onBack, onSignInAgain }: { item: StockItem; onBack: () => void; onSignInAgain: () => void }) {
-  const [result, setResult] = useState<ProductStockResult | null>(null);
+/** One product's stock and its movements, newest first, in place of the list until Back to inventory. */
+export function StockHistory({ item, onBack, onSignInAgain }: { item: InventoryItem; onBack: () => void; onSignInAgain: () => void }) {
+  const [result, setResult] = useState<ProductInventoryResult | null>(null);
   const productId = item.product.id;
 
   useEffect(() => {
     let showing = true;
     window.kvnsys
-      .productStock(productId)
-      .catch((error: unknown): ProductStockResult => ({
+      .productInventory(productId)
+      .catch((error: unknown): ProductInventoryResult => ({
         ok: false,
         reason: 'unreachable',
         message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
@@ -52,7 +52,7 @@ export function StockHistory({ item, onBack, onSignInAgain }: { item: StockItem;
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center gap-4">
         <Button type="button" variant="secondary" size="compact" onClick={onBack}>
-          Back to stock
+          Back to inventory
         </Button>
         <h2 className="text-[19px] font-semibold">
           {item.product.name} <span className="font-normal text-muted-foreground">{item.product.code}</span>

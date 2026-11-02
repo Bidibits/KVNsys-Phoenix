@@ -10,7 +10,7 @@ things stand and how to carry on.
 `main` now has everything in the README's "Status", up to and including **Getting around**. Added
 in this round:
 
-- Stock over the network, and the **Stock** screen: stock on hand, a product's history, receiving a
+- Inventory over the network, and the **Inventory** screen (called Stock until 2026-11-03): stock on hand, a product's history, receiving a
   delivery, putting a count right
 - Sales in the database, selling over the network, and the **Sell** screen: scan, quantity, the
   senior/PWD discount, cash, change, the receipt on screen
@@ -66,7 +66,7 @@ Type the address it printed, and sign in with that username and password. To kee
 PC's real ones, run `set KVNSYS_APP_DATA=%USERPROFILE%\Desktop\Phoenix-test\app` in that window
 first (Windows cmd).
 
-**A walk through it:** Products, add one with a price. Stock, Receive stock, scan or type its code,
+**A walk through it:** Products, add one with a price. Inventory, Receive delivery, scan or type its code,
 the pieces, Save delivery. Sell, Start shift with the cash in the drawer, scan the code, Pay. Sales
 shows the receipt. Back on Sell, End shift and count the drawer. Machines shows this PC.
 
@@ -186,7 +186,7 @@ None of it needs a change to the database's tables.
 | ~~**"Shop" becomes "Location"**, on screen and in the code; "Address" for where it is~~ | **Done** (2026-11-03, protocol 22): the screens, the setup, the messages and the code. Where "shop" meant the whole business it says "the business", the network is "the local network", and the clock and its days are the business's (`businessDate`, `businessDay`). "Address" waits for the Locations screen, below. |
 | **The place tables in use** | PSA's list of regions, provinces, cities and municipalities and barangays checked and loaded at setup (SCHEMA-PLAN, "Still open" 1), and a Locations screen that picks each, narrowing the next, then the street. Each branch's own code is set there; today every install is `HQ`. |
 | ~~**What the setup makes is credited to the admin it makes**~~ | **Done** (2026-11-03): the location, the server PC, the Administrator role and the admin account, and their lines in the audit log, are by that admin; anything made while nobody was signed in shows a dash, and the Audit log's Who calls it "No one". |
-| **"Stock" becomes "Inventory"** | Screens, code and the rights (`stock.view` becomes `inventory.view`, and so on). The tables are already `inventory` and `inventory_logs`. |
+| ~~**"Stock" becomes "Inventory"**~~ | **Done** (2026-11-03, protocol 23): the tile and screen, Receive delivery and Adjust count, the rights (`inventory.view`, `inventory.receive`, `inventory.adjust`), `/api/inventory`, and in the code the ledger (`InventoryLedger`) and the calls. "Stock" stays where it means a product's count: the `stock` column, "In stock", `tracksStock`. |
 | **Home: seven tiles** | Transact, Sales, Products, Inventory, Users, Machines, Audit log. Suppliers, Brands, Manufacturers and Categories are buttons inside Products (as Beta's Products dashboard had them); Roles is inside Users. |
 | **Inventory Logs** | The History button on each row goes; an Inventory Logs button at the top of Inventory shows every product's movements, as a grid. |
 | **"Sell" becomes "Transact"** | The selling screen's name. Its records stay `receipts`. |

@@ -1,14 +1,14 @@
-import type { AccessName, SignedInUser, StockItem, StockListResult } from '@kvnsys/client';
+import type { AccessName, SignedInUser, InventoryItem, InventoryListResult } from '@kvnsys/client';
 import { Button, Notice, Pieces, RecordTable, StatusLabel, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { CountPanel } from './CountPanel';
 import { ReceivePanel } from './ReceivePanel';
 import { StockHistory } from './StockHistory';
 
-const ReceiveRight: AccessName = 'stock.receive';
-const AdjustRight: AccessName = 'stock.adjust';
+const ReceiveRight: AccessName = 'inventory.receive';
+const AdjustRight: AccessName = 'inventory.adjust';
 
-const Columns: Column<StockItem>[] = [
+const Columns: Column<InventoryItem>[] = [
   { heading: 'Code', cell: (item) => item.product.code },
   { heading: 'Name', cell: (item) => item.product.name },
   { heading: 'Status', cell: (item) => <StatusLabel status={item.product.status} /> },
@@ -17,25 +17,25 @@ const Columns: Column<StockItem>[] = [
 
 /**
  * Every product with how many this location has. Each row opens its History; someone whose role may
- * receive goods gets Receive stock, which takes in a whole delivery, and someone who may put counts
+ * receive goods gets Receive delivery, which takes in a whole delivery, and someone who may put counts
  * right gets Adjust on each row. After a save the list is asked for again, so it shows what the
  * server has. The list is asked for after the screen is on show, never while it's being built.
  */
-export function StockScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+export function InventoryScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
   const toast = useToast();
   const mayReceive = user.rights.includes(ReceiveRight);
   const mayAdjust = user.rights.includes(AdjustRight);
-  const [result, setResult] = useState<StockListResult | null>(null);
+  const [result, setResult] = useState<InventoryListResult | null>(null);
   const [reloads, setReloads] = useState(0);
   const [receiving, setReceiving] = useState(false);
-  const [counting, setCounting] = useState<StockItem | null>(null);
-  const [history, setHistory] = useState<StockItem | null>(null);
+  const [counting, setCounting] = useState<InventoryItem | null>(null);
+  const [history, setHistory] = useState<InventoryItem | null>(null);
 
   useEffect(() => {
     let showing = true;
     window.kvnsys
-      .listStock()
-      .catch((error: unknown): StockListResult => ({
+      .listInventory()
+      .catch((error: unknown): InventoryListResult => ({
         ok: false,
         reason: 'unreachable',
         message: `Something went wrong on this machine: ${error instanceof Error ? error.message : String(error)}`,
@@ -59,7 +59,7 @@ export function StockScreen({ user, search, onSignInAgain }: { user: SignedInUse
     return <StockHistory item={history} onBack={() => setHistory(null)} onSignInAgain={onSignInAgain} />;
   }
 
-  const columns: Column<StockItem>[] = [
+  const columns: Column<InventoryItem>[] = [
     ...Columns,
     {
       heading: 'Actions',
@@ -92,7 +92,7 @@ export function StockScreen({ user, search, onSignInAgain }: { user: SignedInUse
   if (!result) {
     return (
       <p role="status" className="text-[17px] text-muted-foreground">
-        Loading stock…
+        Loading the inventory…
       </p>
     );
   }
@@ -125,12 +125,12 @@ export function StockScreen({ user, search, onSignInAgain }: { user: SignedInUse
               setReceiving(true);
             }}
           >
-            Receive stock
+            Receive delivery
           </Button>
         )}
       </div>
       {/* Fits its rows; once there are more than the window holds, it shrinks to fit and scrolls. */}
-      {count > 0 && <RecordTable label="Stock" columns={columns} rows={result.items} filter={search} searchText={(item) => [item.product.code, item.product.barcode ?? '', item.product.name].join(' ')} rowKey={(item) => item.product.id} />}
+      {count > 0 && <RecordTable label="Inventory" columns={columns} rows={result.items} filter={search} searchText={(item) => [item.product.code, item.product.barcode ?? '', item.product.name].join(' ')} rowKey={(item) => item.product.id} />}
       {receiving && (
         <ReceivePanel
           onClose={() => setReceiving(false)}

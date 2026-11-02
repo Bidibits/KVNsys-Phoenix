@@ -9,7 +9,7 @@ import {
   PrismaSalesJournal,
   PrismaShiftBook,
   PrismaLocationDirectory,
-  PrismaStockLedger,
+  PrismaInventoryLedger,
   PrismaUserAccounts,
   PrismaUserDirectory,
   PrismaUserSettingsBook,
@@ -32,7 +32,7 @@ import { MachinesController, type MachinesOperationParts } from './machines.cont
 import { RolesController, type RolesOperationParts } from './roles.controller.js';
 import { SalesController, type SalesOperationParts } from './sales.controller.js';
 import { ShiftsController, type ShiftsOperationParts } from './shifts.controller.js';
-import { StockController, type StockOperationParts } from './stock.controller.js';
+import { InventoryController, type InventoryOperationParts } from './inventory.controller.js';
 import {
   AuditsOperation,
   CatalogOperation,
@@ -44,7 +44,7 @@ import {
   SalesOperation,
   ShiftsOperation,
   SignInOperation,
-  StockOperation,
+  InventoryOperation,
   UsersOperation,
 } from './tokens.js';
 import { UsersController, type UsersOperationParts } from './users.controller.js';
@@ -79,7 +79,7 @@ export class ServerModule {
         ProductsController,
         UsersController,
         RolesController,
-        StockController,
+        InventoryController,
         SalesController,
         MachinesController,
         ShiftsController,
@@ -171,18 +171,18 @@ export class ServerModule {
           }),
         },
         {
-          provide: StockOperation,
+          provide: InventoryOperation,
           inject: [DatabaseClient, Sessions],
           useFactory: ({ client: db }: Database, sessions: Sessions) => ({
             stock: db
               ? ({
-                  ledger: new PrismaStockLedger(db),
+                  ledger: new PrismaInventoryLedger(db),
                   catalog: new PrismaProductCatalog(db),
                   locations: new PrismaLocationDirectory(db),
                   accounts: new PrismaUserAccounts(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,
-                } satisfies StockOperationParts)
+                } satisfies InventoryOperationParts)
               : null,
           }),
         },

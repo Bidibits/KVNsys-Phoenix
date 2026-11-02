@@ -7,20 +7,20 @@ import { ProductOnWire } from './products.js';
  * stock.receive to record goods in from a supplier, stock.adjust to put a count right. Stock is
  * always the server's own location's: each branch has its own server, which knows which location it is.
  *
- *   GET  /api/stock                   every product, by name, with its stock here
- *   GET  /api/stock/find?codeOrBarcode=PRD-0042
+ *   GET  /api/inventory                   every product, by name, with its stock here
+ *   GET  /api/inventory/find?codeOrBarcode=PRD-0042
  *                                     one product, by what was typed or scanned, with its stock here
- *   GET  /api/stock/<productId>       one product's stock, and its newest movements
- *   POST /api/stock/movements         record goods in, or put counts right: all saved, or none (201)
+ *   GET  /api/inventory/<productId>       one product's stock, and its newest movements
+ *   POST /api/inventory/movements         record goods in, or put counts right: all saved, or none (201)
  *
  * Goods out to a customer can't be recorded here: only a sale records them. A refusal is a
  * ProblemReply (see products.ts): 400 a rule, 401 sign in again, 403 the role may not (for any
  * one line), 404 no such product, 503 no database, or this PC was never set up as the server.
  */
-export const StockPath = '/api/stock';
-export const StockMovementsPath = '/api/stock/movements';
-export const FindStockItemPath = '/api/stock/find';
-export const productStockPath = (productId: string) => `${StockPath}/${encodeURIComponent(productId)}`;
+export const InventoryPath = '/api/inventory';
+export const InventoryMovementsPath = '/api/inventory/movements';
+export const FindInventoryItemPath = '/api/inventory/find';
+export const productInventoryPath = (productId: string) => `${InventoryPath}/${encodeURIComponent(productId)}`;
 
 /** How many of a product's movements come back at most, newest first. */
 export const MovementsShown = 200;
@@ -49,20 +49,20 @@ export const MovementOnWire = z.object({
 export type MovementOnWire = z.infer<typeof MovementOnWire>;
 
 /** Every product in the catalog, Inactive ones too, with how many the location holds. Never moved: 0. */
-export const StockListReply = z.object({
+export const InventoryListReply = z.object({
   location: LocationOnWire,
   items: z.array(z.object({ product: ProductOnWire, stock: z.number().int() })),
 });
-export type StockListReply = z.infer<typeof StockListReply>;
+export type InventoryListReply = z.infer<typeof InventoryListReply>;
 
 /**
  * One product and its stock here. Finding needs only the right to see stock, so whoever receives
  * goods doesn't also need the right to see the catalog.
  */
-export const StockItemReply = z.object({ location: LocationOnWire, product: ProductOnWire, stock: z.number().int() });
-export type StockItemReply = z.infer<typeof StockItemReply>;
+export const InventoryItemReply = z.object({ location: LocationOnWire, product: ProductOnWire, stock: z.number().int() });
+export type InventoryItemReply = z.infer<typeof InventoryItemReply>;
 
-export const ProductStockReply = z.object({
+export const ProductInventoryReply = z.object({
   location: LocationOnWire,
   product: ProductOnWire,
   stock: z.number().int(),
@@ -71,9 +71,9 @@ export const ProductStockReply = z.object({
   /** True when there are older movements than these. */
   more: z.boolean(),
 });
-export type ProductStockReply = z.infer<typeof ProductStockReply>;
+export type ProductInventoryReply = z.infer<typeof ProductInventoryReply>;
 
-/** One change a person records. KVNsysCore's rules (checkStockChange) are checked at the server. */
+/** One change a person records. KVNsysCore's rules (checkInventoryChange) are checked at the server. */
 export const MovementFields = z.object({
   productId: z.string().max(100),
   type: z.enum(MovementTypes),
@@ -83,9 +83,9 @@ export const MovementFields = z.object({
 export type MovementFields = z.infer<typeof MovementFields>;
 
 /** A delivery's worth of lines at most. */
-export const StockMovementsRequest = z.object({ movements: z.array(MovementFields).min(1).max(500) });
-export type StockMovementsRequest = z.infer<typeof StockMovementsRequest>;
+export const InventoryMovementsRequest = z.object({ movements: z.array(MovementFields).min(1).max(500) });
+export type InventoryMovementsRequest = z.infer<typeof InventoryMovementsRequest>;
 
 /** The lines as saved, in the order sent. */
-export const StockMovementsReply = z.object({ movements: z.array(MovementOnWire) });
-export type StockMovementsReply = z.infer<typeof StockMovementsReply>;
+export const InventoryMovementsReply = z.object({ movements: z.array(MovementOnWire) });
+export type InventoryMovementsReply = z.infer<typeof InventoryMovementsReply>;

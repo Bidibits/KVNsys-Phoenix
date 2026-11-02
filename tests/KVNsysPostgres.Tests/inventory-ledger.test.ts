@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import type { StockChange } from '@kvnsys/core';
-import { createPrismaClient, PrismaStockLedger, type PrismaClient } from '@kvnsys/postgres';
+import type { InventoryChange } from '@kvnsys/core';
+import { createPrismaClient, PrismaInventoryLedger, type PrismaClient } from '@kvnsys/postgres';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 describeWithDatabase('the stock ledger in PostgreSQL', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
-  let ledger: PrismaStockLedger;
+  let ledger: PrismaInventoryLedger;
   let hq: string;
   let branch: string;
   let rice: string;
@@ -18,7 +18,7 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
   const location = async (code: string) => (await db.location.create({ data: { id: randomUUID(), code, name: code } })).id;
   const product = async (code: string, name: string) =>
     (await db.product.create({ data: { id: randomUUID(), code, name, retailPrice: '100.00' } })).id;
-  const change = (productId: string, type: StockChange['type'], quantityChange: number, extra: Partial<StockChange> = {}): StockChange => ({
+  const change = (productId: string, type: InventoryChange['type'], quantityChange: number, extra: Partial<InventoryChange> = {}): InventoryChange => ({
     locationId: hq,
     productId,
     type,
@@ -40,7 +40,7 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
   beforeEach(async () => {
     database = await createThrowawayDatabase();
     db = createPrismaClient(database.url);
-    ledger = new PrismaStockLedger(db);
+    ledger = new PrismaInventoryLedger(db);
     hq = await location('HQ');
     branch = await location('GUMACA');
     rice = await product('PRD-0042', 'Sack of rice 25kg');

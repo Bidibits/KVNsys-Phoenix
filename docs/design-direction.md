@@ -64,8 +64,8 @@ Capstone 3Re, counting Log Out). A button you have no right to is switched off.
 
 **In Phoenix:**
 - Home shows one tile per area. At launch: Sell, Shifts, Sales, Products, People and
-  Machines. Stock, Settings and the rest join as they're built. (Sell, Products, Stock, Users and
-  Roles are there now.)
+  Machines. Inventory, Settings and the rest join as they're built. (Sell, Products, Inventory, Users
+  and Roles are there now.)
 - A tile you may not use is greyed out, with a note saying why.
 - The server still checks every request. The greyed tile only saves a pointless click.
 
@@ -215,8 +215,8 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Inventory, Inventory Admin, Inventory Manager | Stock on hand, entering stock, minimum and maximum per storage | ✅ Stock on hand, receiving and adjusting, with their own rights, over the network and on the Stock screen (2026-10-24) · ⏭ minimum and maximum, storages |
-| Inventory logs | Every stock movement | ✅ The ledger, in the database (2026-10-20), and a product's newest movements, on the Stock screen's History (2026-10-24) · ⏭ older movements than the newest 200, and a search |
+| Inventory, Inventory Admin, Inventory Manager | Stock on hand, entering stock, minimum and maximum per storage | ✅ Stock on hand, receiving and adjusting, with their own rights, over the network and on the Inventory screen (2026-10-24) · ⏭ minimum and maximum, storages |
+| Inventory logs | Every stock movement | ✅ The ledger, in the database (2026-10-20), and a product's newest movements, on the Inventory screen's History (2026-10-24) · ⏭ older movements than the newest 200, and a search |
 | Transfers hub: quotes, orders, receiving | Supplier quotes, orders built from them, receiving an order into stock | ⏭ |
 | Transfer maker, manager and requests | Moving stock between places, and asking for a transfer | ⏭ HQ-to-branch transfers (one document carrying the stock and the product details) are the first thing after launch |
 

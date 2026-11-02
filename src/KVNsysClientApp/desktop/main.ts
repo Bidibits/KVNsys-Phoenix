@@ -30,17 +30,17 @@ import {
   type SaleResult,
   type StatutoryDiscount,
   type TillResult,
-  findStockItem,
-  getProductStock,
-  listStock,
+  findInventoryItem,
+  getProductInventory,
+  listInventory,
   saveCount,
   saveDelivery,
   type CountForm,
   type DeliveryLineForm,
-  type ProductStockResult,
-  type RecordStockResult,
-  type StockItemResult,
-  type StockListResult,
+  type ProductInventoryResult,
+  type RecordMovementsResult,
+  type InventoryItemResult,
+  type InventoryListResult,
   CatalogLists,
   listCatalog,
   loadCatalogEntryForm,
@@ -95,17 +95,17 @@ import {
   ListAuditsChannel,
   DaySalesChannel,
   ReceiptChannel,
-  CountStockChannel,
+  RecordCountChannel,
   PaySaleChannel,
   RemoveFromSaleChannel,
   ScanForSaleChannel,
   SetSaleDiscountChannel,
   SetSaleQuantityChannel,
   TillChannel,
-  FindStockItemChannel,
-  ListStockChannel,
-  ProductStockChannel,
-  ReceiveStockChannel,
+  FindInventoryItemChannel,
+  ListInventoryChannel,
+  ProductInventoryChannel,
+  ReceiveDeliveryChannel,
   CatalogEntryFormChannel,
   ListCatalogChannel,
   SaveCatalogEntryChannel,
@@ -511,28 +511,28 @@ ipcMain.handle(SaveRoleChannel, async (_event, id: unknown, typed: unknown): Pro
   return withPass((address, pass, options) => saveRoleForm(address, pass, roleId, form, options));
 });
 
-ipcMain.handle(ListStockChannel, (): Promise<StockListResult> => withPass(listStock));
+ipcMain.handle(ListInventoryChannel, (): Promise<InventoryListResult> => withPass(listInventory));
 
-ipcMain.handle(FindStockItemChannel, async (_event, typed: unknown): Promise<StockItemResult> => {
+ipcMain.handle(FindInventoryItemChannel, async (_event, typed: unknown): Promise<InventoryItemResult> => {
   const codeOrBarcode = asText(typed);
   if (codeOrBarcode === undefined) return NotAForm;
-  return withPass((address, pass, options) => findStockItem(address, pass, codeOrBarcode, options));
+  return withPass((address, pass, options) => findInventoryItem(address, pass, codeOrBarcode, options));
 });
 
-ipcMain.handle(ProductStockChannel, async (_event, id: unknown): Promise<ProductStockResult> => {
+ipcMain.handle(ProductInventoryChannel, async (_event, id: unknown): Promise<ProductInventoryResult> => {
   const productId = asProductId(id);
   if (!productId) return NotAForm;
-  return withPass((address, pass, options) => getProductStock(address, pass, productId, options));
+  return withPass((address, pass, options) => getProductInventory(address, pass, productId, options));
 });
 
-ipcMain.handle(ReceiveStockChannel, async (_event, typed: unknown, note: unknown): Promise<RecordStockResult> => {
+ipcMain.handle(ReceiveDeliveryChannel, async (_event, typed: unknown, note: unknown): Promise<RecordMovementsResult> => {
   const lines = asDeliveryLines(typed);
   const shared = asText(note);
   if (!lines || shared === undefined) return NotAForm;
   return withPass((address, pass, options) => saveDelivery(address, pass, lines, shared, options));
 });
 
-ipcMain.handle(CountStockChannel, async (_event, typed: unknown): Promise<RecordStockResult> => {
+ipcMain.handle(RecordCountChannel, async (_event, typed: unknown): Promise<RecordMovementsResult> => {
   const form = asCountForm(typed);
   if (!form) return NotAForm;
   return withPass((address, pass, options) => saveCount(address, pass, form, options));

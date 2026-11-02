@@ -3,19 +3,19 @@ import type { AddressInfo } from 'node:net';
 import type { INestApplication } from '@nestjs/common';
 import {
   addProduct,
-  findStockItem,
-  getProductStock,
-  listStock,
-  recordStock,
+  findInventoryItem,
+  getProductInventory,
+  listInventory,
+  recordMovements,
   signIn,
   type HandMovement,
   type Product,
   type ServerPin,
   type SessionPass,
 } from '@kvnsys/client';
-import { createPrismaClient, PrismaSetupStore, PrismaStockLedger, type PrismaClient } from '@kvnsys/postgres';
+import { createPrismaClient, PrismaSetupStore, PrismaInventoryLedger, type PrismaClient } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, lacksRight, ScryptPasswordHasher, type ServerCertificate } from '@kvnsys/server';
-import { MovementsShown, StockMovementsPath, StockPath } from '@kvnsys/wire';
+import { MovementsShown, InventoryMovementsPath, InventoryPath } from '@kvnsys/wire';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { httpsJson } from './https.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
@@ -86,9 +86,9 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     hqId = (await db.location.findUniqueOrThrow({ where: { code: 'HQ' } })).id;
     // A second location in the same database, as HQ will hold its branches': stock here must never land there.
     await db.location.create({ data: { id: randomUUID(), code: 'GUMACA', name: 'Gumaca branch' } });
-    await addRole('STOCKMAN', ['stock.view', 'stock.receive', 'stock.adjust']);
-    await addRole('RECEIVER', ['stock.view', 'stock.receive']);
-    await addRole('LOOKER', ['stock.view']);
+    await addRole('STOCKMAN', ['inventory.view', 'inventory.receive', 'inventory.adjust']);
+    await addRole('RECEIVER', ['inventory.view', 'inventory.receive']);
+    await addRole('LOOKER', ['inventory.view']);
     await addRole('CASHIER', ['products.view']);
     await addUser('ana', 'STOCKMAN');
     await addUser('ben', 'RECEIVER');
@@ -114,7 +114,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
 
   it("receives goods and puts a count right at the server's own location, recording who did", async () => {
     const { pass, options } = as('ana');
-    const saved = await recordStock(address, pass, [received(sardines, 24), counted(sardines, -2, ' counted 22 on the shelf ')], options);
+    const saved = await recordMovements(address, pass, [received(sardines, 24), counted(sardines, -2, ' counted 22 on the shelf ')], options);
     if (!saved.ok) throw new Error(saved.message);
     const ana = await db.user.findUniqueOrThrow({ where: { username: 'ana' } });
     expect(saved.movements).toMatchObject([
@@ -128,7 +128,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
 
   it('lists every product with its stock, never-moved ones at 0, and the location it belongs to', async () => {
     const { pass, options } = as('cora');
-    const list = await listStock(address, pass, options);
+    const list = await listInventory(address, pass, options);
     if (!list.ok) throw new Error(list.message);
     expect(list.location).toEqual({ id: hqId, code: 'HQ', name: 'Head Office' });
     expect(list.items.map((item) => [item.product.name, item.stock])).toEqual([
@@ -141,22 +141,22 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
 
   it("shows one product's stock and its movements, newest first", async () => {
     const { pass, options } = as('cora');
-    const one = await getProductStock(address, pass, sardines.id, options);
+    const one = await getProductInventory(address, pass, sardines.id, options);
     if (!one.ok) throw new Error(one.message);
     expect(one).toMatchObject({ product: sardines, stock: 22, more: false });
     expect(one.movements.map((m) => [m.type, m.quantityChange, m.resultingOnHand])).toEqual([
       ['adjustment', -2, 22],
       ['from_supplier', 24, 24],
     ]);
-    expect(await getProductStock(address, pass, randomUUID(), options)).toEqual({ ok: false, reason: 'not-found', message: "That product isn't in the catalog." });
-    expect(await getProductStock(address, pass, 'PRD-0007', options)).toMatchObject({ ok: false, reason: 'not-found' });
+    expect(await getProductInventory(address, pass, randomUUID(), options)).toEqual({ ok: false, reason: 'not-found', message: "That product isn't in the catalog." });
+    expect(await getProductInventory(address, pass, 'PRD-0007', options)).toMatchObject({ ok: false, reason: 'not-found' });
   });
 
   it('shows the newest movements only, and says there are older ones', async () => {
     const { pass, options } = as('ana');
     const delivery = Array.from({ length: MovementsShown + 1 }, () => received(soap, 1));
-    expect(await recordStock(address, pass, delivery, options)).toMatchObject({ ok: true });
-    const one = await getProductStock(address, pass, soap.id, options);
+    expect(await recordMovements(address, pass, delivery, options)).toMatchObject({ ok: true });
+    const one = await getProductInventory(address, pass, soap.id, options);
     if (!one.ok) throw new Error(one.message);
     expect(one).toMatchObject({ stock: MovementsShown + 1, more: true });
     expect(one.movements).toHaveLength(MovementsShown);
@@ -165,50 +165,50 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
 
   it('finds a product by its code or its barcode, capitals ignored, with its stock here, for anyone who may see stock', async () => {
     const { pass, options } = as('cora');
-    expect(await findStockItem(address, pass, ' prd-0007 ', options)).toEqual({ ok: true, location: expect.objectContaining({ code: 'HQ' }), item: { product: sardines, stock: 22 } });
-    expect(await findStockItem(address, pass, '4800249211116', options)).toMatchObject({ ok: true, item: { product: { id: sardines.id } } });
-    expect(await findStockItem(address, pass, 'PRD-9999', options)).toEqual({ ok: false, reason: 'not-found', message: 'No product has the code or barcode PRD-9999.' });
-    expect(await findStockItem(address, pass, '  ', options)).toEqual({ ok: false, reason: 'refused', message: 'Type or scan a code or a barcode.' });
+    expect(await findInventoryItem(address, pass, ' prd-0007 ', options)).toEqual({ ok: true, location: expect.objectContaining({ code: 'HQ' }), item: { product: sardines, stock: 22 } });
+    expect(await findInventoryItem(address, pass, '4800249211116', options)).toMatchObject({ ok: true, item: { product: { id: sardines.id } } });
+    expect(await findInventoryItem(address, pass, 'PRD-9999', options)).toEqual({ ok: false, reason: 'not-found', message: 'No product has the code or barcode PRD-9999.' });
+    expect(await findInventoryItem(address, pass, '  ', options)).toEqual({ ok: false, reason: 'refused', message: 'Type or scan a code or a barcode.' });
     const dan = as('dan');
-    expect(await findStockItem(address, dan.pass, 'PRD-0007', dan.options)).toEqual({ ok: false, reason: 'not-allowed', message: lacksRight('stock.view') });
+    expect(await findInventoryItem(address, dan.pass, 'PRD-0007', dan.options)).toEqual({ ok: false, reason: 'not-allowed', message: lacksRight('inventory.view') });
   });
 
   it("names nobody for a line saved by someone whose account isn't on this server", async () => {
     const fromHq = randomUUID();
-    await new PrismaStockLedger(db).record(
+    await new PrismaInventoryLedger(db).record(
       [{ locationId: hqId, productId: rice.id, type: 'from_supplier', quantityChange: 5, note: null, source: null }],
       { userId: fromHq, machineId: null, locationId: hqId },
     );
-    const one = await getProductStock(address, as('cora').pass, rice.id, { pin });
+    const one = await getProductInventory(address, as('cora').pass, rice.id, { pin });
     expect(one).toMatchObject({ ok: true, stock: 5, movements: [{ createdBy: { id: fromHq, name: null } }] });
   });
 
   it('lets a receiver take goods in, but not put a count right, and saves none of a batch with a line they may not record', async () => {
     const { pass, options } = as('ben');
-    expect(await recordStock(address, pass, [received(rice, 10)], options)).toMatchObject({ ok: true, movements: [{ resultingOnHand: 15 }] });
-    expect(await recordStock(address, pass, [received(rice, 10), counted(rice, -1, 'one torn sack')], options)).toEqual({
+    expect(await recordMovements(address, pass, [received(rice, 10)], options)).toMatchObject({ ok: true, movements: [{ resultingOnHand: 15 }] });
+    expect(await recordMovements(address, pass, [received(rice, 10), counted(rice, -1, 'one torn sack')], options)).toEqual({
       ok: false,
       reason: 'not-allowed',
-      message: lacksRight('stock.adjust'),
+      message: lacksRight('inventory.adjust'),
     });
     expect(await stockOf(rice)).toBe(15);
   });
 
   it('lets a looker see stock but not change it, and shows nothing to a role without the right to see it', async () => {
     const cora = as('cora');
-    expect(await recordStock(address, cora.pass, [received(rice, 1)], cora.options)).toEqual({ ok: false, reason: 'not-allowed', message: lacksRight('stock.receive') });
+    expect(await recordMovements(address, cora.pass, [received(rice, 1)], cora.options)).toEqual({ ok: false, reason: 'not-allowed', message: lacksRight('inventory.receive') });
     const dan = as('dan');
-    const refused = { ok: false, reason: 'not-allowed', message: lacksRight('stock.view') };
-    expect(await listStock(address, dan.pass, dan.options)).toEqual(refused);
-    expect(await getProductStock(address, dan.pass, rice.id, dan.options)).toEqual(refused);
+    const refused = { ok: false, reason: 'not-allowed', message: lacksRight('inventory.view') };
+    expect(await listInventory(address, dan.pass, dan.options)).toEqual(refused);
+    expect(await getProductInventory(address, dan.pass, rice.id, dan.options)).toEqual(refused);
     // Even a line with a kind nobody may record by hand is refused for the right first.
-    expect(await recordStock(address, dan.pass, [{ ...received(rice, -1), type: 'to_customer' as never }], dan.options)).toEqual(refused);
+    expect(await recordMovements(address, dan.pass, [{ ...received(rice, -1), type: 'to_customer' as never }], dan.options)).toEqual(refused);
   });
 
   it('never takes goods out to a customer by hand: only a sale records those', async () => {
     const { pass, options } = as('admin');
     const sold = { productId: rice.id, type: 'to_customer', quantityChange: -1, note: null } as unknown as HandMovement;
-    expect(await recordStock(address, pass, [sold], options)).toEqual({
+    expect(await recordMovements(address, pass, [sold], options)).toEqual({
       ok: false,
       reason: 'refused',
       message: 'Goods out to a customer are recorded by the sale, not by hand.',
@@ -218,17 +218,17 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
 
   it("holds every line to the ledger's rules, says which line broke one, and saves none of the batch", async () => {
     const { pass, options } = as('admin');
-    expect(await recordStock(address, pass, [counted(rice, -1, '  ')], options)).toEqual({
+    expect(await recordMovements(address, pass, [counted(rice, -1, '  ')], options)).toEqual({
       ok: false,
       reason: 'refused',
       message: 'Say why the count is being put right, such as "counted 22 on the shelf".',
     });
-    expect(await recordStock(address, pass, [received(rice, 3), received(rice, 2.5)], options)).toEqual({
+    expect(await recordMovements(address, pass, [received(rice, 3), received(rice, 2.5)], options)).toEqual({
       ok: false,
       reason: 'refused',
       message: 'Line 2: Stock moves in whole pieces.',
     });
-    expect(await recordStock(address, pass, [received(rice, 3), received({ ...rice, id: randomUUID() }, 1)], options)).toEqual({
+    expect(await recordMovements(address, pass, [received(rice, 3), received({ ...rice, id: randomUUID() }, 1)], options)).toEqual({
       ok: false,
       reason: 'not-found',
       message: "That product isn't in the catalog.",
@@ -237,11 +237,11 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
   });
 
   it('answers nothing without a pass, and nothing it cannot read', async () => {
-    const list = await httpsJson(`${address}${StockPath}`, { ca: certificate.cert });
+    const list = await httpsJson(`${address}${InventoryPath}`, { ca: certificate.cert });
     expect(list.status).toBe(401);
-    const garbage = await httpsJson(`${address}${StockMovementsPath}`, { ca: certificate.cert, method: 'POST', body: { lines: 'rice' } });
+    const garbage = await httpsJson(`${address}${InventoryMovementsPath}`, { ca: certificate.cert, method: 'POST', body: { lines: 'rice' } });
     expect(garbage.status).toBe(401);
-    const understood = await httpsJson(`${address}${StockMovementsPath}`, {
+    const understood = await httpsJson(`${address}${InventoryMovementsPath}`, {
       ca: certificate.cert,
       method: 'POST',
       body: { lines: 'rice' },
@@ -253,7 +253,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
   it('finds its location by its hardware id even after its machine code changed, and refuses when it can tell neither', async () => {
     await db.machine.update({ where: { code: 'HQ-SRV' }, data: { code: 'RENAMED-SRV' } });
     try {
-      expect(await listStock(address, as('cora').pass, { pin })).toMatchObject({ ok: true, location: { code: 'HQ' } });
+      expect(await listInventory(address, as('cora').pass, { pin })).toMatchObject({ ok: true, location: { code: 'HQ' } });
 
       const elsewhere = await createServer({ logger: false, databaseUrl: database.url, certificate, server: { hardwareId: 'another-pc', computerName: 'X' } });
       await elsewhere.listen(0, '127.0.0.1');
@@ -261,7 +261,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
         const there = `https://127.0.0.1:${(elsewhere.getHttpServer().address() as AddressInfo).port}`;
         const pass = await signIn(there, { username: 'cora', password: Password }, { pin });
         if (!pass.ok) throw new Error(pass.message);
-        expect(await listStock(there, pass.session, { pin })).toEqual({
+        expect(await listInventory(there, pass.session, { pin })).toEqual({
           ok: false,
           reason: 'refused',
           message:
