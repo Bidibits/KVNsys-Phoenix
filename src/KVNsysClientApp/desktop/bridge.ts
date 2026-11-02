@@ -14,6 +14,7 @@ import type {
   ShiftResult,
   MachineListResult,
   MachineResult,
+  MySettingsResult,
   SaleResult,
   StatutoryDiscount,
   TillResult,
@@ -39,6 +40,7 @@ import type {
   UserFormResult,
   UserListResult,
   UserResult,
+  UserSettings,
 } from '@kvnsys/client';
 
 /**
@@ -159,6 +161,10 @@ export interface KvnsysBridge {
   openShift(openingCash: string): Promise<ShiftResult>;
   /** Ends the open shift with the cash counted out, as typed, and a note. */
   closeShift(countedCash: string, note: string): Promise<ShiftResult>;
+  /** The signed-in person's own settings, kept on the server for them: so far, the widths they dragged list columns to. */
+  mySettings(): Promise<MySettingsResult>;
+  /** Keeps these as the signed-in person's settings, all of them, in place of what was kept. */
+  saveMySettings(settings: UserSettings): Promise<MySettingsResult>;
 }
 
 // The message names the desktop side listens on. preload.cts repeats them; keep them equal.
@@ -201,3 +207,5 @@ export const ListAuditsChannel = 'kvnsys:list-audits';
 export const CurrentShiftChannel = 'kvnsys:current-shift';
 export const OpenShiftChannel = 'kvnsys:open-shift';
 export const CloseShiftChannel = 'kvnsys:close-shift';
+export const MySettingsChannel = 'kvnsys:my-settings';
+export const SaveMySettingsChannel = 'kvnsys:save-my-settings';

@@ -91,7 +91,8 @@ been checked these four ways before it was committed:
 3. **`pnpm check:package`** (after `pnpm package`): runs the programs in `out/` together, as the
    setup files will install them, on a throwaway database. The server sets a new shop up the way
    its setup file does, then serves on a spare port; the built app connects, signs in with the
-   username the setup chose, and goes through Home, Machines and the Audit log. It checks the
+   username the setup chose, goes through Home, Machines and the Audit log, and drags a column
+   narrower, which it finds again after signing in anew. It checks the
    server speaks the protocol the code says, so an `out/` older than the code is noticed, and runs
    `Uninstall all KVNsys.exe` in its check mode, which removes nothing, against what Windows says is
    installed. It never touches an installed KVNsys. What the uninstall tool removes is only proven by

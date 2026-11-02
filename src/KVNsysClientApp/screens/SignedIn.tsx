@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AuditLogScreen } from './audits/AuditLogScreen';
 import { CatalogListScreen } from './catalog/CatalogListScreen';
 import { HomeScreen, type Area } from './home/HomeScreen';
+import { KeptSettings } from './KeptSettings';
 import { ProductsScreen } from './products/ProductsScreen';
 import { MachinesScreen } from './machines/MachinesScreen';
 import { RolesScreen } from './roles/RolesScreen';
@@ -83,33 +84,36 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
   const screen = { onSignInAgain: onSignedOut, search };
   return (
     <ToastProvider>
-      <AppFrame
-        title={Titles[place]}
-        signedIn={{ name: user.displayName, username: user.username, machine: user.machine?.name ?? null }}
-        onHome={() => open('home')}
-        onBack={history.at > 0 ? () => step(-1) : null}
-        onForward={history.at < history.places.length - 1 ? () => step(1) : null}
-        search={Searchable.has(place) ? { value: search, onChange: setSearch } : null}
-        onSignOut={() => void signOut()}
-        signingOut={signingOut}
-      >
-        {/* Keyed by the visit, so each arrival shows the screen fresh. */}
-        <div key={history.visit} className="contents">
-          {place === 'home' && <HomeScreen user={user} onOpen={open} />}
-          {/* The server has already ended this pass, so there's nothing left to sign out of. */}
-          {place === 'sell' && <SellScreen onSignInAgain={onSignedOut} />}
-          {place === 'sales' && <SalesScreen {...screen} />}
-          {place === 'products' && <ProductsScreen user={user} {...screen} />}
-          {(place === 'suppliers' || place === 'brands' || place === 'manufacturers' || place === 'categories') && (
-            <CatalogListScreen list={place} user={user} {...screen} />
-          )}
-          {place === 'stock' && <StockScreen user={user} {...screen} />}
-          {place === 'users' && <UsersScreen user={user} {...screen} />}
-          {place === 'roles' && <RolesScreen user={user} {...screen} />}
-          {place === 'machines' && <MachinesScreen user={user} {...screen} />}
-          {place === 'audits' && <AuditLogScreen {...screen} />}
-        </div>
-      </AppFrame>
+      {/* The person's own column widths, for every list inside. */}
+      <KeptSettings>
+        <AppFrame
+          title={Titles[place]}
+          signedIn={{ name: user.displayName, username: user.username, machine: user.machine?.name ?? null }}
+          onHome={() => open('home')}
+          onBack={history.at > 0 ? () => step(-1) : null}
+          onForward={history.at < history.places.length - 1 ? () => step(1) : null}
+          search={Searchable.has(place) ? { value: search, onChange: setSearch } : null}
+          onSignOut={() => void signOut()}
+          signingOut={signingOut}
+        >
+          {/* Keyed by the visit, so each arrival shows the screen fresh. */}
+          <div key={history.visit} className="contents">
+            {place === 'home' && <HomeScreen user={user} onOpen={open} />}
+            {/* The server has already ended this pass, so there's nothing left to sign out of. */}
+            {place === 'sell' && <SellScreen onSignInAgain={onSignedOut} />}
+            {place === 'sales' && <SalesScreen {...screen} />}
+            {place === 'products' && <ProductsScreen user={user} {...screen} />}
+            {(place === 'suppliers' || place === 'brands' || place === 'manufacturers' || place === 'categories') && (
+              <CatalogListScreen list={place} user={user} {...screen} />
+            )}
+            {place === 'stock' && <StockScreen user={user} {...screen} />}
+            {place === 'users' && <UsersScreen user={user} {...screen} />}
+            {place === 'roles' && <RolesScreen user={user} {...screen} />}
+            {place === 'machines' && <MachinesScreen user={user} {...screen} />}
+            {place === 'audits' && <AuditLogScreen {...screen} />}
+          </div>
+        </AppFrame>
+      </KeptSettings>
     </ToastProvider>
   );
 }

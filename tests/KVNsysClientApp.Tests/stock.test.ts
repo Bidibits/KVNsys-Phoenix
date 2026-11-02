@@ -148,7 +148,7 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
     await form.getByRole('button', { name: 'Save delivery' }).click();
     await window.getByText('Saved the delivery: 3 lines.').waitFor();
     expect(await form.count()).toBe(0);
-    expect(await stockShown()).toEqual([
+    await expect.poll(() => stockShown()).toEqual([
       ['Sack of rice 25kg', '1,200'],
       ['Sardines 155g', '30'],
     ]);

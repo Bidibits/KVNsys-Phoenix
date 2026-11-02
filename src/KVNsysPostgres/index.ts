@@ -12,5 +12,6 @@ export { PrismaShiftBook } from './selling/prisma-shift-book.js';
 export { PrismaRoleCatalog } from './identity/prisma-role-catalog.js';
 export { PrismaUserAccounts } from './identity/prisma-user-accounts.js';
 export { PrismaUserDirectory } from './identity/prisma-user-directory.js';
+export { PrismaUserSettingsBook } from './identity/prisma-user-settings-book.js';
 export { PrismaSetupStore } from './setup/prisma-setup-store.js';
 export { PrismaAuditLog } from './audits/prisma-audit-log.js';

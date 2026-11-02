@@ -228,7 +228,7 @@ Key:
 | A list, form and search for each table, built from one description | ✅ A shared table of records, striped, with a header that stays put (2026-10-18), the form panel from the right (2026-10-19), and a simple search box over every list (2026-10-24) · ✅ every column and who made and last updated each record, in a grid like Beta's: columns keep their width and scroll sideways, a heading sorts (2026-10-30) · 🟢 building them from one description · ⏭ Advance Search |
 | Pop-up notices and themed dialogs | ✅ "Saved …" pops up and goes on its own; a themed dialog asks before throwing work away (2026-10-24) |
 | Light theme (Standard) | ✅ (2026-10-18) · ⏭ dark theme |
-| Per-person table settings (columns, stripes, sort) | ⏭ (a heading sorts since 2026-10-30, but nothing is kept between visits yet) |
+| Per-person table settings (columns, stripes, sort) | ✅ column widths: a line between columns, dragged to resize or double-clicked to fit, kept on the server for each person (2026-11-02) · ⏭ which columns show and in what order, stripes, and keeping a sort (a heading sorts since 2026-10-30, but the sort isn't kept between visits) |
 | Forms in their own window (Ctrl+click) | ⏭ |
 
 ### Also before January, though not a Capstone screen

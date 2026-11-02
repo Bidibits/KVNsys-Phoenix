@@ -32,3 +32,6 @@ export const CatalogOperation = Symbol('CatalogOperation');
 
 /** The audit log and the rights check, or null when there's no database. */
 export const AuditsOperation = Symbol('AuditsOperation');
+
+/** Each person's own settings and the pass check, or null when there's no database. */
+export const MySettingsOperation = Symbol('MySettingsOperation');

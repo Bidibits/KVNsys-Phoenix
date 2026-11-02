@@ -112,7 +112,7 @@ describeWithDatabase('adding and changing products from the real app', () => {
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Sardines 155g.').waitFor();
     expect(await form.count()).toBe(0);
-    expect(await rowsShown()).toContainEqual(['PRD-0007', '—', 'Sardines 155g', '₱25.75', 'Active']);
+    await expect.poll(() => rowsShown()).toContainEqual(['PRD-0007', '—', 'Sardines 155g', '₱25.75', 'Active']);
     const admin = await db.user.findUniqueOrThrow({ where: { username: 'admin' } });
     expect(await db.product.findUniqueOrThrow({ where: { code: 'PRD-0007' } })).toMatchObject({ createdByUser: admin.id });
   });
@@ -143,7 +143,7 @@ describeWithDatabase('adding and changing products from the real app', () => {
     await form.getByLabel('Status').selectOption('Inactive');
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Sack of rice 25kg.').waitFor();
-    expect(await rowsShown()).toContainEqual(['PRD-0042', '4800016641503', 'Sack of rice 25kg', '₱1,520.00', 'Inactive']);
+    await expect.poll(() => rowsShown()).toContainEqual(['PRD-0042', '4800016641503', 'Sack of rice 25kg', '₱1,520.00', 'Inactive']);
     const admin = await db.user.findUniqueOrThrow({ where: { username: 'admin' } });
     expect(await db.product.findUniqueOrThrow({ where: { code: 'PRD-0042' } })).toMatchObject({ updatedByUser: admin.id });
   });

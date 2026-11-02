@@ -114,7 +114,7 @@ describeWithDatabase('managing user accounts from the real app', () => {
     await field(form, 'Type the password again').fill('a-good-password');
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Ana Cruz.').waitFor();
-    expect(await rowsShown()).toContainEqual(['Ana Cruz', 'ana', 'Cashier', 'Active']);
+    await expect.poll(() => rowsShown()).toContainEqual(['Ana Cruz', 'ana', 'Cashier', 'Active']);
     // Made by the administrator, and not changed since; the administrator was made by KVNsys itself.
     expect(await historyShown()).toEqual({ ana: ['System Administrator (admin)', '—'], admin: ['KVNsys itself', '—'] });
   });
@@ -173,7 +173,7 @@ describeWithDatabase('managing user accounts from the real app', () => {
     await field(form, 'Status').selectOption({ label: 'Switched off: cannot sign in' });
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Ana Cruz.').waitFor();
-    expect(await rowsShown()).toContainEqual(['Ana Cruz', 'ana', 'Cashier', 'Inactive']);
+    await expect.poll(() => rowsShown()).toContainEqual(['Ana Cruz', 'ana', 'Cashier', 'Inactive']);
     expect((await historyShown()).ana).toEqual(['System Administrator (admin)', 'System Administrator (admin)']);
   });
 });

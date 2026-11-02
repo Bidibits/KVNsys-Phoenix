@@ -93,3 +93,4 @@ export {
   ShiftsPath,
 } from './shifts.js';
 export { AuditEntryOnWire, AuditListReply, AuditsPath, auditsPath, type AuditQuery } from './audits.js';
+export { MySettingsPath, MySettingsReply, UserSettingsOnWire } from './user-settings.js';

@@ -44,6 +44,8 @@ const ListAuditsChannel = 'kvnsys:list-audits';
 const CurrentShiftChannel = 'kvnsys:current-shift';
 const OpenShiftChannel = 'kvnsys:open-shift';
 const CloseShiftChannel = 'kvnsys:close-shift';
+const MySettingsChannel = 'kvnsys:my-settings';
+const SaveMySettingsChannel = 'kvnsys:save-my-settings';
 
 const bridge: KvnsysBridge = {
   connectToServer: (address, serverPassword) => ipcRenderer.invoke(ConnectChannel, address, serverPassword),
@@ -85,6 +87,8 @@ const bridge: KvnsysBridge = {
   currentShift: () => ipcRenderer.invoke(CurrentShiftChannel),
   openShift: (openingCash) => ipcRenderer.invoke(OpenShiftChannel, openingCash),
   closeShift: (countedCash, note) => ipcRenderer.invoke(CloseShiftChannel, countedCash, note),
+  mySettings: () => ipcRenderer.invoke(MySettingsChannel),
+  saveMySettings: (settings) => ipcRenderer.invoke(SaveMySettingsChannel, settings),
 };
 
 contextBridge.exposeInMainWorld('kvnsys', bridge);

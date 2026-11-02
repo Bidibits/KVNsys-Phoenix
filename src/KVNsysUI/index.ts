@@ -1,6 +1,7 @@
 // KVNsysUI: shared screen pieces. Their look is in styles.css, which an app imports once.
 export { AppFrame } from './AppFrame.js';
 export { Button } from './Button.js';
+export { ColumnWidthsProvider, type KeptColumnWidths } from './ColumnWidths.js';
 export { ConfirmDialog } from './ConfirmDialog.js';
 export { FormPanel } from './FormPanel.js';
 export { ByKVNsysItself, Dash, historyColumns, idColumn, TextOrDash } from './HistoryColumns.js';

@@ -107,7 +107,7 @@ describeWithDatabase('making roles from the real app', () => {
     await box(form, SeeProducts).click();
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Cashier.').waitFor();
-    expect(await rowsShown()).toContainEqual(['Cashier', 'See products', '0', 'Active']);
+    await expect.poll(() => rowsShown()).toContainEqual(['Cashier', 'See products', '0', 'Active']);
   });
 
   it('refuses a name another role has, and keeps what was typed', async () => {

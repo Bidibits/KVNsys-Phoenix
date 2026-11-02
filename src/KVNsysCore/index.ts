@@ -64,6 +64,17 @@ export {
   type RoleStatus,
 } from './identity/role-catalog.js';
 export { PasswordHasher, passwordProblem } from './identity/passwords.js';
+export {
+  ColumnWidthLimits,
+  columnWidth,
+  NoSettings,
+  readColumnWidth,
+  readUserSettings,
+  UserSettingsBook,
+  UserSettingsLimits,
+  userSettingsProblem,
+  type UserSettings,
+} from './identity/user-settings.js';
 export { displayName, maySignIn, UserDirectory, type UserForSignIn, type UserStanding } from './identity/users.js';
 export {
   AccountLimits,

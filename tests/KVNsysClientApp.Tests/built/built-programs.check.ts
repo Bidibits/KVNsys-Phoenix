@@ -177,6 +177,39 @@ describeWithDatabase('the built programs in out\\, run together on a throwaway s
     await picture(window, 'built-audit-log');
   });
 
+  it('keeps a column width dragged in the built app on the built server, and gives it back at the next sign-in', async () => {
+    expect((await get(port, '/api/my-settings')).status).toBe(401);
+    const openMachines = async () => {
+      await window.getByRole('button', { name: 'Home', exact: true }).click();
+      await window.getByRole('button', { name: /^Machines/ }).click();
+      await window.getByRole('table', { name: 'Machines' }).waitFor();
+    };
+    const idWidth = () =>
+      window.getByRole('table', { name: 'Machines' }).evaluate((table) => table.querySelector('thead th')!.getBoundingClientRect().width);
+    await openMachines();
+    const before = await idWidth();
+    // The line at the right-hand edge of the first heading, Id's.
+    const edge = (await window.getByRole('table', { name: 'Machines' }).locator('thead th').first().locator('[data-column-edge]').boundingBox())!;
+    const [x, y] = [edge.x + edge.width / 2, edge.y + edge.height / 2];
+    await window.mouse.move(x, y);
+    await window.mouse.down();
+    await window.mouse.move(x - 120, y, { steps: 6 });
+    await window.mouse.up();
+    const after = await idWidth();
+    expect(Math.abs(after - (before - 120))).toBeLessThan(2);
+    const keptId = async () => (await db.userSetting.findMany()).map((row) => JSON.parse(row.settings).columnWidths?.Machines?.Id as string);
+    await expect.poll(keptId).toEqual([expect.stringMatching(/em$/)]);
+
+    await window.getByRole('button', { name: 'Sign out' }).click();
+    await window.getByLabel('Username').fill('kenly');
+    await window.getByLabel('Password').fill(Password);
+    await window.getByRole('button', { name: 'Sign in' }).click();
+    await window.getByRole('navigation', { name: 'Areas' }).waitFor();
+    await openMachines();
+    expect(Math.abs((await idWidth()) - after)).toBeLessThan(1);
+    await picture(window, 'built-column-widths');
+  });
+
   it('has Uninstall all KVNsys beside them, which finds what Windows says is installed on this PC, in a check that removes nothing', () => {
     expect(existsSync(uninstallAllExe), `${uninstallAllExe} isn't there`).toBe(true);
     const found = join(appData, 'uninstall-all-found.txt');

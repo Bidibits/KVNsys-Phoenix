@@ -27,7 +27,7 @@ written down on this page instead.
 | 22 | `shifts` | 22–25 Selling | ✅ Start and end shift |
 | 23–25 | `receipts`, `receipt_items`, `receipt_payments` | 22–25 | ✅ Selling, the day's sales. Voiding isn't built |
 | 26–28 | `transfer_imports`, `sales_imports`, `consolidated_sales` | 26–28 HQ and branch | Not yet: HQ ↔ branch comes after launch |
-| 29 | `user_settings` | 29–30 | Not yet |
+| 29 | `user_settings` | 29–30 | ✅ Each person's column widths (2026-11-02), as JSON text, one row per person who has dragged one |
 | 30 | `schema_migrations` | 29–30 | Prisma's own `_prisma_migrations` does this job |
 
 ## Where Phoenix differs from the plan, and why
@@ -41,6 +41,8 @@ written down on this page instead.
 | `shifts` | **Also** `number` | Numbered per shop with no gaps, like receipts |
 | `inventory_logs.movement_type`: seven kinds | The database takes all seven; KVNsysCore records three so far | `to_supplier`, `transfer`, `from_customer` and `disposal` come with the features that make them |
 | `audits` | **Kept as written**: the database refuses to change or remove a row. `column_name` may be empty | An audit log anyone can edit isn't one. Every row written so far names its column: creating a record writes one row per column it was given (Beta did the same), so a column's history starts with its first value |
+| `transfer_imports.from_location`, `sales_imports.location_id`, `consolidated_sales.location_id` | **Not foreign keys** | They name another site's shop, which this database may not hold. The same reasoning as the lineage columns |
+| `receipt_payments.payment_type` | Cash only, for now (a check in the migration) | Other ways to pay come later; the plan's gap 3 (a table of payment types) isn't decided |
 
 ## What the audit log records (since 2026-10-28)
 
@@ -68,6 +70,8 @@ save**: a change is never kept without its record, and a refused save leaves non
   and `updated_*` columns aren't logged as changes.
 - **Not logged here, because they're their own record**: the stock ledger (`inventory_logs`, and the
   `inventory` totals it keeps), receipts and their lines and payments, and shifts.
+- **Not logged at all**: `user_settings`, a person's own column widths. They're how one person likes
+  the screens, not a record of the shop's.
 - **Nothing before 2026-10-28 was logged.** Changes made before then have no history.
 
 **Reading it back (since 2026-10-29):** the Audit log tile (right `audits.view`; the Administrator
@@ -77,8 +81,6 @@ record's name shows only that record's history. Names stand in for ids: the reco
 PC, the shop, and a column holding another record's id (a product's category, a user's role). A
 record no longer there shows as such. `GET /api/audits` (protocol 18); Core `audits/audit-log-book.ts`,
 Postgres `audits/prisma-audit-log.ts`.
-| `transfer_imports.from_location`, `sales_imports.location_id`, `consolidated_sales.location_id` | **Not foreign keys** | They name another site's shop, which this database may not hold. The same reasoning as the lineage columns |
-| `receipt_payments.payment_type` | Cash only, for now (a check in the migration) | Other ways to pay come later; the plan's gap 3 (a table of payment types) isn't decided |
 
 ## What the plan says that needs code, not built yet
 

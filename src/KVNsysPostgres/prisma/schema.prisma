@@ -165,8 +165,8 @@ model Machine {
 }
 
 /// Something the shop sells. HQ encodes it; later, branches receive it with the delivery.
-/// Every column SCHEMA-PLAN names. The product form and the till use code, barcode, name, retail
-/// price and status so far; the rest are kept but not yet shown or applied (docs/schema.md).
+/// Every column SCHEMA-PLAN names, all on the product form. The till charges the cheapest price
+/// the customer qualifies for: retail, promo, or wholesale once a line reaches its pieces.
 model Product {
   id                String   @id @db.Uuid
   /// What staff type: PRD-0042.
@@ -488,7 +488,8 @@ model Audit {
   id                    String   @id @db.Uuid
   tableName             String   @map("table_name")
   recordId              String   @map("record_id") @db.Uuid
-  /// Empty when the change is to the record as a whole, such as creating it.
+  /// Which column changed. Every row written so far names one (creating a record writes a row for
+  /// each column it was given); it may be left empty.
   columnName            String?  @map("column_name")
   valueBefore           String?  @map("value_before")
   valueAfter            String?  @map("value_after")
@@ -505,7 +506,8 @@ model Audit {
   @@map("audits")
 }
 
-/// SCHEMA-PLAN 12–17, the catalogue. HQ owns it and sends it to the branches. No screens yet.
+/// SCHEMA-PLAN 12–17, the catalogue, which HQ owns and, later, sends to the branches. Brands,
+/// manufacturers, suppliers and categories each have a list and a form.
 model Brand {
   id          String  @id @db.Uuid
   code        String  @unique
@@ -721,8 +723,10 @@ model ConsolidatedSale {
   @@map("consolidated_sales")
 }
 
-/// SCHEMA-PLAN 29: what a person changed about how the screens look (columns, sort, theme), kept on
-/// the server so it follows them to whichever counter they sign in at. Opaque to the server.
+/// SCHEMA-PLAN 29: what a person changed about how the screens look, kept on the server so it
+/// follows them to whichever machine they sign in at. So far, the widths they dragged list columns
+/// to, as JSON text; KVNsysCore's user-settings.ts says what the server keeps. Not audited: it's
+/// the person's own, not a record of the shop's.
 model UserSetting {
   userId    String   @id @map("user_id") @db.Uuid
   settings  String

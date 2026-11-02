@@ -1,0 +1,101 @@
+{
+  "step": "Lines between the grids' columns, dragged to resize or double-clicked to fit, each person's widths kept on the server (2026-11-02)",
+  "plants": [
+    {
+      "name": "1 a person's kept settings read back as none",
+      "file": "src/KVNsysPostgres/identity/prisma-user-settings-book.ts",
+      "old": "return readUserSettings(row?.settings ?? null);",
+      "new": "return readUserSettings(null);",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "user-settings-book"], ["KVNsysServer.Tests", "my-settings-database"]]
+    },
+    {
+      "name": "2 a save that doesn't replace what was kept",
+      "file": "src/KVNsysPostgres/identity/prisma-user-settings-book.ts",
+      "old": "update: { settings: text, updatedAt: new Date() },",
+      "new": "update: { updatedAt: new Date() },",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "user-settings-book"]]
+    },
+    {
+      "name": "3 the server keeping a width KVNsys can't use",
+      "file": "src/KVNsysServer/http/my-settings.controller.ts",
+      "old": "const issue = userSettingsProblem(settings.data);",
+      "new": "const issue = userSettingsProblem({ columnWidths: {} });",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "my-settings-database"]]
+    },
+    {
+      "name": "4 kept settings read back with widths KVNsys can't use",
+      "file": "src/KVNsysCore/identity/user-settings.ts",
+      "old": "typeof entry[1] === 'string' && readColumnWidth(entry[1]) !== null",
+      "new": "typeof entry[1] === 'string'",
+      "build": ["@kvnsys/core"],
+      "tests": [["KVNsysCore.Tests", "user-settings"], ["KVNsysPostgres.Tests", "user-settings-book"]]
+    },
+    {
+      "name": "5 a column dragged narrower than 3em",
+      "file": "src/KVNsysCore/identity/user-settings.ts",
+      "old": "const within = Math.min(ColumnWidthLimits.max, Math.max(ColumnWidthLimits.min, em));",
+      "new": "const within = Math.min(ColumnWidthLimits.max, em);",
+      "build": ["@kvnsys/core", "@kvnsys/client-app"],
+      "tests": [["KVNsysCore.Tests", "user-settings"], ["KVNsysClientApp.Tests", "column-widths"]]
+    },
+    {
+      "name": "6 a dragged width never kept",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "if (width !== null) keepWidth(columns[index]!.heading, width);",
+      "new": "if (width === '') keepWidth(columns[index]!.heading, width);",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "column-widths"]]
+    },
+    {
+      "name": "7 no line between the headings",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "const headingLine = 'shadow-[inset_-1px_0_0_var(--border)] last:shadow-none';",
+      "new": "const headingLine = '';",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "column-widths"]]
+    },
+    {
+      "name": "8 no line between the cells",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "const cellLine = 'shadow-[inset_-1px_0_0_color-mix(in_oklab,var(--border)_60%,transparent)] last:shadow-none';",
+      "new": "const cellLine = '';",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "column-widths"]]
+    },
+    {
+      "name": "9 two lines before the pinned Edit column",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "const lined = (index: number) => resizable(columns[index]!) && !columns[index + 1]?.pinned;",
+      "new": "const lined = (index: number) => resizable(columns[index]!);",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "column-widths"]]
+    },
+    {
+      "name": "10 a double-click fitting the column to its heading alone",
+      "file": "src/KVNsysUI/RecordTable.tsx",
+      "old": "if (cell) needed = Math.max(needed, contentWidth(cell));",
+      "new": "if (cell && cell.colSpan > 1) needed = Math.max(needed, contentWidth(cell));",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "column-widths"]]
+    },
+    {
+      "name": "11 the kept widths never applied at sign-in",
+      "file": "src/KVNsysClientApp/screens/KeptSettings.tsx",
+      "old": "if (!open || !result.ok) return;",
+      "new": "if (open || !result.ok) return;",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "column-widths"]]
+    },
+    {
+      "name": "12 the desktop side refusing every save",
+      "file": "src/KVNsysClientApp/desktop/main.ts",
+      "old": "const settings = asUserSettings(typed);",
+      "new": "const settings = asUserSettings(null);",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "column-widths"]]
+    }
+  ]
+}

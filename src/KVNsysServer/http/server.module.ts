@@ -12,6 +12,7 @@ import {
   PrismaStockLedger,
   PrismaUserAccounts,
   PrismaUserDirectory,
+  PrismaUserSettingsBook,
   type PrismaClient,
 } from '@kvnsys/postgres';
 import { Authorizer } from '../identity/authorizer.js';
@@ -23,6 +24,7 @@ import { AuditsController, type AuditsOperationParts } from './audits.controller
 import { CatalogController, type CatalogOperationParts } from './catalog.controller.js';
 import { HelloController } from './hello.controller.js';
 import { JoinController } from './join.controller.js';
+import { MySettingsController, type MySettingsOperationParts } from './my-settings.controller.js';
 import { ProductsController } from './products.controller.js';
 import { SessionController } from './session.controller.js';
 import { SignInController, type SignInOperationParts } from './sign-in.controller.js';
@@ -35,6 +37,7 @@ import {
   AuditsOperation,
   CatalogOperation,
   DatabaseClient,
+  MySettingsOperation,
   ProductsOperation,
   MachinesOperation,
   RolesOperation,
@@ -68,7 +71,22 @@ export class ServerModule {
   static withDatabase(client: PrismaClient | null, server: PcIdentity, serverPassword: ServerPassword): DynamicModule {
     return {
       module: ServerModule,
-      controllers: [HelloController, JoinController, SignInController, SessionController, ProductsController, UsersController, RolesController, StockController, SalesController, MachinesController, ShiftsController, CatalogController, AuditsController],
+      controllers: [
+        HelloController,
+        JoinController,
+        SignInController,
+        SessionController,
+        ProductsController,
+        UsersController,
+        RolesController,
+        StockController,
+        SalesController,
+        MachinesController,
+        ShiftsController,
+        CatalogController,
+        AuditsController,
+        MySettingsController,
+      ],
       providers: [
         { provide: DatabaseClient, useValue: { client } satisfies Database },
         DatabaseLifecycle,
@@ -113,6 +131,15 @@ export class ServerModule {
           useFactory: ({ client: db }: Database, sessions: Sessions) => ({
             audits: db
               ? ({ log: new PrismaAuditLog(db), authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)) } satisfies AuditsOperationParts)
+              : null,
+          }),
+        },
+        {
+          provide: MySettingsOperation,
+          inject: [DatabaseClient, Sessions],
+          useFactory: ({ client: db }: Database, sessions: Sessions) => ({
+            mySettings: db
+              ? ({ settings: new PrismaUserSettingsBook(db), authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)) } satisfies MySettingsOperationParts)
               : null,
           }),
         },

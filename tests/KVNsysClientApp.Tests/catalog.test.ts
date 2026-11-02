@@ -90,7 +90,7 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
     expect(await form.getByLabel('Inside', { exact: true }).count()).toBe(0);
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Asia Appliances.').waitFor();
-    expect(await rowsOf('Suppliers', ['Code', 'Name', 'Address', 'Status', 'Description', 'Change'])).toEqual([
+    await expect.poll(() => rowsOf('Suppliers', ['Code', 'Name', 'Address', 'Status', 'Description', 'Change'])).toEqual([
       ['SUP-001', 'Asia Appliances', 'Quezon Ave., Lucena City', 'Active', '—', 'Edit'],
     ]);
     // Every column of the table in the table's order, its id first, then who last changed it and who made it, as Beta's grids showed.
@@ -124,7 +124,7 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
     await field(form, 'Inside').selectOption({ label: 'Appliances' });
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Fans.').waitFor();
-    expect(await rowsOf('Categories', ['Code', 'Name', 'Inside', 'Status', 'Change'])).toEqual([
+    await expect.poll(() => rowsOf('Categories', ['Code', 'Name', 'Inside', 'Status', 'Change'])).toEqual([
       ['CAT-APP', 'Appliances', '—', 'Active', 'Edit'],
       ['CAT-FAN', 'Fans', 'Appliances', 'Active', 'Edit'],
     ]);

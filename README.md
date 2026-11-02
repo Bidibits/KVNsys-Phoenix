@@ -94,6 +94,11 @@ and everything a user sees, is called KVNsys.
   rows 28px tall. Columns keep their width; a value too long for its column is cut short and
   shows whole when the pointer rests on it; the table scrolls sideways in its own box. Clicking a
   heading sorts by it, again the other way, a third time back. The Edit buttons stay in view.
+- **Column widths are each person's own.** A thin line runs between the grids' columns. Dragging
+  the line at a heading's right-hand edge makes that column wider or narrower (3em to 80em);
+  double-clicking it fits the column to its heading and the longest value it shows. The server
+  keeps each person's widths, so they come back at the next sign-in, at any machine, and nobody
+  else's change. The Edit column can't be dragged.
 - **Users.** The Users tile lists every account: username, names, role, status. Someone whose
   role may manage users gets Add user and Edit, in the same panel: names, username, role, Active
   or switched off, and a first password typed twice. A password is never shown; Edit has its own

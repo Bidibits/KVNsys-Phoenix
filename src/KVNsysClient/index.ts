@@ -82,6 +82,7 @@ export {
   type UserResult,
 } from './identity/users.js';
 export { changeMachine, listMachines, type ListedMachine, type MachineListResult, type MachineResult, type SentMachine } from './identity/machines.js';
+export { loadMySettings, saveMySettings, type MySettingsResult } from './identity/my-settings.js';
 export { listAudits, type AuditFilterForm, type AuditLine, type AuditListResult } from './audits/audit-log.js';
 export {
   listRoles,
@@ -145,4 +146,5 @@ export type {
   RoleForm,
   RoleStatus,
   UserForm,
+  UserSettings,
 } from '@kvnsys/core';

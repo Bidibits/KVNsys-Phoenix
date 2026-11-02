@@ -29,8 +29,10 @@ import { z } from 'zod';
  *     roles their description, and the register list each one's shop.
  * 20: registers are called machines: /api/registers became /api/machines, and sign-in, the person
  *     signed in and a receipt say `machine` where they said `register`.
+ * 21: a person's own settings, kept on the server for them (/api/my-settings): so far, the widths
+ *     they dragged each list's columns to.
  */
-export const ProtocolVersion = 20;
+export const ProtocolVersion = 21;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

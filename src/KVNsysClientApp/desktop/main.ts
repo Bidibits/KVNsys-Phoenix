@@ -15,9 +15,13 @@ import {
   type ShiftResult,
   findSaleProduct,
   listMachines,
+  loadMySettings,
   readThisPc,
+  saveMySettings,
   type MachineListResult,
   type MachineResult,
+  type MySettingsResult,
+  type UserSettings,
   getReceipt,
   listDaySales,
   type DaySalesResult,
@@ -86,6 +90,8 @@ import {
   OpenShiftChannel,
   ListMachinesChannel,
   SaveMachineChannel,
+  MySettingsChannel,
+  SaveMySettingsChannel,
   ListAuditsChannel,
   DaySalesChannel,
   ReceiptChannel,
@@ -621,6 +627,26 @@ ipcMain.handle(CloseShiftChannel, async (_event, typed: unknown, note: unknown):
   const written = asText(note);
   if (countedCash === undefined || written === undefined) return NotAForm;
   return withPass((address, pass, options) => closeShift(address, pass, countedCash, written, options));
+});
+
+/**
+ * Settings as the screens sent them: column widths, as text, per column per list; or nothing.
+ * Which widths KVNsys keeps is the server's to say.
+ */
+function asUserSettings(value: unknown): UserSettings | undefined {
+  const isObject = (part: unknown): part is Record<string, unknown> => typeof part === 'object' && part !== null && !Array.isArray(part);
+  if (!isObject(value) || !isObject(value.columnWidths)) return undefined;
+  const lists = Object.values(value.columnWidths);
+  const whole = lists.every((columns) => isObject(columns) && Object.values(columns).every((width) => typeof width === 'string'));
+  return whole ? { columnWidths: value.columnWidths as UserSettings['columnWidths'] } : undefined;
+}
+
+ipcMain.handle(MySettingsChannel, (): Promise<MySettingsResult> => withPass(loadMySettings));
+
+ipcMain.handle(SaveMySettingsChannel, async (_event, typed: unknown): Promise<MySettingsResult> => {
+  const settings = asUserSettings(typed);
+  if (!settings) return NotAForm;
+  return withPass((address, pass, options) => saveMySettings(address, pass, settings, options));
 });
 
 function openWindow(): void {

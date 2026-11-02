@@ -91,7 +91,7 @@ describeWithDatabase('machines from the real app', () => {
     await form.getByLabel('Name', { exact: true }).fill('Counter 1');
     await form.getByRole('button', { name: 'Save' }).click();
     await window.getByText('Saved Counter 1.').waitFor();
-    expect((await rowsShown())[1]).toEqual(['HQ-M01', 'Counter 1', hostname()]);
+    await expect.poll(async () => (await rowsShown())[1]).toEqual(['HQ-M01', 'Counter 1', hostname()]);
   });
 
   const table = () => window.getByRole('table', { name: 'Machines' });
