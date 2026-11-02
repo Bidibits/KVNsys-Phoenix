@@ -10,10 +10,12 @@ import { MachinesScreen } from './machines/MachinesScreen';
 import { RolesScreen } from './roles/RolesScreen';
 import { SalesScreen } from './selling/SalesScreen';
 import { SellScreen } from './selling/SellScreen';
+import { InventoryLogsScreen } from './inventory/InventoryLogsScreen';
 import { InventoryScreen } from './inventory/InventoryScreen';
 import { UsersScreen } from './users/UsersScreen';
 
-type Place = Area | 'home';
+/** Home, an area, or a screen opened from one: the inventory log, from Inventory. */
+type Place = Area | 'home' | 'inventory-logs';
 
 const Titles: Record<Place, string> = {
   home: 'Home',
@@ -25,6 +27,7 @@ const Titles: Record<Place, string> = {
   manufacturers: 'Manufacturers',
   categories: 'Categories',
   inventory: 'Inventory',
+  'inventory-logs': 'Inventory logs',
   users: 'Users',
   roles: 'Roles',
   machines: 'Machines',
@@ -32,7 +35,7 @@ const Titles: Record<Place, string> = {
 };
 
 /** The screens with a list the title bar's search box filters. Sell has its own code box. */
-const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'inventory', 'users', 'roles', 'machines', 'audits']);
+const Searchable: ReadonlySet<Place> = new Set<Place>(['sales', 'products', 'suppliers', 'brands', 'manufacturers', 'categories', 'inventory', 'inventory-logs', 'users', 'roles', 'machines', 'audits']);
 
 /**
  * Every screen opened, in order, and where Back and Forward have got to (design-direction.md,
@@ -106,7 +109,8 @@ export function SignedIn({ user, onSignedOut }: { user: SignedInUser; onSignedOu
             {(place === 'suppliers' || place === 'brands' || place === 'manufacturers' || place === 'categories') && (
               <CatalogListScreen list={place} user={user} {...screen} />
             )}
-            {place === 'inventory' && <InventoryScreen user={user} {...screen} />}
+            {place === 'inventory' && <InventoryScreen user={user} {...screen} onOpenLogs={() => open('inventory-logs')} />}
+            {place === 'inventory-logs' && <InventoryLogsScreen {...screen} />}
             {place === 'users' && <UsersScreen user={user} {...screen} />}
             {place === 'roles' && <RolesScreen user={user} {...screen} />}
             {place === 'machines' && <MachinesScreen user={user} {...screen} />}

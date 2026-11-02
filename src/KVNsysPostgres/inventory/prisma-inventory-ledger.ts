@@ -7,8 +7,10 @@ import {
   type MovementType,
   type InventoryChange,
   type InventoryLevel,
+  type InventoryLogLine,
   type InventoryMovement,
 } from '@kvnsys/core';
+import { historiesOf } from '../audits/record-history.js';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -68,6 +70,39 @@ export class PrismaInventoryLedger extends InventoryLedger {
       ...(limit === undefined ? {} : { take: limit }),
     });
     return rows.map(toMovement);
+  }
+
+  async log(locationId: string, limit: number): Promise<{ lines: InventoryLogLine[]; more: boolean }> {
+    if (!Uuid.test(locationId)) return { lines: [], more: false };
+    // One more than shown says whether there are older lines. The id settles lines saved together.
+    const rows = await this.db.inventoryLog.findMany({
+      where: { locationId },
+      orderBy: [{ createdAtDate: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      include: { product: { select: { code: true, name: true } }, location: { select: { name: true } } },
+    });
+    const shown = rows.slice(0, limit);
+    // A line is never updated, so its history is who saved it, where and when.
+    const histories = await historiesOf(
+      this.db,
+      shown.map((row) => ({ ...row, updatedByUser: null, updatedAtMachine: null, updatedAtLocation: null, updatedAtDate: null })),
+    );
+    const receiptIds = shown.flatMap((row) => (row.sourceTable === 'receipts' && row.sourceId && Uuid.test(row.sourceId) ? [row.sourceId] : []));
+    const receipts = receiptIds.length === 0 ? [] : await this.db.receipt.findMany({ where: { id: { in: receiptIds } }, select: { id: true, code: true } });
+    const codes = new Map(receipts.map((receipt) => [receipt.id, receipt.code]));
+    return {
+      lines: shown.map((row, at) => ({
+        ...toMovement(row),
+        locationName: row.location.name,
+        productCode: row.product.code,
+        productName: row.product.name,
+        sourceName: row.sourceId ? (codes.get(row.sourceId) ?? null) : null,
+        createdBy: histories[at]!.createdBy,
+        createdMachine: histories[at]!.createdMachine,
+        createdLocation: histories[at]!.createdLocation,
+      })),
+      more: rows.length > limit,
+    };
   }
 }
 

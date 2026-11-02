@@ -1,0 +1,53 @@
+{
+  "step": "An Inventory logs button in place of each row's History: every product's movements, newest first (2026-11-03)",
+  "plants": [
+    {
+      "name": "1 the log oldest first",
+      "file": "src/KVNsysPostgres/inventory/prisma-inventory-ledger.ts",
+      "old": "      where: { locationId },\n      orderBy: [{ createdAtDate: 'desc' }, { id: 'desc' }],\n      take: limit + 1,",
+      "new": "      where: { locationId },\n      orderBy: [{ createdAtDate: 'asc' }, { id: 'asc' }],\n      take: limit + 1,",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "inventory-ledger"], ["KVNsysServer.Tests", "inventory-database"]]
+    },
+    {
+      "name": "2 the log never saying there are older lines",
+      "file": "src/KVNsysPostgres/inventory/prisma-inventory-ledger.ts",
+      "old": "      more: rows.length > limit,",
+      "new": "      more: false,",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "inventory-ledger"]]
+    },
+    {
+      "name": "3 a receipt's line without the receipt's code",
+      "file": "src/KVNsysPostgres/inventory/prisma-inventory-ledger.ts",
+      "old": "sourceName: row.sourceId ? (codes.get(row.sourceId) ?? null) : null,",
+      "new": "sourceName: null,",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "inventory-ledger"], ["KVNsysServer.Tests", "inventory-database"]]
+    },
+    {
+      "name": "4 the log shown without the right to see the inventory",
+      "file": "src/KVNsysServer/http/inventory.controller.ts",
+      "old": "    const { parts, location } = await this.allow(authorization, [Accesses.InventoryView]);\n    const { lines, more } = await parts.ledger.log(location.id, InventoryLogsShown);",
+      "new": "    const { parts, location } = await this.allow(authorization, []);\n    const { lines, more } = await parts.ledger.log(location.id, InventoryLogsShown);",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "inventory-database"]]
+    },
+    {
+      "name": "5 no Inventory logs button on the Inventory screen",
+      "file": "src/KVNsysClientApp/screens/inventory/InventoryScreen.tsx",
+      "old": "          Inventory logs\n",
+      "new": "          Movements\n",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "inventory"]]
+    },
+    {
+      "name": "6 the log's Product column before its Location",
+      "file": "src/KVNsysClientApp/screens/inventory/InventoryLogsScreen.tsx",
+      "old": "  { heading: 'Location', width: '10em', cell: (line) => line.locationName, sortBy: (line) => line.locationName },\n  { heading: 'Product', width: '18em', cell: (line) => `${line.productName} (${line.productCode})`, sortBy: (line) => line.productName },",
+      "new": "  { heading: 'Product', width: '18em', cell: (line) => `${line.productName} (${line.productCode})`, sortBy: (line) => line.productName },\n  { heading: 'Location', width: '10em', cell: (line) => line.locationName, sortBy: (line) => line.locationName },",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "inventory"]]
+    }
+  ]
+}

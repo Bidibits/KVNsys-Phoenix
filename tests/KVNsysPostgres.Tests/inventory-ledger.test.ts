@@ -158,4 +158,38 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
     expect(await ledger.movements(hq, 'nope')).toEqual([]);
     expect(await ledger.record([], lineage())).toEqual([]);
   });
+
+  it("lists every product's lines at a location, newest first, with names, a receipt's code, and whether there are older ones", async () => {
+    const admin = await db.role.create({ data: { id: randomUUID(), code: 'R', name: 'R' } });
+    await db.user.create({ data: { id: clerk, username: 'ana', firstName: 'Ana', lastName: 'Cruz', passwordHash: 'x', roleId: admin.id } });
+    const receipt = randomUUID();
+    await db.receipt.create({ data: { id: receipt, code: 'HQ-000001', locationId: hq, number: 1, subtotal: '100.00', discountTotal: '0.00', total: '100.00' } });
+    // Saved one after the other: lines saved together share a moment, and their order then is the store's.
+    await ledger.record([change(rice, 'from_supplier', 10)], lineage());
+    await ledger.record([change(sardines, 'from_supplier', 24)], lineage());
+    await ledger.record([change(sardines, 'to_customer', -1, { source: { table: 'receipts', id: receipt } })], lineage());
+    await ledger.record([change(rice, 'from_supplier', 5, { locationId: branch })], { ...lineage(), locationId: branch });
+
+    const { lines, more } = await ledger.log(hq, 10);
+    expect(more).toBe(false);
+    expect(lines.map((line) => [line.productCode, line.quantityChange, line.resultingOnHand])).toEqual([
+      ['PRD-0007', -1, 23],
+      ['PRD-0007', 24, 24],
+      ['PRD-0042', 10, 10],
+    ]);
+    expect(lines[0]).toMatchObject({
+      locationName: 'HQ',
+      productName: 'Sardines 155g',
+      source: { table: 'receipts', id: receipt },
+      sourceName: 'HQ-000001',
+      createdBy: 'Ana Cruz (ana)',
+      createdMachine: null,
+      createdLocation: 'HQ',
+    });
+    expect(lines[1]!.sourceName).toBeNull();
+
+    const newest = await ledger.log(hq, 2);
+    expect([newest.lines.length, newest.more]).toEqual([2, true]);
+    expect(await ledger.log('nope', 10)).toEqual({ lines: [], more: false });
+  });
 });

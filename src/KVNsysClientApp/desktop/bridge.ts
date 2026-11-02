@@ -24,6 +24,7 @@ import type {
   RecordMovementsResult,
   InventoryItemResult,
   InventoryListResult,
+  InventoryLogsResult,
   ProductForm,
   ProductFormResult,
   PasswordResult,
@@ -125,6 +126,8 @@ export interface KvnsysBridge {
   saveRole(id: string | null, form: RoleForm): Promise<RoleResult>;
   /** Every product, by name, with how many this location has, if the signed-in person may see stock. */
   listInventory(): Promise<InventoryListResult>;
+  /** The newest lines of this location's inventory log, every product's, with names, if the signed-in person may see the inventory. */
+  inventoryLogs(): Promise<InventoryLogsResult>;
   /** One product, by what was typed or scanned (its code or its barcode), with its stock here. */
   findInventoryItem(codeOrBarcode: string): Promise<InventoryItemResult>;
   /** One product's stock as the server has it now, and its newest movements. */
@@ -188,6 +191,7 @@ export const ListRolesChannel = 'kvnsys:list-roles';
 export const RoleFormChannel = 'kvnsys:role-form';
 export const SaveRoleChannel = 'kvnsys:save-role';
 export const ListInventoryChannel = 'kvnsys:list-inventory';
+export const InventoryLogsChannel = 'kvnsys:inventory-logs';
 export const FindInventoryItemChannel = 'kvnsys:find-inventory-item';
 export const ProductInventoryChannel = 'kvnsys:product-inventory';
 export const ReceiveDeliveryChannel = 'kvnsys:receive-delivery';

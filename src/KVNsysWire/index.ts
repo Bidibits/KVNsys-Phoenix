@@ -39,18 +39,21 @@ export {
 } from './users.js';
 export {
   FindInventoryItemPath,
+  InventoryItemReply,
+  InventoryListReply,
+  InventoryLogLineOnWire,
+  InventoryLogsPath,
+  InventoryLogsReply,
+  InventoryMovementsPath,
+  InventoryMovementsReply,
+  InventoryMovementsRequest,
+  InventoryPath,
   LocationOnWire,
   MovementFields,
   MovementOnWire,
   MovementsShown,
   ProductInventoryReply,
   productInventoryPath,
-  InventoryListReply,
-  InventoryMovementsPath,
-  InventoryMovementsReply,
-  InventoryMovementsRequest,
-  InventoryItemReply,
-  InventoryPath,
 } from './inventory.js';
 export { RoleFields, RoleListReply, RoleOnWire, RoleReply, RolesPath, rolePath } from './roles.js';
 export { ListedMachineOnWire, MachineFields, MachineListReply, MachineOnWire, MachineReply, machinePath, MachinesPath } from './machines.js';

@@ -54,6 +54,24 @@ export interface InventoryLevel {
   stock: number;
 }
 
+/**
+ * A line of the inventory log as a list shows it: names in place of ids, the document it came from
+ * by name (a receipt's code), and who saved it, on which machine, at which location.
+ */
+export interface InventoryLogLine extends InventoryMovement {
+  locationName: string;
+  productCode: string;
+  productName: string;
+  /** The document's name, such as a receipt's code; null when there's none, or it isn't here. */
+  sourceName: string | null;
+  createdBy: string | null;
+  createdMachine: string | null;
+  createdLocation: string | null;
+}
+
+/** How many lines the inventory log shows at once, newest first. */
+export const InventoryLogsShown = 500;
+
 function refuse(message: string): never {
   throw new Refusal('invalid', message);
 }
@@ -109,4 +127,6 @@ export abstract class InventoryLedger {
   abstract levels(locationId: string): Promise<InventoryLevel[]>;
   /** The product's movements at the location, newest first: all of them, or the newest `limit`. */
   abstract movements(locationId: string, productId: string, limit?: number): Promise<InventoryMovement[]>;
+  /** Every product's movements at the location, newest first, the newest `limit`, and whether there are older ones. */
+  abstract log(locationId: string, limit: number): Promise<{ lines: InventoryLogLine[]; more: boolean }>;
 }

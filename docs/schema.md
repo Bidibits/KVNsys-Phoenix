@@ -23,7 +23,7 @@ written down on this page instead.
 | 17 | `products` | 12–17 | ✅ Every field, on the product form, and the list shows the picture, category and brand; the till charges the promo and wholesale prices and leaves alone the stock of a product that tracks none (2026-10-25) |
 | 18–19 | `stock_documents`, `stock_document_items` | 18–21 Stock | No screens yet |
 | 20 | `inventory` | 18–21 | ✅ Stock on hand. Min stock, max stock and reorder point are kept; no alerts yet |
-| 21 | `inventory_logs` | 18–21 | ✅ The stock ledger, recording three of its seven kinds so far |
+| 21 | `inventory_logs` | 18–21 | ✅ The stock ledger, recording three of its seven kinds so far; every line on the Inventory logs screen (2026-11-03) |
 | 22 | `shifts` | 22–25 Selling | ✅ Start and end shift |
 | 23–25 | `receipts`, `receipt_items`, `receipt_payments` | 22–25 | ✅ Selling, the day's sales. Voiding isn't built |
 | 26–28 | `transfer_imports`, `sales_imports`, `consolidated_sales` | 26–28 HQ and branch | Not yet: HQ ↔ branch comes after launch |

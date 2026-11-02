@@ -154,14 +154,16 @@ export {
 
 export {
   checkInventoryChange,
-  MovementTypes,
-  rightToRecordByHand,
   InventoryLedger,
   InventoryLimits,
-  type MovementType,
+  InventoryLogsShown,
+  MovementTypes,
+  rightToRecordByHand,
   type InventoryChange,
   type InventoryLevel,
+  type InventoryLogLine,
   type InventoryMovement,
+  type MovementType,
 } from './inventory/inventory-ledger.js';
 export {
   readCount,

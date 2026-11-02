@@ -36,8 +36,9 @@ import { z } from 'zod';
  *     history `createdLocation` and `updatedLocation`.
  * 23: the Stock area is the inventory: /api/stock became /api/inventory, and the rights stock.view,
  *     stock.receive and stock.adjust became inventory.view, inventory.receive and inventory.adjust.
+ * 24: the inventory log (/api/inventory/logs): the newest lines, every product's, with names.
  */
-export const ProtocolVersion = 23;
+export const ProtocolVersion = 24;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;

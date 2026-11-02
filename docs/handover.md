@@ -188,7 +188,7 @@ None of it needs a change to the database's tables.
 | ~~**What the setup makes is credited to the admin it makes**~~ | **Done** (2026-11-03): the location, the server PC, the Administrator role and the admin account, and their lines in the audit log, are by that admin; anything made while nobody was signed in shows a dash, and the Audit log's Who calls it "No one". |
 | ~~**"Stock" becomes "Inventory"**~~ | **Done** (2026-11-03, protocol 23): the tile and screen, Receive delivery and Adjust count, the rights (`inventory.view`, `inventory.receive`, `inventory.adjust`), `/api/inventory`, and in the code the ledger (`InventoryLedger`) and the calls. "Stock" stays where it means a product's count: the `stock` column, "In stock", `tracksStock`. |
 | **Home: seven tiles** | Transact, Sales, Products, Inventory, Users, Machines, Audit log. Suppliers, Brands, Manufacturers and Categories are buttons inside Products (as Beta's Products dashboard had them); Roles is inside Users. |
-| **Inventory Logs** | The History button on each row goes; an Inventory Logs button at the top of Inventory shows every product's movements, as a grid. |
+| ~~**Inventory Logs**~~ | **Done** (2026-11-03, protocol 24): each row's History is gone; Inventory logs at the top of Inventory opens every product's movements, newest 500 first, as a grid with every column of `inventory_logs`. |
 | **"Sell" becomes "Transact"** | The selling screen's name. Its records stay `receipts`. |
 | **Sales as a full grid** | Every column of `receipts` in its order, then its three events, opened, settled and voided, in place of created and updated (settled is who rang it up and took the money, where and when). |
 

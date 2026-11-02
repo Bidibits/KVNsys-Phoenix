@@ -3,13 +3,15 @@ import { z } from 'zod';
 import { ProductOnWire } from './products.js';
 
 /**
- * The stock calls. Every one needs a signed-in pass, and a role with the right: stock.view to look,
- * stock.receive to record goods in from a supplier, stock.adjust to put a count right. Stock is
- * always the server's own location's: each branch has its own server, which knows which location it is.
+ * The inventory calls. Every one needs a signed-in pass, and a role with the right: inventory.view
+ * to look, inventory.receive to record goods in from a supplier, inventory.adjust to put a count
+ * right. The inventory is always the server's own location's: each branch has its own server, which
+ * knows which location it is.
  *
  *   GET  /api/inventory                   every product, by name, with its stock here
  *   GET  /api/inventory/find?codeOrBarcode=PRD-0042
- *                                     one product, by what was typed or scanned, with its stock here
+ *                                         one product, by what was typed or scanned, with its stock here
+ *   GET  /api/inventory/logs              the newest lines of the inventory log, every product's, with names
  *   GET  /api/inventory/<productId>       one product's stock, and its newest movements
  *   POST /api/inventory/movements         record goods in, or put counts right: all saved, or none (201)
  *
@@ -20,6 +22,7 @@ import { ProductOnWire } from './products.js';
 export const InventoryPath = '/api/inventory';
 export const InventoryMovementsPath = '/api/inventory/movements';
 export const FindInventoryItemPath = '/api/inventory/find';
+export const InventoryLogsPath = '/api/inventory/logs';
 export const productInventoryPath = (productId: string) => `${InventoryPath}/${encodeURIComponent(productId)}`;
 
 /** How many of a product's movements come back at most, newest first. */
@@ -72,6 +75,35 @@ export const ProductInventoryReply = z.object({
   more: z.boolean(),
 });
 export type ProductInventoryReply = z.infer<typeof ProductInventoryReply>;
+
+/** A line of the inventory log, every column of it, with names in place of ids. */
+export const InventoryLogLineOnWire = z.object({
+  id: z.string(),
+  locationName: z.string(),
+  productId: z.string(),
+  productCode: z.string(),
+  productName: z.string(),
+  /** Positive in, negative out. */
+  quantityChange: z.number().int(),
+  type: z.enum(MovementTypes),
+  sourceTable: z.string().nullable(),
+  sourceId: z.string().nullable(),
+  /** The document by name, such as a receipt's code, or null. */
+  sourceName: z.string().nullable(),
+  resultingOnHand: z.number().int(),
+  note: z.string().nullable(),
+  /** Who saved it ("Ana Cruz (ana)"), on which machine, at which location; null when nobody or none. */
+  createdBy: z.string().nullable(),
+  createdMachine: z.string().nullable(),
+  createdLocation: z.string().nullable(),
+  /** An ISO date and time. */
+  createdAt: z.string(),
+});
+export type InventoryLogLineOnWire = z.infer<typeof InventoryLogLineOnWire>;
+
+/** The newest lines of the location's inventory log, newest first, and whether there are older ones. */
+export const InventoryLogsReply = z.object({ location: LocationOnWire, lines: z.array(InventoryLogLineOnWire), more: z.boolean() });
+export type InventoryLogsReply = z.infer<typeof InventoryLogsReply>;
 
 /** One change a person records. KVNsysCore's rules (checkInventoryChange) are checked at the server. */
 export const MovementFields = z.object({

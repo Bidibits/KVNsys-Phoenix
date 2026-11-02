@@ -6,6 +6,7 @@ import {
   findInventoryItem,
   getProductInventory,
   listInventory,
+  listInventoryLogs,
   recordMovements,
   signIn,
   type HandMovement,
@@ -273,5 +274,38 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     } finally {
       await db.machine.update({ where: { code: 'RENAMED-SRV' }, data: { code: 'HQ-SRV' } });
     }
+  });
+
+  it("shows the inventory log, every product's lines here and no other location's, newest first, with names and a receipt's code", async () => {
+    const ana = await db.user.findUniqueOrThrow({ where: { username: 'ana' } });
+    const receipt = randomUUID();
+    await db.receipt.create({ data: { id: receipt, code: 'HQ-000099', locationId: hqId, number: 99, subtotal: '100.00', discountTotal: '0.00', total: '100.00' } });
+    const ledger = new PrismaInventoryLedger(db);
+    const gumaca = (await db.location.findUniqueOrThrow({ where: { code: 'GUMACA' } })).id;
+    const sale = { locationId: hqId, productId: soap.id, type: 'to_customer' as const, quantityChange: -1, note: null, source: { table: 'receipts', id: receipt } };
+    await ledger.record([sale], { userId: ana.id, machineId: null, locationId: hqId });
+    await ledger.record([{ ...sale, locationId: gumaca, source: null }], { userId: ana.id, machineId: null, locationId: gumaca });
+
+    const log = await listInventoryLogs(address, as('cora').pass, as('cora').options);
+    if (!log.ok) throw new Error(log.message);
+    expect(log.location).toMatchObject({ code: 'HQ', name: 'Head Office' });
+    expect(log.lines[0]).toMatchObject({
+      productCode: 'PRD-0100',
+      productName: 'Bath soap',
+      type: 'to_customer',
+      quantityChange: -1,
+      sourceTable: 'receipts',
+      sourceId: receipt,
+      sourceName: 'HQ-000099',
+      createdBy: 'Ana Tester (ana)',
+      createdLocation: 'Head Office',
+      locationName: 'Head Office',
+    });
+    expect(log.lines.every((line) => line.locationName === 'Head Office')).toBe(true);
+    expect(log.lines).toHaveLength(await db.inventoryLog.count({ where: { locationId: hqId } }));
+    expect(log.more).toBe(false);
+    const times = log.lines.map((line) => line.createdAt);
+    expect(times).toEqual([...times].sort().reverse());
+    expect(await listInventoryLogs(address, as('dan').pass, as('dan').options)).toEqual({ ok: false, reason: 'not-allowed', message: lacksRight('inventory.view') });
   });
 });

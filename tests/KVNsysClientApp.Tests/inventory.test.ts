@@ -1,15 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
+import { join } from 'node:path';
 import { createPrismaClient, PrismaProductCatalog, PrismaSetupStore, type PrismaClient } from '@kvnsys/postgres';
 import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHasher } from '@kvnsys/server';
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
+import { cellsUnder, expectCompact, expectTableOrder, headingsOf } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
 
-describeWithDatabase('stock from the real app: deliveries, counts and history', () => {
+/** Set KVNSYS_SCREENSHOTS to a folder to keep a picture of each step, for a person to look at. */
+async function picture(window: Page, name: string) {
+  const folder = process.env.KVNSYS_SCREENSHOTS;
+  if (folder) await window.screenshot({ path: join(folder, `${name}.png`), animations: 'disabled' });
+}
+
+describeWithDatabase('the inventory from the real app: deliveries, counts and the inventory log', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
   let server: Awaited<ReturnType<typeof createServer>>;
@@ -197,17 +205,42 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
     expect(await stockShown()).toContainEqual(['Sardines 155g', '28']);
   });
 
-  it("shows a product's history, newest first, and goes back to the list", async () => {
-    await window.getByRole('button', { name: 'History of Sardines 155g' }).click();
-    await window.getByRole('table', { name: 'Movements' }).waitFor();
-    expect(await window.getByText('In stock: 28').isVisible()).toBe(true);
-    const lines = (await rowsShown('Movements')).map(([, what, pieces, after, who, note]) => [what, pieces, after, who, note]);
-    expect(lines).toEqual([
-      ['Count put right', '−2', '28', 'System Administrator', '2 torn, thrown away'],
-      ['Received', '+6', '30', 'System Administrator', 'DR 10234'],
-      ['Received', '+24', '24', 'System Administrator', 'DR 10234'],
-    ]);
-    await window.getByRole('button', { name: 'Back to inventory' }).click();
+  it("opens the inventory log from the top of the screen: every product's movements, newest first, every column, and no History on a row", async () => {
+    expect(await window.getByRole('button', { name: /^History of/ }).count()).toBe(0);
+    await picture(window, 'inventory');
+    await window.getByRole('button', { name: 'Inventory logs' }).click();
+    const log = window.getByRole('table', { name: 'Inventory logs' });
+    await log.waitFor();
+    expect(await window.getByText('4 movements at Head Office, newest first.').isVisible()).toBe(true);
+    const rows = await cellsUnder(log, ['Product', 'Pieces', 'Movement', 'In stock after', 'Note', 'Created by', 'Created location']);
+    expect(rows[0]).toEqual(['Sardines 155g (PRD-0007)', '−2', 'Count put right', '28', '2 torn, thrown away', 'System Administrator (admin)', 'Head Office']);
+    // The delivery's three lines were saved together, at one moment, so their order among themselves is the store's.
+    expect(rows.slice(1)).toHaveLength(3);
+    expect(rows.slice(1)).toEqual(
+      expect.arrayContaining([
+        ['Sardines 155g (PRD-0007)', '+6', 'Received', '30', 'DR 10234', 'System Administrator (admin)', 'Head Office'],
+        ['Sack of rice 25kg (PRD-0042)', '+1,200', 'Received', '1,200', 'DR 10234', 'System Administrator (admin)', 'Head Office'],
+        ['Sardines 155g (PRD-0007)', '+24', 'Received', '24', 'DR 10234', 'System Administrator (admin)', 'Head Office'],
+      ]),
+    );
+    await expectTableOrder(db, 'inventory_logs', await headingsOf(log), {
+      Id: 'id',
+      Location: 'location_id',
+      Product: 'product_id',
+      Pieces: 'quantity_change',
+      Movement: 'movement_type',
+      Source: 'source_table',
+      Document: 'source_id',
+      'In stock after': 'resulting_on_hand',
+      Note: 'note',
+      'Created by': 'created_by_user',
+      'Created machine': 'created_at_machine',
+      'Created location': 'created_at_location',
+      'Created at': 'created_at_date',
+    });
+    await expectCompact(log);
+    await picture(window, 'inventory-logs');
+    await window.getByRole('button', { name: 'Back', exact: true }).click();
     await table().waitFor();
     await signOut();
   });
@@ -216,7 +249,7 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
     await signIn('receiver');
     await openStock();
     expect(await window.getByRole('button', { name: 'Receive delivery' }).isVisible()).toBe(true);
-    expect(await window.getByRole('button', { name: 'History of Sardines 155g' }).isVisible()).toBe(true);
+    expect(await window.getByRole('button', { name: 'Inventory logs' }).isVisible()).toBe(true);
     expect(await window.getByRole('button', { name: /^Adjust / }).count()).toBe(0);
     await signOut();
 

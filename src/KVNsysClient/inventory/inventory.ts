@@ -6,8 +6,11 @@ import {
   InventoryListReply,
   InventoryMovementsPath,
   InventoryItemReply,
+  InventoryLogsPath,
+  InventoryLogsReply,
   InventoryMovementsReply,
   InventoryPath,
+  type InventoryLogLineOnWire,
   type MovementOnWire,
   type SessionPass,
   type LocationOnWire,
@@ -30,6 +33,15 @@ export type ProductInventoryResult =
   | { ok: true; location: Location; product: Product; stock: number; movements: RecordedMovement[]; more: boolean }
   | Refused;
 export type RecordMovementsResult = { ok: true; movements: RecordedMovement[] } | Refused;
+/** A line of the inventory log: every column, with names in place of ids. */
+export type InventoryLogLine = InventoryLogLineOnWire;
+export type InventoryLogsResult = { ok: true; location: Location; lines: InventoryLogLine[]; more: boolean } | Refused;
+
+/** The newest lines of the location's inventory log, every product's, newest first. `more` says there are older ones. */
+export async function listInventoryLogs(address: string, pass: SessionPass, options: CallOptions): Promise<InventoryLogsResult> {
+  const answer = await call(address, pass, options, { path: InventoryLogsPath }, InventoryLogsReply);
+  return answer.ok ? { ok: true, ...answer.reply } : answer;
+}
 
 /** Every product, by name, with how many the location holds. */
 export async function listInventory(address: string, pass: SessionPass, options: CallOptions): Promise<InventoryListResult> {

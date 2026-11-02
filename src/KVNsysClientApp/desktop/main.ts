@@ -33,6 +33,7 @@ import {
   findInventoryItem,
   getProductInventory,
   listInventory,
+  listInventoryLogs,
   saveCount,
   saveDelivery,
   type CountForm,
@@ -41,6 +42,7 @@ import {
   type RecordMovementsResult,
   type InventoryItemResult,
   type InventoryListResult,
+  type InventoryLogsResult,
   CatalogLists,
   listCatalog,
   loadCatalogEntryForm,
@@ -104,6 +106,7 @@ import {
   TillChannel,
   FindInventoryItemChannel,
   ListInventoryChannel,
+  InventoryLogsChannel,
   ProductInventoryChannel,
   ReceiveDeliveryChannel,
   CatalogEntryFormChannel,
@@ -512,6 +515,8 @@ ipcMain.handle(SaveRoleChannel, async (_event, id: unknown, typed: unknown): Pro
 });
 
 ipcMain.handle(ListInventoryChannel, (): Promise<InventoryListResult> => withPass(listInventory));
+
+ipcMain.handle(InventoryLogsChannel, (): Promise<InventoryLogsResult> => withPass(listInventoryLogs));
 
 ipcMain.handle(FindInventoryItemChannel, async (_event, typed: unknown): Promise<InventoryItemResult> => {
   const codeOrBarcode = asText(typed);

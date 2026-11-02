@@ -3,7 +3,6 @@ import { Button, Notice, Pieces, RecordTable, StatusLabel, useToast, type Column
 import { useEffect, useState } from 'react';
 import { CountPanel } from './CountPanel';
 import { ReceivePanel } from './ReceivePanel';
-import { StockHistory } from './StockHistory';
 
 const ReceiveRight: AccessName = 'inventory.receive';
 const AdjustRight: AccessName = 'inventory.adjust';
@@ -16,12 +15,23 @@ const Columns: Column<InventoryItem>[] = [
 ];
 
 /**
- * Every product with how many this location has. Each row opens its History; someone whose role may
- * receive goods gets Receive delivery, which takes in a whole delivery, and someone who may put counts
- * right gets Adjust on each row. After a save the list is asked for again, so it shows what the
+ * Every product with how many this location has. Inventory logs opens every product's movements;
+ * someone whose role may receive goods gets Receive delivery, which takes in a whole delivery, and
+ * someone who may put counts right gets Adjust on each row. After a save the list is asked for again, so it shows what the
  * server has. The list is asked for after the screen is on show, never while it's being built.
  */
-export function InventoryScreen({ user, search, onSignInAgain }: { user: SignedInUser; search: string; onSignInAgain: () => void }) {
+export function InventoryScreen({
+  user,
+  search,
+  onSignInAgain,
+  onOpenLogs,
+}: {
+  user: SignedInUser;
+  search: string;
+  onSignInAgain: () => void;
+  /** Opens the inventory log, every product's movements. */
+  onOpenLogs: () => void;
+}) {
   const toast = useToast();
   const mayReceive = user.rights.includes(ReceiveRight);
   const mayAdjust = user.rights.includes(AdjustRight);
@@ -29,7 +39,6 @@ export function InventoryScreen({ user, search, onSignInAgain }: { user: SignedI
   const [reloads, setReloads] = useState(0);
   const [receiving, setReceiving] = useState(false);
   const [counting, setCounting] = useState<InventoryItem | null>(null);
-  const [history, setHistory] = useState<InventoryItem | null>(null);
 
   useEffect(() => {
     let showing = true;
@@ -55,39 +64,22 @@ export function InventoryScreen({ user, search, onSignInAgain }: { user: SignedI
     setReloads((n) => n + 1);
   }
 
-  if (history) {
-    return <StockHistory item={history} onBack={() => setHistory(null)} onSignInAgain={onSignInAgain} />;
-  }
-
-  const columns: Column<InventoryItem>[] = [
-    ...Columns,
-    {
-      heading: 'Actions',
-      hiddenHeading: true,
-      align: 'right',
-      cell: (item) => (
-        <span className="inline-flex gap-2">
-          <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`History of ${item.product.name}`} onClick={() => setHistory(item)}>
-            History
-          </Button>
-          {mayAdjust && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="compact"
-              className="h-8 px-3"
-              aria-label={`Adjust ${item.product.name}`}
-              onClick={() => {
-                setCounting(item);
-              }}
-            >
+  // Adjust is the only thing a row does, so without it there's no column for it.
+  const columns: Column<InventoryItem>[] = !mayAdjust
+    ? Columns
+    : [
+        ...Columns,
+        {
+          heading: 'Actions',
+          hiddenHeading: true,
+          align: 'right',
+          cell: (item) => (
+            <Button type="button" variant="secondary" size="compact" className="h-8 px-3" aria-label={`Adjust ${item.product.name}`} onClick={() => setCounting(item)}>
               Adjust
             </Button>
-          )}
-        </span>
-      ),
-    },
-  ];
+          ),
+        },
+      ];
 
   if (!result) {
     return (
@@ -116,11 +108,13 @@ export function InventoryScreen({ user, search, onSignInAgain }: { user: SignedI
         <p className="text-[15px] text-muted-foreground">
           {count === 0 ? 'No products yet.' : `${count === 1 ? '1 product' : `${count} products`} at ${result.location.name}`}
         </p>
+        <Button type="button" variant="secondary" size="compact" className="ml-auto" onClick={onOpenLogs}>
+          Inventory logs
+        </Button>
         {mayReceive && count > 0 && (
           <Button
             type="button"
             size="compact"
-            className="ml-auto"
             onClick={() => {
               setReceiving(true);
             }}

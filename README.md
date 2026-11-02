@@ -126,8 +126,10 @@ and everything a user sees, is called KVNsys.
   adjust counts. Goods out to a customer can't be typed in; only a sale will record them. The stock is
   always the server's own location's, since each branch has its own server.
 - **The Inventory screen.** An Inventory tile on Home opens every product with how many the location has (below
-  zero shows in red). History on a row shows that product's movements, newest first: when, what,
-  how many, the stock after, who, and the note. Receive delivery takes in a whole delivery: scan or
+  zero shows in red). Inventory logs, at the top, opens every product's movements at the location
+  in a grid, newest first (the newest 500): every column of each line, the product, how many in or
+  out and why, the receipt it came from by its code, the stock after, the note, and who saved it,
+  on which machine, where and when. Receive delivery takes in a whole delivery: scan or
   type each code or barcode, then its pieces, add the line, and save it all at once with one note,
   such as the supplier's DR number; a scanner's Enter never saves it half-done. Adjust on a row
   puts a count right: the pieces counted on the shelf and why they're different. Each button only

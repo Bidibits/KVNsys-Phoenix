@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Post, Query } 
 import {
   Accesses,
   checkInventoryChange,
+  InventoryLogsShown,
   Refusal,
   rightToRecordByHand,
   serverMachineCode,
@@ -11,12 +12,15 @@ import {
   type LocationDirectory,
   type InventoryChange,
   type InventoryLedger,
+  type InventoryLogLine,
   type InventoryMovement,
   type UserAccounts,
 } from '@kvnsys/core';
 import {
   MovementsShown,
   InventoryMovementsRequest,
+  type InventoryLogLineOnWire,
+  type InventoryLogsReply,
   type MovementOnWire,
   type ProductInventoryReply,
   type InventoryItemReply,
@@ -48,7 +52,29 @@ export interface InventoryOperationParts {
   server: PcIdentity;
 }
 
-/** The stock calls (see KVNsysWire's stock.ts). Each one checks the pass and the right first. */
+/** A line of the inventory log as it's sent: every column, with names in place of ids. */
+function logLineOnWire(line: InventoryLogLine): InventoryLogLineOnWire {
+  return {
+    id: line.id,
+    locationName: line.locationName,
+    productId: line.productId,
+    productCode: line.productCode,
+    productName: line.productName,
+    quantityChange: line.quantityChange,
+    type: line.type,
+    sourceTable: line.source?.table ?? null,
+    sourceId: line.source?.id ?? null,
+    sourceName: line.sourceName,
+    resultingOnHand: line.resultingOnHand,
+    note: line.note,
+    createdBy: line.createdBy,
+    createdMachine: line.createdMachine,
+    createdLocation: line.createdLocation,
+    createdAt: line.createdAt,
+  };
+}
+
+/** The inventory calls (see KVNsysWire's inventory.ts). Each one checks the pass and the right first. */
 @Controller('inventory')
 export class InventoryController {
   constructor(@Inject(InventoryOperation) private readonly operation: { stock: InventoryOperationParts | null }) {}
@@ -70,6 +96,14 @@ export class InventoryController {
     const product = (await parts.catalog.findByCode(typed)) ?? (await parts.catalog.findByBarcode(typed));
     if (!product) throw problem(404, `No product has the code or barcode ${typed.trim()}.`);
     return { location, product: toWire(product), stock: await parts.ledger.onHand(location.id, product.id) };
+  }
+
+  /** The newest lines of the inventory log, every product's, with names. Declared before ":productId". */
+  @Get('logs')
+  async logs(@Headers('authorization') authorization: string | undefined): Promise<InventoryLogsReply> {
+    const { parts, location } = await this.allow(authorization, [Accesses.InventoryView]);
+    const { lines, more } = await parts.ledger.log(location.id, InventoryLogsShown);
+    return { location, lines: lines.map(logLineOnWire), more };
   }
 
   /** "movements" is only ever a POST, so it's never taken for a product id here. */
