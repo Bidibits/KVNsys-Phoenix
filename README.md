@@ -87,9 +87,10 @@ and everything a user sees, is called KVNsys.
   until the owners decide (decisions.md, Open). A product that doesn't take itself out of stock,
   such as a service, sells without touching the stock.
 - **Every list is a grid, like Beta's, and says who made each record and who last updated it.**
-  Products, the four catalogue lists, Users, Roles and Machines show every column of their table,
-  then Updated by, Updated machine, Updated shop, Updated at, Created by, Created machine, Created
-  shop and Created at. Columns keep their width; a value too long for its column is cut short and
+  Products, the four catalogue lists, Users, Roles, Machines and the Audit log show every column of
+  their table in the table's own order: the id first, and last Updated by, Updated machine, Updated
+  shop, Updated at, Created by, Created machine, Created shop and Created at (the Audit log ends
+  with By, Machine, Shop and At). Columns keep their width; a value too long for its column is cut short and
   shows whole when the pointer rests on it; the table scrolls sideways in its own box. Clicking a
   heading sorts by it, again the other way, a third time back. The Edit buttons stay in view.
 - **Users.** The Users tile lists every account: username, names, role, status. Someone whose

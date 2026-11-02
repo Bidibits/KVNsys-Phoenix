@@ -1,5 +1,5 @@
 import type { AccessName, CatalogEntry, CatalogList, CatalogListResult, Listed, SignedInUser } from '@kvnsys/client';
-import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, idColumn, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { CatalogEntryFormPanel } from './CatalogEntryFormPanel';
 
@@ -66,9 +66,10 @@ export function CatalogListScreen({
   }
 
   const { shape, entries } = result;
-  // Every column of the list's table, then its history, as Beta's grids showed a table.
+  // Every column of the list's table in the table's own order, its id first and its history last, as Beta's grids showed a table.
   type Entry = Listed<CatalogEntry>;
   const columns: Column<Entry>[] = [
+    idColumn<Entry>(),
     { heading: 'Code', width: '9rem', cell: (entry) => entry.code, sortBy: (entry) => entry.code },
     { heading: 'Name', width: '14rem', cell: (entry) => entry.name, sortBy: (entry) => entry.name },
     ...(shape.hasAddress

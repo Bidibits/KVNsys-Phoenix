@@ -6,7 +6,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { cellsUnder, headingsOf, HistoryHeadings } from './table-cells.js';
+import { cellsUnder, expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -66,11 +66,8 @@ describeWithDatabase('machines from the real app', () => {
   }
 
   const signedIn = () => window.getByLabel('Signed in').textContent();
-  const rowsShown = () =>
-    window
-      .getByRole('table', { name: 'Machines' })
-      .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(0, 3).map((cell) => cell.textContent ?? '')));
+  /** Each row's code, name and computer name, read by heading. */
+  const rowsShown = () => cellsUnder(window.getByRole('table', { name: 'Machines' }), ['Code', 'Name', 'Computer name']);
 
   it('records this PC as a machine the first time someone signs in at it, and shows it in the title bar', async () => {
     await signIn();
@@ -99,9 +96,27 @@ describeWithDatabase('machines from the real app', () => {
 
   const table = () => window.getByRole('table', { name: 'Machines' });
 
-  it('shows every column of the machines table, then who made each and who last changed it, when, on which machine and at which shop', async () => {
+  it("shows every column of the machines table in the table's order: its id first, and last who changed and who made each, when, on which machine and at which shop", async () => {
     await picture(window, 'machines');
-    expect(await headingsOf(table())).toEqual(['Code', 'Name', 'Computer name', 'Hardware id', 'Shop', 'Status', 'Description', ...HistoryHeadings, 'Change']);
+    await expectTableOrder(db, 'machines', await headingsOf(table()), {
+      Id: 'id',
+      Code: 'code',
+      Name: 'name',
+      'Hardware id': 'machine_uuid',
+      'Computer name': 'machine_name',
+      Shop: 'location_id',
+      Status: 'status',
+      Description: 'description',
+      ...HistoryColumnsShown,
+    });
+    const idOf = Object.fromEntries((await db.machine.findMany()).map((row) => [row.code, row.id]));
+    expect(await cellsUnder(table(), ['Id', 'Code'])).toEqual([
+      [idOf['HQ-SRV'], 'HQ-SRV'],
+      [idOf['HQ-M01'], 'HQ-M01'],
+    ]);
+    // Shown whole, never cut short: ids made the same minute begin alike.
+    const id = table().getByRole('cell', { name: idOf['HQ-M01'], exact: true });
+    expect(await id.evaluate((cell) => cell.scrollWidth <= cell.clientWidth)).toBe(true);
     const hardwareId = (await db.machine.findFirstOrThrow({ where: { code: 'HQ-M01' } })).machineUuid;
     const who = ['Updated by', 'Updated machine', 'Updated shop', 'Created by', 'Created machine', 'Created shop'];
     expect(await cellsUnder(table(), ['Code', 'Hardware id', 'Shop', 'Status', 'Description', ...who])).toEqual([

@@ -5,7 +5,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { cellsUnder } from './table-cells.js';
+import { cellsUnder, expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
@@ -83,6 +83,24 @@ describeWithDatabase('managing user accounts from the real app', () => {
     await usersTile().click();
     await window.getByRole('table', { name: 'Users' }).waitFor();
     expect(await rowsShown()).toEqual([['System Administrator', 'admin', 'Administrator', 'Active']]);
+    // Every column of the users table but the password, in the table's order: its id first, its history last.
+    await expectTableOrder(
+      db,
+      'users',
+      await headingsOf(table()),
+      {
+        Id: 'id',
+        Username: 'username',
+        'First name': 'first_name',
+        'Last name': 'last_name',
+        'Middle name': 'middle_name',
+        Role: 'role_id',
+        Status: 'status',
+        Description: 'description',
+        ...HistoryColumnsShown,
+      },
+      { notShown: ['password_hash'] },
+    );
   });
 
   it('adds a cashier from the panel, and the list shows them', async () => {

@@ -16,9 +16,19 @@ export function TextOrDash({ text }: { text: string | null | undefined }) {
 }
 
 /**
- * The eight columns at the end of every list's rows, as Beta's and Release's grids ended: who last
- * updated the record, on which machine, at which shop and when, then the same for who created it.
- * A record never updated has dashes in the first four. Each sorts when its heading is clicked.
+ * The first column of every list, as every table's first column is its id. Shown whole: ids are
+ * made in time order, so ids made the same minute begin alike, and a cut-short one tells rows apart
+ * poorly.
+ */
+export function idColumn<Row extends { id: string }>(): Column<Row> {
+  return { heading: 'Id', width: '21rem', cell: (row) => row.id, sortBy: (row) => row.id };
+}
+
+/**
+ * The eight columns at the end of every list's rows, as every table ends and as Beta's and Release's
+ * grids ended: who last updated the record, on which machine, at which shop and when, then the same
+ * for who created it. A record never updated has dashes in the first four. Each sorts when its
+ * heading is clicked.
  */
 export function historyColumns<Row>(history: (row: Row) => RecordHistory): Column<Row>[] {
   const person = (who: string | null) => who ?? ByKVNsysItself;

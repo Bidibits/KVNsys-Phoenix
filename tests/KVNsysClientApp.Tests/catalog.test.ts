@@ -5,7 +5,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { cellsUnder, headingsOf, HistoryHeadings } from './table-cells.js';
+import { cellsUnder, expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
@@ -93,8 +93,16 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
     expect(await rowsOf('Suppliers', ['Code', 'Name', 'Address', 'Status', 'Description', 'Change'])).toEqual([
       ['SUP-001', 'Asia Appliances', 'Quezon Ave., Lucena City', 'Active', '—', 'Edit'],
     ]);
-    // Every column of the table, then who made it and who last changed it, as Beta's grids showed.
-    expect(await headingsOf(window.getByRole('table', { name: 'Suppliers' }))).toEqual(['Code', 'Name', 'Address', 'Status', 'Description', ...HistoryHeadings, 'Change']);
+    // Every column of the table in the table's order, its id first, then who last changed it and who made it, as Beta's grids showed.
+    await expectTableOrder(db, 'suppliers', await headingsOf(window.getByRole('table', { name: 'Suppliers' })), {
+      Id: 'id',
+      Code: 'code',
+      Name: 'name',
+      Address: 'address',
+      Status: 'status',
+      Description: 'description',
+      ...HistoryColumnsShown,
+    });
     expect(await rowsOf('Suppliers', ['Updated by', 'Created by', 'Created shop'])).toEqual([['—', 'System Administrator (admin)', 'Head Office']]);
   });
 
@@ -120,6 +128,16 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
       ['CAT-APP', 'Appliances', '—', 'Active', 'Edit'],
       ['CAT-FAN', 'Fans', 'Appliances', 'Active', 'Edit'],
     ]);
+    // "Inside" is the table's parent column, in its place.
+    await expectTableOrder(db, 'categories', await headingsOf(window.getByRole('table', { name: 'Categories' })), {
+      Id: 'id',
+      Code: 'code',
+      Name: 'name',
+      Inside: 'parent_category_id',
+      Status: 'status',
+      Description: 'description',
+      ...HistoryColumnsShown,
+    });
   });
 
   it("refuses to put a category inside one of its own, and keeps what was typed", async () => {
@@ -159,6 +177,15 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
     await window.getByRole('table', { name: 'Brands' }).waitFor();
     expect(await window.getByRole('button', { name: 'Add brand' }).count()).toBe(0);
     expect(await window.getByRole('button', { name: 'Edit Hanabishi' }).count()).toBe(0);
+    // Every column still, in the table's order, just no Edit.
+    await expectTableOrder(db, 'brands', await headingsOf(window.getByRole('table', { name: 'Brands' })), {
+      Id: 'id',
+      Code: 'code',
+      Name: 'name',
+      Status: 'status',
+      Description: 'description',
+      ...HistoryColumnsShown,
+    });
   });
 
   it("greys the four out for someone who may not see products", async () => {

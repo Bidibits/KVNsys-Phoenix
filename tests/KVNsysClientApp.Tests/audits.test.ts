@@ -6,7 +6,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { headingsOf } from './table-cells.js';
+import { cellsUnder, expectTableOrder, headingsOf } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -71,18 +71,28 @@ describeWithDatabase('the audit log in the real app', () => {
   });
 
   const table = () => window.getByRole('table', { name: 'Audit log' });
-  /** Each row as shown, but for when: By, Machine, Shop, Table, Record, Column, Change, Source, Before, After. */
-  const rowsShown = () =>
-    table()
-      .locator('tbody tr')
-      .evaluateAll((rows) => rows.map((row) => [...row.querySelectorAll('td')].slice(1).map((cell) => cell.textContent ?? '')));
+  /** Each row, read by heading, but for its id and when: By, Machine, Shop, Table, Record, Column, Change, Source, Before, After. */
+  const rowsShown = () => cellsUnder(table(), ['By', 'Machine', 'Shop', 'Table', 'Record', 'Column', 'Change', 'Source', 'Before', 'After']);
   const RecordAt = 4;
 
-  it('opens from Home and shows the newest change first: who, on which machine, at which shop, then what changed', async () => {
+  it("opens from Home and shows the newest change first, its columns in the audits table's order: what changed, then who, on which machine, at which shop and when", async () => {
     await window.getByRole('button', { name: /^Audit log/ }).click();
     await table().waitFor();
     await picture(window, 'audit-log');
-    expect(await headingsOf(table())).toEqual(['At', 'By', 'Machine', 'Shop', 'Table', 'Record', 'Column', 'Change', 'Source', 'Before', 'After']);
+    await expectTableOrder(db, 'audits', await headingsOf(table()), {
+      Id: 'id',
+      Table: 'table_name',
+      Record: 'record_id',
+      Column: 'column_name',
+      Before: 'value_before',
+      After: 'value_after',
+      Change: 'change_type',
+      Source: 'change_source',
+      By: 'implemented_by_user',
+      Machine: 'implemented_at_machine',
+      Shop: 'implemented_at_location',
+      At: 'implemented_at_date',
+    });
     const rows = await rowsShown();
     // This PC recorded itself when the administrator signed in, so that's the newest.
     expect(rows[0]!.slice(3, 5)).toEqual(['Machines', expect.stringMatching(/^New machine/)]);
@@ -123,20 +133,22 @@ describeWithDatabase('the audit log in the real app', () => {
     expect(await rowsShown()).toEqual(newestFirst);
   });
 
-  /** Waits for the list asked for to arrive with every row's cell `column` (0 is At) starting with `text`. */
-  const rowsBecome = (column: number, text: string) =>
+  /** Waits for the list asked for to arrive with every row's cell under `heading` starting with `text`. */
+  const rowsBecome = (heading: string, text: string) =>
     window.waitForFunction(
-      ([at, start]) => {
-        const rows = [...document.querySelectorAll('table[aria-label="Audit log"] tbody tr')];
-        return rows.length > 0 && rows.every((row) => (row.querySelectorAll('td')[at as number]?.textContent ?? '').startsWith(start as string));
+      ([name, start]) => {
+        const shown = document.querySelector('table[aria-label="Audit log"]');
+        const at = [...(shown?.querySelectorAll('thead th') ?? [])].findIndex((th) => (th.textContent ?? '').replace(/[▲▼]/g, '') === name);
+        const rows = [...(shown?.querySelectorAll('tbody tr') ?? [])];
+        return at >= 0 && rows.length > 0 && rows.every((row) => (row.querySelectorAll('td')[at]?.textContent ?? '').startsWith(start));
       },
-      [column, text] as const,
+      [heading, text] as const,
     );
 
   it("follows one record's history from its name, and goes back to everything", async () => {
     await table().getByRole('button', { name: 'Stand fan (PRD-0100)' }).first().click();
     await window.getByText('Only the changes to').waitFor();
-    await rowsBecome(RecordAt + 1, 'Stand fan (PRD-0100)');
+    await rowsBecome('Record', 'Stand fan (PRD-0100)');
     await picture(window, 'audit-log-one-record');
     const rows = await rowsShown();
     expect(rows.every((row) => row[RecordAt] === 'Stand fan (PRD-0100)')).toBe(true);
@@ -148,11 +160,11 @@ describeWithDatabase('the audit log in the real app', () => {
 
   it('narrows the log by what and by who', async () => {
     await window.getByLabel('What').selectOption('categories');
-    await rowsBecome(4, 'Categories');
+    await rowsBecome('Table', 'Categories');
     expect((await rowsShown()).every((row) => row[3] === 'Categories')).toBe(true);
     await window.getByLabel('What').selectOption('');
     await window.getByLabel('Who').selectOption({ label: 'KVNsys itself' });
-    await rowsBecome(1, 'KVNsys itself');
+    await rowsBecome('By', 'KVNsys itself');
     expect((await rowsShown()).every((row) => row[0]!.startsWith('KVNsys itself'))).toBe(true);
     await picture(window, 'audit-log-by-kvnsys');
   });

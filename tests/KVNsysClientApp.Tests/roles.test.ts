@@ -5,7 +5,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { cellsUnder } from './table-cells.js';
+import { cellsUnder, expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
@@ -69,6 +69,15 @@ describeWithDatabase('making roles from the real app', () => {
     await rolesTile().click();
     await window.getByRole('table', { name: 'Roles' }).waitFor();
     expect(await rowsShown()).toEqual([['Administrator', 'Every right', '1', 'Active']]);
+    // The table's columns in its order (its level only sorts the list), then the rights and the
+    // accounts, which no column holds, then the history.
+    await expectTableOrder(
+      db,
+      'roles',
+      await headingsOf(window.getByRole('table', { name: 'Roles' })),
+      { Id: 'id', Code: 'code', Name: 'name', Status: 'status', Description: 'description', ...HistoryColumnsShown },
+      { notShown: ['level'], extra: ['Rights', 'Accounts'] },
+    );
   });
 
   it("shows the Administrator's boxes all ticked and locked, so it can only be renamed", async () => {

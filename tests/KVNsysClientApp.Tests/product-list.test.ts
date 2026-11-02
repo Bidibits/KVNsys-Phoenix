@@ -6,7 +6,7 @@ import { createServer, createServerCertificate, InstallSeed, ScryptPasswordHashe
 import type { ElectronApplication, Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { freshDataDir, launchApp, removeDataDir } from './launch.js';
-import { headingsOf, HistoryHeadings } from './table-cells.js';
+import { expectTableOrder, headingsOf, HistoryColumnsShown } from './table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const Password = 'test-password-1234';
@@ -132,29 +132,36 @@ describeWithDatabase("the Products list's pictures, categories and brands, in th
   });
 
   it('shows every column like a Beta grid: each keeps its width, a long name is cut short and shown whole when pointed at, and only the table scrolls sideways', async () => {
-    // Every column of the products table, then its history; this administrator may change products, so Cost and Edit too.
-    expect(await headingsOf(table())).toEqual([
-      'Picture',
-      'Code',
-      'Barcode',
-      'Name',
-      'Category',
-      'Brand',
-      'Supplier',
-      'Manufacturer',
-      'Unit',
-      'Price',
-      'Promo price',
-      'Wholesale price',
-      'Wholesale from',
-      'Cost',
-      'Tracks stock',
-      'Warranty',
-      'Status',
-      'Description',
-      ...HistoryHeadings,
-      'Change',
-    ]);
+    // Every column of the products table in the table's order, its id first and its history last;
+    // this administrator may change products, so Cost and Edit too. Warranty shows both its columns.
+    await expectTableOrder(
+      db,
+      'products',
+      await headingsOf(table()),
+      {
+        Id: 'id',
+        Code: 'code',
+        Barcode: 'barcode',
+        Name: 'name',
+        Picture: 'image',
+        Category: 'category_id',
+        Brand: 'brand_id',
+        Supplier: 'supplier_id',
+        Manufacturer: 'manufacturer_id',
+        Unit: 'unit_of_measure',
+        'Tracks stock': 'tracks_stock',
+        Cost: 'cost_price',
+        Price: 'retail_price',
+        'Promo price': 'promo_price',
+        'Wholesale price': 'wholesale_price',
+        'Wholesale from': 'wholesale_quantity',
+        Warranty: 'has_warranty',
+        Status: 'status',
+        Description: 'description',
+        ...HistoryColumnsShown,
+      },
+      { notShown: ['warranty_months'] },
+    );
     const name = table().getByRole('cell', { name: LongName, exact: true });
     expect(await name.evaluate((cell) => cell.scrollWidth > cell.clientWidth)).toBe(true);
     await name.hover();

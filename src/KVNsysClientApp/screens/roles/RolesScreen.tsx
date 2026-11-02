@@ -1,18 +1,23 @@
 import type { AccessName, ListedRole, Role, RoleListResult, SignedInUser } from '@kvnsys/client';
-import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, idColumn, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { RoleFormPanel } from './RoleFormPanel';
 
 const ManageRight: AccessName = 'roles.manage';
 
-/** Every column of the roles table, the rights it holds and how many accounts have it, then its history, as Beta's grids showed a table. */
+/**
+ * The roles table's columns in its own order, its id first, as Beta's grids showed a table. Then
+ * what no column of the table holds, the rights the role gives and how many accounts have it, and
+ * the history last. The table's level only orders the list, so it isn't shown.
+ */
 const Columns: Column<ListedRole>[] = [
+  idColumn<ListedRole>(),
   { heading: 'Code', width: '9rem', cell: (role) => role.code, sortBy: (role) => role.code },
   { heading: 'Name', width: '12rem', cell: (role) => role.name, sortBy: (role) => role.name },
-  { heading: 'Rights', width: '26rem', cell: (role) => role.rightsInWords, sortBy: (role) => role.rightsInWords },
-  { heading: 'Accounts', width: '7rem', align: 'right', cell: (role) => role.userCount, sortBy: (role) => role.userCount },
   { heading: 'Status', width: '8rem', cell: (role) => <StatusLabel status={role.status} />, sortBy: (role) => role.status },
   { heading: 'Description', width: '16rem', cell: (role) => <TextOrDash text={role.description} />, sortBy: (role) => role.description },
+  { heading: 'Rights', width: '26rem', cell: (role) => role.rightsInWords, sortBy: (role) => role.rightsInWords },
+  { heading: 'Accounts', width: '7rem', align: 'right', cell: (role) => role.userCount, sortBy: (role) => role.userCount },
   ...historyColumns<ListedRole>((role) => role.history),
 ];
 

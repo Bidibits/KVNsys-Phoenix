@@ -1,16 +1,20 @@
 import type { AccessName, Account, Listed, SignedInUser, UserListResult } from '@kvnsys/client';
-import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, idColumn, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { UserFormPanel } from './UserFormPanel';
 
 const ManageRight: AccessName = 'users.manage';
 
-/** Every column of the users table but the password, then its history, as Beta's grids showed a table. */
+/**
+ * Every column of the users table but the password, in the table's own order, its id first and its
+ * history last, as Beta's grids showed a table.
+ */
 const Columns: Column<Listed<Account>>[] = [
+  idColumn<Listed<Account>>(),
   { heading: 'Username', width: '10rem', cell: (account) => account.username, sortBy: (account) => account.username },
   { heading: 'First name', width: '10rem', cell: (account) => account.firstName, sortBy: (account) => account.firstName },
-  { heading: 'Middle name', width: '9rem', cell: (account) => <TextOrDash text={account.middleName} />, sortBy: (account) => account.middleName },
   { heading: 'Last name', width: '10rem', cell: (account) => account.lastName, sortBy: (account) => account.lastName },
+  { heading: 'Middle name', width: '9rem', cell: (account) => <TextOrDash text={account.middleName} />, sortBy: (account) => account.middleName },
   { heading: 'Role', width: '11rem', cell: (account) => account.roleName, sortBy: (account) => account.roleName },
   { heading: 'Status', width: '8rem', cell: (account) => <StatusLabel status={account.status} />, sortBy: (account) => account.status },
   { heading: 'Description', width: '16rem', cell: (account) => <TextOrDash text={account.description} />, sortBy: (account) => account.description },

@@ -1,4 +1,6 @@
+import type { PrismaClient } from '@kvnsys/postgres';
 import type { Locator } from 'playwright-core';
+import { expect } from 'vitest';
 
 /**
  * Each row's cells under the headings named, in that order: read by heading, not position, so a
@@ -28,3 +30,45 @@ export const HistoryHeadings = [
   'Created shop',
   'Created at',
 ];
+
+/** The column of a table each history heading shows. */
+export const HistoryColumnsShown: Record<string, string> = {
+  'Updated by': 'updated_by_user',
+  'Updated machine': 'updated_at_machine',
+  'Updated shop': 'updated_at_location',
+  'Updated at': 'updated_at_date',
+  'Created by': 'created_by_user',
+  'Created machine': 'created_at_machine',
+  'Created shop': 'created_at_location',
+  'Created at': 'created_at_date',
+};
+
+/**
+ * Checks a list's headings against its table as the database has it, not against a list typed out
+ * here: every column of the table but those `notShown`, in the table's own order, so its id comes
+ * first and its history last. `columnOf` says which column each heading shows. `extra` are headings no
+ * column holds (worked out, such as a role's rights); they sit after the table's own columns, just
+ * before its history. A heading "Change" no column backs is the Edit buttons', and is left out.
+ */
+export async function expectTableOrder(
+  db: PrismaClient,
+  table: string,
+  headings: string[],
+  columnOf: Record<string, string>,
+  { notShown = [], extra = [] }: { notShown?: string[]; extra?: string[] } = {},
+): Promise<void> {
+  const columns = (
+    await db.$queryRaw<{ column_name: string }[]>`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = current_schema() AND table_name = ${table}
+      ORDER BY ordinal_position`
+  ).map((row) => row.column_name);
+  for (const column of notShown) expect(columns, `${table} has no column ${column}`).toContain(column);
+  const isEdit = (heading: string) => heading === 'Change' && !('Change' in columnOf);
+  const shown = headings.filter((heading) => !isEdit(heading) && !extra.includes(heading)).map((heading) => columnOf[heading] ?? `no column for "${heading}"`);
+  expect(shown).toEqual(columns.filter((column) => !notShown.includes(column)));
+  if (extra.length > 0) {
+    const history = headings.indexOf(HistoryHeadings[0]!);
+    expect(headings.slice(history - extra.length, history)).toEqual(extra);
+  }
+}

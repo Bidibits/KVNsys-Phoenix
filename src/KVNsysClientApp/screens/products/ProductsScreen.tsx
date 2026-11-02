@@ -1,5 +1,5 @@
 import type { AccessName, ProductRow, ProductRowsResult, SignedInUser } from '@kvnsys/client';
-import { Button, historyColumns, Notice, Pesos, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, idColumn, Notice, Pesos, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { ProductFormPanel } from './ProductFormPanel';
 import { ProductThumbnail } from './ProductThumbnail';
@@ -10,25 +10,30 @@ const ManageRight: AccessName = 'products.manage';
 const PesosOrDash = ({ centavos }: { centavos: number | null }) => (centavos === null ? <TextOrDash text={null} /> : <Pesos centavos={centavos} />);
 
 /**
- * Every column of the products table, then its history, as Beta's grids showed a table. The
- * picture's column depends on which time the list was asked for, so a changed picture shows. The
- * cost is shown only to someone who may change products: they see it on the form anyway.
+ * Every column of the products table in the table's own order, its id first and its history last,
+ * as Beta's grids showed a table. The picture's column depends on which time the list was asked for,
+ * so a changed picture shows. The cost is shown only to someone who may change products: they see it
+ * on the form anyway.
  */
 const columnsFor = (generation: number, showCost: boolean): Column<ProductRow>[] => [
-  {
-    heading: 'Picture',
-    hiddenHeading: true,
-    width: '4.5rem',
-    cell: (product) => <ProductThumbnail id={product.id} name={product.name} hasPicture={product.hasPicture} generation={generation} />,
-  },
+  idColumn<ProductRow>(),
   { heading: 'Code', width: '8rem', cell: (product) => product.code, sortBy: (product) => product.code },
   { heading: 'Barcode', width: '10rem', cell: (product) => <TextOrDash text={product.barcode} />, sortBy: (product) => product.barcode },
   { heading: 'Name', width: '16rem', cell: (product) => product.name, sortBy: (product) => product.name },
+  {
+    heading: 'Picture',
+    width: '6rem',
+    cell: (product) => <ProductThumbnail id={product.id} name={product.name} hasPicture={product.hasPicture} generation={generation} />,
+  },
   { heading: 'Category', width: '14rem', cell: (product) => <TextOrDash text={product.categoryPath} />, sortBy: (product) => product.categoryPath },
   { heading: 'Brand', width: '10rem', cell: (product) => <TextOrDash text={product.brandName} />, sortBy: (product) => product.brandName },
   { heading: 'Supplier', width: '11rem', cell: (product) => <TextOrDash text={product.supplierName} />, sortBy: (product) => product.supplierName },
   { heading: 'Manufacturer', width: '11rem', cell: (product) => <TextOrDash text={product.manufacturerName} />, sortBy: (product) => product.manufacturerName },
   { heading: 'Unit', width: '6rem', cell: (product) => <TextOrDash text={product.unitOfMeasure} />, sortBy: (product) => product.unitOfMeasure },
+  { heading: 'Tracks stock', width: '8rem', cell: (product) => (product.tracksStock ? 'Yes' : 'No'), sortBy: (product) => (product.tracksStock ? 'Yes' : 'No') },
+  ...(showCost
+    ? [{ heading: 'Cost', width: '8rem', align: 'right' as const, cell: (product: ProductRow) => <Pesos centavos={product.costPrice} />, sortBy: (product: ProductRow) => product.costPrice }]
+    : []),
   { heading: 'Price', width: '8rem', align: 'right', cell: (product) => <Pesos centavos={product.retailPrice} />, sortBy: (product) => product.retailPrice },
   { heading: 'Promo price', width: '8.5rem', align: 'right', cell: (product) => <PesosOrDash centavos={product.promoPrice} />, sortBy: (product) => product.promoPrice },
   {
@@ -45,10 +50,6 @@ const columnsFor = (generation: number, showCost: boolean): Column<ProductRow>[]
     cell: (product) => (product.wholesaleQuantity === null ? <TextOrDash text={null} /> : `${product.wholesaleQuantity} pcs`),
     sortBy: (product) => product.wholesaleQuantity,
   },
-  ...(showCost
-    ? [{ heading: 'Cost', width: '8rem', align: 'right' as const, cell: (product: ProductRow) => <Pesos centavos={product.costPrice} />, sortBy: (product: ProductRow) => product.costPrice }]
-    : []),
-  { heading: 'Tracks stock', width: '8rem', cell: (product) => (product.tracksStock ? 'Yes' : 'No'), sortBy: (product) => (product.tracksStock ? 'Yes' : 'No') },
   {
     heading: 'Warranty',
     width: '8rem',

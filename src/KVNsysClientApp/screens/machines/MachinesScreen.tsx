@@ -1,12 +1,13 @@
 import type { AccessName, ListedMachine, MachineListResult, SignedInUser } from '@kvnsys/client';
-import { Button, historyColumns, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
+import { Button, historyColumns, idColumn, Notice, RecordTable, StatusLabel, TextOrDash, useToast, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 import { MachineFormPanel } from './MachineFormPanel';
 
 const ManageRight: AccessName = 'machines.manage';
 
-/** Every column of the machines table, then its history, as Beta's grids showed a table. */
+/** Every column of the machines table in the table's own order, its id first and its history last, as Beta's grids showed a table. */
 const Columns: Column<ListedMachine>[] = [
+  idColumn<ListedMachine>(),
   { heading: 'Code', width: '7rem', cell: (machine) => machine.code, sortBy: (machine) => machine.code },
   {
     heading: 'Name',
@@ -19,8 +20,8 @@ const Columns: Column<ListedMachine>[] = [
     ),
     sortBy: (machine) => machine.name,
   },
-  { heading: 'Computer name', width: '11rem', cell: (machine) => <TextOrDash text={machine.computerName} />, sortBy: (machine) => machine.computerName },
   { heading: 'Hardware id', width: '21rem', cell: (machine) => <TextOrDash text={machine.hardwareId} />, sortBy: (machine) => machine.hardwareId },
+  { heading: 'Computer name', width: '11rem', cell: (machine) => <TextOrDash text={machine.computerName} />, sortBy: (machine) => machine.computerName },
   { heading: 'Shop', width: '10rem', cell: (machine) => machine.shopName, sortBy: (machine) => machine.shopName },
   { heading: 'Status', width: '8rem', cell: (machine) => <StatusLabel status={machine.status} />, sortBy: (machine) => machine.status },
   { heading: 'Description', width: '16rem', cell: (machine) => <TextOrDash text={machine.description} />, sortBy: (machine) => machine.description },
