@@ -5,6 +5,11 @@ Written 2026-10-24, when the selling work (October 20 to 24) went into `main`. R
 [`design-direction.md`](design-direction.md). Those three are the record; this page only says where
 things stand and how to carry on.
 
+**Left to build:** what's left of the list the user agreed on 2026-11-02 (Sales as a full grid,
+Advance Search, and the Locations screen with PSA's place list) is written up in
+[`remaining-work.md`](remaining-work.md), for whoever takes it on. That page goes once all of it is
+done.
+
 ## Where it stands
 
 `main` now has everything in the README's "Status", up to and including **Getting around**. Added
@@ -31,6 +36,14 @@ Since then (2026-10-27): the server has a dashboard (`KVNsysServerApp`, an Elect
 administrator) that turns it on and off, chooses whether it starts with the PC, lists who's connected
 and disconnects them, and sets the server password machines must give. 637 tests; the protocol is
 at 17.
+
+Since then (2026-10-28 to 2026-11-03): every save writes the audit log, and the Audit log screen
+shows it; the setup asks for the first account's username; every list is a compact grid like
+Beta's, with every column in its table's order, who made and last changed each record, and columns
+dragged wider or narrower (each person's widths kept on the server); PCs are machines, shops are
+locations, Stock is the Inventory and Sell is Transact; Home has seven tiles; the Inventory logs
+list every movement; and `Uninstall all KVNsys.exe` sits beside the setup files. 700 tests; the
+protocol is at 24.
 
 ## Getting it onto your PC
 
@@ -184,17 +197,19 @@ None of it needs a change to the database's tables.
 |---|---|
 | ~~**Lines between columns, dragged to resize**~~ | **Done** (2026-11-02, protocol 21): double-click fits; each person's widths kept on the server (`decisions.md`, Settled). |
 | ~~**"Shop" becomes "Location"**, on screen and in the code; "Address" for where it is~~ | **Done** (2026-11-03, protocol 22): the screens, the setup, the messages and the code. Where "shop" meant the whole business it says "the business", the network is "the local network", and the clock and its days are the business's (`businessDate`, `businessDay`). "Address" waits for the Locations screen, below. |
-| **The place tables in use** | PSA's list of regions, provinces, cities and municipalities and barangays checked and loaded at setup (SCHEMA-PLAN, "Still open" 1), and a Locations screen that picks each, narrowing the next, then the street. Each branch's own code is set there; today every install is `HQ`. |
+| **The place tables in use** | PSA's list of regions, provinces, cities and municipalities and barangays checked and loaded at setup (SCHEMA-PLAN, "Still open" 1), and a Locations screen that picks each, narrowing the next, then the street. Each branch's own code is set there; today every install is `HQ`. Written up in [`remaining-work.md`](remaining-work.md), piece 3. |
 | ~~**What the setup makes is credited to the admin it makes**~~ | **Done** (2026-11-03): the location, the server PC, the Administrator role and the admin account, and their lines in the audit log, are by that admin; anything made while nobody was signed in shows a dash, and the Audit log's Who calls it "No one". |
 | ~~**"Stock" becomes "Inventory"**~~ | **Done** (2026-11-03, protocol 23): the tile and screen, Receive delivery and Adjust count, the rights (`inventory.view`, `inventory.receive`, `inventory.adjust`), `/api/inventory`, and in the code the ledger (`InventoryLedger`) and the calls. "Stock" stays where it means a product's count: the `stock` column, "In stock", `tracksStock`. |
 | ~~**Home: seven tiles**~~ | **Done** (2026-11-03): Transact, Sales, Products, Inventory, Users, Machines, Audit log. Brands, Categories, Manufacturers and Suppliers are buttons at the top of Products (as Beta's Products dashboard had them); Roles is a button at the top of Users, for whoever may see roles. |
 | ~~**Inventory Logs**~~ | **Done** (2026-11-03, protocol 24): each row's History is gone; Inventory logs at the top of Inventory opens every product's movements, newest 500 first, as a grid with every column of `inventory_logs`. |
 | ~~**"Sell" becomes "Transact"**~~ | **Done** (2026-11-03): the tile, the screen and the right's label ("Transact (ring up sales)"). Its records stay `receipts`, and the right stays `sales.sell`, since selling is what it does. |
-| **Sales as a full grid** | Every column of `receipts` in its order, then its three events, opened, settled and voided, in place of created and updated (settled is who rang it up and took the money, where and when). |
+| **Sales as a full grid** | Every column of `receipts` in its order, then its three events, opened, settled and voided, in place of created and updated (settled is who rang it up and took the money, where and when). Written up in [`remaining-work.md`](remaining-work.md), piece 1. |
+| **Advance Search** on every list | Asked for on 2026-11-03: a search with a box per field, as Beta had it. Written up in [`remaining-work.md`](remaining-work.md), piece 2. |
 
 ## Continuing with Claude Code
 
 Open Claude Code in the Phoenix folder and start with:
 
-> Read docs/handover.md, then README.md, docs/decisions.md and docs/design-direction.md. Then tell
-> me what you'd build next, and everything that step includes, before starting it.
+> Read docs/handover.md and docs/remaining-work.md, then README.md, docs/decisions.md and
+> docs/design-direction.md. Then tell me what you'd build next, and everything that step includes,
+> before starting it.
