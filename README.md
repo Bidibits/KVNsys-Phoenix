@@ -337,7 +337,7 @@ Needs Node 24 and pnpm 10. Run from this folder:
 | `pnpm start:server` | Starts KVNsys Server on this PC and prints the address other PCs use to reach it. It needs its database (`DATABASE_URL` in `.env`). A database that doesn't exist yet it creates, and an empty one it sets up, asking once for the shop's name and an administrator's username and password; any other database must already be KVNsys's, or it refuses to start. |
 | `pnpm start:app` | Opens KVNsys POS & Inventory on this PC |
 | `pnpm start:dashboard` | Opens the server's dashboard on this PC, looking at the installed KVNsys Server service. Started like this it has no administrator rights, so Windows refuses to turn the server on or off; the installed dashboard asks for them. |
-| `pnpm package` | Builds everything, then makes the programs in `out/`: `KVNsys POS & Inventory` (the app), `KVNsys Server` (one `KVNsys Server.exe`) and `KVNsys Server Dashboard` (the server's dashboard), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a machine, and `KVNsys Server Setup.exe` for the server PC, which carries the server and its dashboard. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
+| `pnpm package` | Builds everything, then makes the programs in `out/`: `KVNsys POS & Inventory` (the app), `KVNsys Server` (one `KVNsys Server.exe`) and `KVNsys Server Dashboard` (the server's dashboard), plus `KVNsys POS & Inventory Setup.exe`, the app as one setup file for a machine, and `KVNsys Server Setup.exe` for the server PC, which carries the server and its dashboard, and `Uninstall all KVNsys.exe`, which takes both off a PC for a fresh start. The server's setup file needs Inno Setup 7 on the building PC, and `pnpm fetch:installer-parts` run first. None of them needs Node or pnpm on the PC that runs it. |
 | `pnpm install:here` | Installs those two programs on this PC, for the person signed in to Windows, with an icon for each on the desktop. Run it again after packaging again, with both programs closed. |
 | `pnpm fetch:installer-parts` | Downloads what the server's setup file will carry into `vendor/`, which isn't committed: PostgreSQL 18.6 for Windows from EDB (unpacked), and Microsoft's Visual C++ runtime. Each file is checked against its recorded fingerprint. |
 
@@ -399,6 +399,15 @@ needing no administrator rights. It puts an icon on the desktop and in the Start
 the app. To remove it, use Windows' list of apps; its settings (which server it uses, which server it
 trusts, the server's password) go with it. Installing a newer version over it keeps them. If the server has a
 password, the app asks for it the first time it connects, and again only if it changes.
+
+**To take all of KVNsys off a PC**, for a fresh start: `out\Uninstall all KVNsys.exe`, built beside the
+setup files. Windows asks for administrator rights, then it shows what it found and what happens to
+it, and removes nothing until Remove is clicked. It closes KVNsys's windows, then runs the uninstallers
+already there, one after the other: the app's (with its settings), a copy `pnpm install:here` made
+(with its desktop icons), and KVNsys Server's, which packs the shop into one archive in
+`C:\KVNsys Archives` first. The archives are kept. It says at the end what was removed, and what
+wasn't and why. `/CHECK=<file>` only writes what it found to that file (with `/CURRENTUSER`, it needs no
+administrator rights for that); `pnpm check:package` uses it.
 
 **KVNsys's own PostgreSQL:** `scripts/postgresql/install-postgresql.ps1` installs it as a Windows
 service: port 5433, answering on this PC only, with random passwords nobody sees. `remove-postgresql.ps1`

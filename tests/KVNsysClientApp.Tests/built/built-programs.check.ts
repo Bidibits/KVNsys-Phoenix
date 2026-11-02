@@ -16,6 +16,7 @@ import { createThrowawayDatabase, describeWithDatabase } from '../throwaway-data
 const out = fileURLToPath(new URL('../../../out/', import.meta.url));
 const serverExe = join(out, 'KVNsys Server', 'KVNsys Server.exe');
 const appExe = join(out, 'KVNsys POS & Inventory', 'KVNsys POS & Inventory.exe');
+const uninstallAllExe = join(out, 'Uninstall all KVNsys.exe');
 const Password = 'package-check-password';
 
 /** The protocol the code says, so a server left over from an older `pnpm package` is noticed. */
@@ -174,5 +175,22 @@ describeWithDatabase('the built programs in out\\, run together on a throwaway s
     await log.waitFor();
     expect((await cellsUnder(log, ['Table', 'Column', 'Before', 'After', 'By']))[0]).toEqual(['Machines', 'Name', 'Server', 'Front counter', 'System Administrator (kenly)']);
     await picture(window, 'built-audit-log');
+  });
+
+  it('has Uninstall all KVNsys beside them, which finds what Windows says is installed on this PC, in a check that removes nothing', () => {
+    expect(existsSync(uninstallAllExe), `${uninstallAllExe} isn't there`).toBe(true);
+    const found = join(appData, 'uninstall-all-found.txt');
+    spawnSync(uninstallAllExe, ['/CURRENTUSER', '/VERYSILENT', `/CHECK=${found}`], { timeout: 60_000 });
+    const said = Object.fromEntries(
+      readFileSync(found, 'utf8')
+        .trim()
+        .split(/\r?\n/)
+        .map((line) => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]),
+    );
+    // What Windows says, read apart from it.
+    const registered = (key: string) => spawnSync('reg', ['query', key], { stdio: 'ignore' }).status === 0;
+    expect(said.server !== '', 'KVNsys Server').toBe(registered('HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{FE1FED73-BEAD-48D2-AC69-831D052DCC53}_is1'));
+    expect(said.app !== '', 'KVNsys POS & Inventory').toBe(registered('HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\2b496fba-f10a-5cc0-9abd-0156bf729cf7'));
+    expect(said.here !== '', 'the install:here copy').toBe(existsSync(join(process.env.LOCALAPPDATA ?? '', 'Programs', 'KVNsys')));
   });
 });

@@ -5,6 +5,7 @@
 //   out/KVNsys Server/                     the server: KVNsys Server.exe, a console program, with its own Node
 //   out/KVNsys Server Dashboard/           the server's dashboard: Electron, like the app, run as administrator
 //   out/KVNsys Server Setup.exe            the server PC's setup file: the server, its dashboard, and its own PostgreSQL
+//   out/Uninstall all KVNsys.exe           takes both off a PC for a fresh start, the shop packed into an archive first
 //
 // None of them needs Node or pnpm on the PC it runs on. `pnpm install:here` installs the app and the
 // server on this PC.
@@ -250,6 +251,16 @@ async function packageServer() {
   return target;
 }
 
+/** Inno Setup 7's compiler, or undefined when it isn't installed. */
+function innoCompiler() {
+  const candidates = [
+    process.env.ISCC,
+    join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Inno Setup 7', 'ISCC.exe'),
+    join(process.env.ProgramFiles ?? '', 'Inno Setup 7', 'ISCC.exe'),
+  ];
+  return candidates.find((path) => path && existsSync(path));
+}
+
 /**
  * The server PC's setup file, built by Inno Setup from scripts/server-setup/kvnsys-server.iss. It
  * carries the server packageServer made, the dashboard packageDashboard made, PostgreSQL and the
@@ -257,12 +268,7 @@ async function packageServer() {
  * again, the nightly backup's, and the one that packs a shop into an archive before an uninstall.
  */
 function makeServerSetup() {
-  const candidates = [
-    process.env.ISCC,
-    join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Inno Setup 7', 'ISCC.exe'),
-    join(process.env.ProgramFiles ?? '', 'Inno Setup 7', 'ISCC.exe'),
-  ];
-  const iscc = candidates.find((path) => path && existsSync(path));
+  const iscc = innoCompiler();
   if (!iscc) {
     console.log("Skipped KVNsys Server Setup.exe: Inno Setup 7 isn't installed on this PC (see the README).");
     return null;
@@ -282,8 +288,26 @@ function makeServerSetup() {
   return join(out, 'KVNsys Server Setup.exe');
 }
 
+/**
+ * Uninstall all KVNsys.exe, built by Inno Setup from scripts/uninstall-all/uninstall-all.iss: one
+ * double-click that runs the app's and the server's own uninstallers, for a fresh start. It carries
+ * nothing but itself, so it goes beside the setup files.
+ */
+function makeUninstallAll() {
+  const iscc = innoCompiler();
+  if (!iscc) {
+    console.log("Skipped Uninstall all KVNsys.exe: Inno Setup 7 isn't installed on this PC (see the README).");
+    return null;
+  }
+  const { version } = readJson(join(root, 'src', 'KVNsysServer', 'package.json'));
+  execFileSync(iscc, ['/Qp', `/DAppVersion=${version}`, `/O${out}`, join(root, 'scripts', 'uninstall-all', 'uninstall-all.iss')], {
+    stdio: 'inherit',
+  });
+  return join(out, 'Uninstall all KVNsys.exe');
+}
+
 const client = await packageClient();
-const made = [client, await makeClientSetup(client), await packageServer(), await packageDashboard(), makeServerSetup()].filter(Boolean);
+const made = [client, await makeClientSetup(client), await packageServer(), await packageDashboard(), makeServerSetup(), makeUninstallAll()].filter(Boolean);
 for (const path of made) {
   if (!existsSync(path)) throw new Error(`Packaging finished but ${path} isn't there.`);
   console.log(`Made ${path}`);
