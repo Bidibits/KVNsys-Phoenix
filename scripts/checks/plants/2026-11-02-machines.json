@@ -4,16 +4,16 @@
     {
       "name": "1 new machines coded with R again",
       "file": "src/KVNsysCore/locations/machines.ts",
-      "old": "return `${shopCode}-M${",
-      "new": "return `${shopCode}-R${",
+      "old": "return `${locationCode}-M${",
+      "new": "return `${locationCode}-R${",
       "build": ["@kvnsys/core"],
       "tests": [["KVNsysCore.Tests", "machines"]]
     },
     {
       "name": "2 the next number counted from the old R codes",
       "file": "src/KVNsysPostgres/locations/prisma-machine-book.ts",
-      "old": "const prefix = `${shop.code}-M`;",
-      "new": "const prefix = `${shop.code}-R`;",
+      "old": "const prefix = `${location.code}-M`;",
+      "new": "const prefix = `${location.code}-R`;",
       "build": ["@kvnsys/postgres"],
       "tests": [["KVNsysPostgres.Tests", "machine-book"]]
     },

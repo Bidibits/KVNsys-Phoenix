@@ -89,7 +89,7 @@ export function readRoleForm(form: RoleForm): RoleDetails {
 }
 
 /**
- * The Administrator's rights and status can't change, so the shop can never lose the one role that
+ * The Administrator's rights and status can't change, so the business can never lose the one role that
  * can do everything. Its name can.
  */
 export function checkRoleChange(code: string, details: RoleDetails): void {

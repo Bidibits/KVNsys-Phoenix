@@ -103,7 +103,7 @@ describeWithDatabase("the catalogue's lists in the real app", () => {
       Description: 'description',
       ...HistoryColumnsShown,
     });
-    expect(await rowsOf('Suppliers', ['Updated by', 'Created by', 'Created shop'])).toEqual([['—', 'System Administrator (admin)', 'Head Office']]);
+    expect(await rowsOf('Suppliers', ['Updated by', 'Created by', 'Created location'])).toEqual([['—', 'System Administrator (admin)', 'Head Office']]);
   });
 
   it('puts a category inside another, and the list says where each sits', async () => {

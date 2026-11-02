@@ -5,13 +5,13 @@ import { callServer as call, type CallOptions, type Refused } from '../connectio
 /** A machine as the server sends it. */
 export type SentMachine = Omit<Machine, 'locationId'>;
 
-/** A machine as the Machines screen lists it: with the name of its shop, and its history. */
-export type ListedMachine = Omit<Listed<Machine>, 'locationId'> & { shopName: string };
+/** A machine as the Machines screen lists it: with the name of its location, and its history. */
+export type ListedMachine = Omit<Listed<Machine>, 'locationId'> & { locationName: string };
 
 export type MachineListResult = { ok: true; machines: ListedMachine[] } | Refused;
 export type MachineResult = { ok: true; machine: SentMachine } | Refused;
 
-/** The shop's machines, the server PC first. */
+/** The location's machines, the server PC first. */
 export async function listMachines(address: string, pass: SessionPass, options: CallOptions): Promise<MachineListResult> {
   const answer = await call(address, pass, options, { path: MachinesPath }, MachineListReply);
   return answer.ok ? { ok: true, machines: answer.reply.machines } : answer;

@@ -15,7 +15,7 @@ export interface ServerOptions {
   certificate: Pick<ServerCertificate, 'key' | 'cert'>;
   /** The database the server owns. Without one, it still says hello but can't sign anyone in. */
   databaseUrl?: string;
-  /** The PC it runs on, which says which shop it serves. Read from this PC unless given. */
+  /** The PC it runs on, which says which location it serves. Read from this PC unless given. */
   server?: PcIdentity;
   /**
    * The server's own folder, where the server password is kept between runs. Without one (tests),

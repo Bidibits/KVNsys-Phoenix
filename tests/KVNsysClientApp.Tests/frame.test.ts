@@ -20,7 +20,7 @@ describeWithDatabase('the window frame, Home and the products list, in the real 
   let app: ElectronApplication;
   let window: Page;
 
-  /** A role made by hand, as a shop makes one: a new install has only the Administrator. */
+  /** A role made by hand, as a location makes one: a new install has only the Administrator. */
   async function addRole(code: string, rights: string[]): Promise<void> {
     const role = await db.role.create({ data: { id: randomUUID(), code, name: code, level: 10 } });
     for (const access of rights) await db.access.create({ data: { id: randomUUID(), roleId: role.id, access } });
@@ -159,7 +159,7 @@ describeWithDatabase('the window frame, Home and the products list, in the real 
     await productsTile().click();
     await table().waitFor();
     expect((await rowsShown()).length).toBe(43);
-    // What a product costs the shop isn't shown to someone who can't change products; who made each is.
+    // What a product costs the location isn't shown to someone who can't change products; who made each is.
     const headings = await headingsOf(table());
     expect(headings).not.toContain('Cost');
     expect(headings).toContain('Created by');

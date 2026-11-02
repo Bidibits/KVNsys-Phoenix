@@ -1,6 +1,6 @@
 <#
   Removes what install-postgresql.ps1 installed: the service and the programs. The data folder and
-  the stored password are kept unless -RemoveData is given, because deleting a shop's data should
+  the stored password are kept unless -RemoveData is given, because deleting a location's data should
   never happen by accident. Needs administrator rights.
 #>
 param(

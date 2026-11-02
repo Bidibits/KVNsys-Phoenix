@@ -9,7 +9,7 @@ import { freshDataDir, launchApp, removeDataDir } from './launch.js';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
 const AdminPassword = 'test-admin-password';
-const ServerPasswordTyped = 'shop-door-1234';
+const ServerPasswordTyped = 'location-door-1234';
 
 describeWithDatabase('a server with a password, from the real app, across restarts', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
@@ -72,7 +72,7 @@ describeWithDatabase('a server with a password, from the real app, across restar
   });
 
   it('turns away a wrong one, and empties the box', async () => {
-    await window.getByLabel('Server password').fill('shop-door-9999');
+    await window.getByLabel('Server password').fill('location-door-9999');
     await window.getByRole('button', { name: 'Connect' }).click();
     await window.getByRole('alert').getByText("That isn't this server's password.").waitFor();
     expect(await window.getByLabel('Server password').inputValue()).toBe('');

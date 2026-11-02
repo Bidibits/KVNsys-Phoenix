@@ -34,11 +34,11 @@ export function headingsOf(table: Locator): Promise<string[]> {
 export const HistoryHeadings = [
   'Updated by',
   'Updated machine',
-  'Updated shop',
+  'Updated location',
   'Updated at',
   'Created by',
   'Created machine',
-  'Created shop',
+  'Created location',
   'Created at',
 ];
 
@@ -46,11 +46,11 @@ export const HistoryHeadings = [
 export const HistoryColumnsShown: Record<string, string> = {
   'Updated by': 'updated_by_user',
   'Updated machine': 'updated_at_machine',
-  'Updated shop': 'updated_at_location',
+  'Updated location': 'updated_at_location',
   'Updated at': 'updated_at_date',
   'Created by': 'created_by_user',
   'Created machine': 'created_at_machine',
-  'Created shop': 'created_at_location',
+  'Created location': 'created_at_location',
   'Created at': 'created_at_date',
 };
 

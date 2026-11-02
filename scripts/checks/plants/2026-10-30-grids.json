@@ -34,10 +34,10 @@
       "tests": [["KVNsysPostgres.Tests", "record-history"]]
     },
     {
-      "name": "5 the machines list names the shop by its code",
+      "name": "5 the machines list names the location by its code",
       "file": "src/KVNsysServer/http/machines.controller.ts",
-      "old": "shopName: shop.name",
-      "new": "shopName: shop.code",
+      "old": "locationName: location.name",
+      "new": "locationName: location.code",
       "build": ["@kvnsys/server"],
       "tests": [["KVNsysServer.Tests", "machines-database"]]
     },

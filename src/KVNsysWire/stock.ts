@@ -5,7 +5,7 @@ import { ProductOnWire } from './products.js';
 /**
  * The stock calls. Every one needs a signed-in pass, and a role with the right: stock.view to look,
  * stock.receive to record goods in from a supplier, stock.adjust to put a count right. Stock is
- * always the server's own shop's: each branch has its own server, which knows which shop it is.
+ * always the server's own location's: each branch has its own server, which knows which location it is.
  *
  *   GET  /api/stock                   every product, by name, with its stock here
  *   GET  /api/stock/find?codeOrBarcode=PRD-0042
@@ -25,9 +25,9 @@ export const productStockPath = (productId: string) => `${StockPath}/${encodeURI
 /** How many of a product's movements come back at most, newest first. */
 export const MovementsShown = 200;
 
-/** The shop the stock belongs to. */
-export const ShopOnWire = z.object({ id: z.string(), code: z.string(), name: z.string() });
-export type ShopOnWire = z.infer<typeof ShopOnWire>;
+/** The location the stock belongs to. */
+export const LocationOnWire = z.object({ id: z.string(), code: z.string(), name: z.string() });
+export type LocationOnWire = z.infer<typeof LocationOnWire>;
 
 /** One line of the ledger, as the server sends it. Quantities are whole pieces. */
 export const MovementOnWire = z.object({
@@ -39,7 +39,7 @@ export const MovementOnWire = z.object({
   note: z.string().nullable(),
   /** The document that caused it, such as a sale, or null. */
   source: z.object({ table: z.string(), id: z.string() }).nullable(),
-  /** The shop's stock of the product just after this line. */
+  /** The location's stock of the product just after this line. */
   resultingOnHand: z.number().int(),
   /** When it was saved, by the server's clock: an ISO date and time. */
   createdAt: z.string(),
@@ -48,9 +48,9 @@ export const MovementOnWire = z.object({
 });
 export type MovementOnWire = z.infer<typeof MovementOnWire>;
 
-/** Every product in the catalog, Inactive ones too, with how many the shop holds. Never moved: 0. */
+/** Every product in the catalog, Inactive ones too, with how many the location holds. Never moved: 0. */
 export const StockListReply = z.object({
-  shop: ShopOnWire,
+  location: LocationOnWire,
   items: z.array(z.object({ product: ProductOnWire, stock: z.number().int() })),
 });
 export type StockListReply = z.infer<typeof StockListReply>;
@@ -59,11 +59,11 @@ export type StockListReply = z.infer<typeof StockListReply>;
  * One product and its stock here. Finding needs only the right to see stock, so whoever receives
  * goods doesn't also need the right to see the catalog.
  */
-export const StockItemReply = z.object({ shop: ShopOnWire, product: ProductOnWire, stock: z.number().int() });
+export const StockItemReply = z.object({ location: LocationOnWire, product: ProductOnWire, stock: z.number().int() });
 export type StockItemReply = z.infer<typeof StockItemReply>;
 
 export const ProductStockReply = z.object({
-  shop: ShopOnWire,
+  location: LocationOnWire,
   product: ProductOnWire,
   stock: z.number().int(),
   /** Newest first, at most MovementsShown of them. */

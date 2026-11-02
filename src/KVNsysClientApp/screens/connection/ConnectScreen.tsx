@@ -65,7 +65,7 @@ export function ConnectScreen({
   }
 
   return (
-    <Panel title="KVNsys POS & Inventory" subtitle="Connect this machine to the shop's KVNsys Server.">
+    <Panel title="KVNsys POS & Inventory" subtitle="Connect this machine to this location's KVNsys Server.">
       <form onSubmit={connect} noValidate>
         <TextField
           label="Server address"

@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * The signed-in person's own settings for how the screens look (see KVNsysCore's user-settings.ts):
  * so far, the widths they dragged each list's columns to. Both calls need a signed-in pass and no
- * right: the settings are the person's own, and change nothing of the shop's.
+ * right: the settings are the person's own, and change nothing of the business's.
  *
  *   GET  /api/my-settings    the person's settings; none changed yet reads as an empty one
  *   PUT  /api/my-settings    keeps these in place of what was kept; the reply is them as kept

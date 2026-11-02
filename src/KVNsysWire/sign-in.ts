@@ -49,7 +49,7 @@ export const SignedInUser = z.object({
    * courtesy: the server checks the real rights on every request.
    */
   rights: z.array(z.string()),
-  /** The machine this sign-in is at, as the shop calls it, or null when it's at none. */
+  /** The machine this sign-in is at, as the location calls it, or null when it's at none. */
   machine: z.object({ code: z.string(), name: z.string() }).nullable(),
 });
 export type SignedInUser = z.infer<typeof SignedInUser>;

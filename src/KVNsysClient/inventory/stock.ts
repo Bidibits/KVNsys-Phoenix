@@ -10,13 +10,13 @@ import {
   StockPath,
   type MovementOnWire,
   type SessionPass,
-  type ShopOnWire,
+  type LocationOnWire,
 } from '@kvnsys/wire';
 import { productFromWire } from '../catalog/products.js';
 import { callServer as call, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
-/** The shop the stock belongs to: always the server's own. */
-export type Shop = ShopOnWire;
+/** The location the stock belongs to: always the server's own. */
+export type Location = LocationOnWire;
 /** A line of the stock ledger, with the name of whoever saved it. */
 export type RecordedMovement = MovementOnWire;
 export interface StockItem {
@@ -24,19 +24,19 @@ export interface StockItem {
   stock: number;
 }
 
-export type StockListResult = { ok: true; shop: Shop; items: StockItem[] } | Refused;
-export type StockItemResult = { ok: true; shop: Shop; item: StockItem } | Refused;
+export type StockListResult = { ok: true; location: Location; items: StockItem[] } | Refused;
+export type StockItemResult = { ok: true; location: Location; item: StockItem } | Refused;
 export type ProductStockResult =
-  | { ok: true; shop: Shop; product: Product; stock: number; movements: RecordedMovement[]; more: boolean }
+  | { ok: true; location: Location; product: Product; stock: number; movements: RecordedMovement[]; more: boolean }
   | Refused;
 export type RecordStockResult = { ok: true; movements: RecordedMovement[] } | Refused;
 
-/** Every product, by name, with how many the shop holds. */
+/** Every product, by name, with how many the location holds. */
 export async function listStock(address: string, pass: SessionPass, options: CallOptions): Promise<StockListResult> {
   const answer = await call(address, pass, options, { path: StockPath }, StockListReply);
   if (!answer.ok) return answer;
   const items = answer.reply.items.map((item) => ({ product: productFromWire(item.product), stock: item.stock }));
-  return { ok: true, shop: answer.reply.shop, items };
+  return { ok: true, location: answer.reply.location, items };
 }
 
 /** One product by what was typed or scanned, its code or its barcode, with its stock here. */
@@ -44,7 +44,7 @@ export async function findStockItem(address: string, pass: SessionPass, codeOrBa
   const path = `${FindStockItemPath}?codeOrBarcode=${encodeURIComponent(codeOrBarcode)}`;
   const answer = await call(address, pass, options, { path }, StockItemReply);
   if (!answer.ok) return answer;
-  return { ok: true, shop: answer.reply.shop, item: { product: productFromWire(answer.reply.product), stock: answer.reply.stock } };
+  return { ok: true, location: answer.reply.location, item: { product: productFromWire(answer.reply.product), stock: answer.reply.stock } };
 }
 
 /** One product's stock, and its movements, newest first. `more` says there are older ones. */

@@ -8,7 +8,7 @@ import {
   PrismaRoleCatalog,
   PrismaSalesJournal,
   PrismaShiftBook,
-  PrismaShopDirectory,
+  PrismaLocationDirectory,
   PrismaStockLedger,
   PrismaUserAccounts,
   PrismaUserDirectory,
@@ -65,7 +65,7 @@ class DatabaseLifecycle implements OnModuleDestroy {
 @Module({})
 export class ServerModule {
   /**
-   * `server` is the PC this server runs on, which says which shop's stock it keeps. `serverPassword`
+   * `server` is the PC this server runs on, which says which location's stock it keeps. `serverPassword`
    * is the password machines must give, when it's on.
    */
   static withDatabase(client: PrismaClient | null, server: PcIdentity, serverPassword: ServerPassword): DynamicModule {
@@ -101,7 +101,7 @@ export class ServerModule {
               ? ({
                   signIn: new SignIn(new PrismaUserDirectory(db), new ScryptPasswordHasher()),
                   machines: new PrismaMachineBook(db),
-                  shops: new PrismaShopDirectory(db),
+                  locations: new PrismaLocationDirectory(db),
                   server,
                 } satisfies SignInOperationParts)
               : null,
@@ -178,7 +178,7 @@ export class ServerModule {
               ? ({
                   ledger: new PrismaStockLedger(db),
                   catalog: new PrismaProductCatalog(db),
-                  shops: new PrismaShopDirectory(db),
+                  locations: new PrismaLocationDirectory(db),
                   accounts: new PrismaUserAccounts(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,
@@ -194,7 +194,7 @@ export class ServerModule {
               ? ({
                   journal: new PrismaSalesJournal(db),
                   catalog: new PrismaProductCatalog(db),
-                  shops: new PrismaShopDirectory(db),
+                  locations: new PrismaLocationDirectory(db),
                   accounts: new PrismaUserAccounts(db),
                   machines: new PrismaMachineBook(db),
                   shifts: new PrismaShiftBook(db),
@@ -211,7 +211,7 @@ export class ServerModule {
             machines: db
               ? ({
                   machines: new PrismaMachineBook(db),
-                  shops: new PrismaShopDirectory(db),
+                  locations: new PrismaLocationDirectory(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   sessions,
                   server,
@@ -226,7 +226,7 @@ export class ServerModule {
             shifts: db
               ? ({
                   shifts: new PrismaShiftBook(db),
-                  shops: new PrismaShopDirectory(db),
+                  locations: new PrismaLocationDirectory(db),
                   accounts: new PrismaUserAccounts(db),
                   authorizer: new Authorizer(sessions, new PrismaUserDirectory(db)),
                   server,

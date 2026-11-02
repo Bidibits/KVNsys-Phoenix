@@ -1,11 +1,11 @@
 <#
-  Packs a server PC's shop into one archive file. Uninstalling KVNsys Server runs this first, so the
-  uninstall can then remove everything and still never lose the shop. KVNsys Server's setup runs it
+  Packs a server PC's records into one archive file. Uninstalling KVNsys Server runs this first, so the
+  uninstall can then remove everything and still never lose the location's records. KVNsys Server's setup runs it
   too, on a PC where an earlier install left its data but KVNsys Server isn't installed any more:
-  that data is packed away, and the new install starts a new shop instead of picking it back up.
+  that data is packed away, and the new install starts a new location instead of picking it back up.
 
   The archive is one .zip in C:\KVNsys Archives, a folder only Administrators and SYSTEM may open,
-  since it holds the shop's records. Inside:
+  since it holds the location's records. Inside:
     database.dump            the whole database, in PostgreSQL's own format, like a nightly backup
     Backups\                 the nightly backups that were kept
     Logs\                    the server's logs
@@ -72,7 +72,7 @@ function Read-DatabaseUrl([string] $file) {
 }
 
 # Copies the whole database into one file, the way the nightly backup does, and reads it back in
-# full before it counts. Returns the shop's name too, for the archive's file name.
+# full before it counts. Returns the location's name too, for the archive's file name.
 function Save-Database([string] $dumpFile) {
   $bin = Join-Path $InstallDir 'bin'
   if (-not (Test-Path (Join-Path $bin 'pg_dump.exe'))) { throw "There's no pg_dump.exe in $bin." }
@@ -98,19 +98,19 @@ function Save-Database([string] $dumpFile) {
     Invoke-Tool (Join-Path $bin 'pg_dump.exe') @(
       '-h', $db.Host, '-p', "$($db.Port)", '-U', $db.User, '-d', $db.Database,
       '--format=custom', '--no-password', "--file=$dumpFile") | Out-Null
-    # The first shop recorded is the one the setup made. Only for the file's name, so a database
+    # The first location recorded is the one the setup made. Only for the file's name, so a database
     # that can't say leaves the name out rather than failing.
-    $shop = ''
+    $location = ''
     try {
-      $shop = (& (Join-Path $bin 'psql.exe') -h $db.Host -p $db.Port -U $db.User -d $db.Database --no-password -At `
+      $location = (& (Join-Path $bin 'psql.exe') -h $db.Host -p $db.Port -U $db.User -d $db.Database --no-password -At `
         -c 'SELECT name FROM locations ORDER BY created_at_date LIMIT 1' 2>$null | Select-Object -First 1)
-      if ($LASTEXITCODE -ne 0) { $shop = '' }
-    } catch { $shop = '' }
+      if ($LASTEXITCODE -ne 0) { $location = '' }
+    } catch { $location = '' }
   } finally {
     Remove-Item Env:\PGPASSWORD -ErrorAction SilentlyContinue
   }
   Invoke-Tool (Join-Path $bin 'pg_restore.exe') @('--file=NUL', $dumpFile) | Out-Null
-  return "$shop".Trim()
+  return "$location".Trim()
 }
 
 # Adds one file to the archive. Read with sharing, so a log another program still has open is
@@ -144,7 +144,7 @@ function Add-Text($zip, [string] $entryName, [string] $text) {
   try { $writer.Write($text) } finally { $writer.Dispose() }
 }
 
-# A file name made from the shop's name: anything Windows won't take in a name is left out.
+# A file name made from the location's name: anything Windows won't take in a name is left out.
 function Get-SafeName([string] $text) {
   $invalid = [IO.Path]::GetInvalidFileNameChars()
   $safe = -join ($text.ToCharArray() | Where-Object { $invalid -notcontains $_ })
@@ -159,13 +159,13 @@ try {
   if ($LogFile) { New-Item -ItemType Directory -Force -Path (Split-Path $LogFile) | Out-Null }
   Write-Log "Packing KVNsys Server's data in $DataDir into an archive."
   $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-  if (-not $isAdmin) { throw 'This needs administrator rights: only administrators may read the shop''s data.' }
+  if (-not $isAdmin) { throw 'This needs administrator rights: only administrators may read the location''s data.' }
   if (-not (Test-Path -LiteralPath $DataDir)) {
     Write-Log 'There is no data to pack. Nothing to do.'
     exit 0
   }
 
-  # The archives are the whole shop, so only Administrators and SYSTEM may open the folder.
+  # The archives are all the location's records, so only Administrators and SYSTEM may open the folder.
   if (-not (Test-Path -LiteralPath $ArchiveDir)) {
     New-Item -ItemType Directory -Force -Path $ArchiveDir | Out-Null
     & icacls $ArchiveDir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' | Out-Null
@@ -175,10 +175,10 @@ try {
   # The database, copied while PostgreSQL runs. If that can't be done, its own files are taken as
   # they are, with PostgreSQL stopped so they're in one piece.
   $dumpFile = Join-Path ([IO.Path]::GetTempPath()) "kvnsys-archive-$([Guid]::NewGuid().ToString('N')).dump"
-  $shop = ''
+  $location = ''
   $whole = $false
   try {
-    $shop = Save-Database $dumpFile
+    $location = Save-Database $dumpFile
     Write-Log "Copied the database ($('{0:N1}' -f ((Get-Item -LiteralPath $dumpFile).Length / 1MB)) MB)."
   } catch {
     Write-Log "Couldn't copy the database the usual way: $($_.Exception.Message)"
@@ -193,8 +193,8 @@ try {
   }
 
   $stamp = Get-Date -Format 'yyyy-MM-dd HH-mm-ss'
-  $shopPart = Get-SafeName $shop
-  $name = if ($shopPart) { "KVNsys $shopPart $stamp.zip" } else { "KVNsys $stamp.zip" }
+  $locationPart = Get-SafeName $location
+  $name = if ($locationPart) { "KVNsys $locationPart $stamp.zip" } else { "KVNsys $stamp.zip" }
   $archive = Join-Path $ArchiveDir $name
   $partial = "$archive.partial"
 
@@ -214,10 +214,10 @@ try {
         "Backups\                 the nightly backups that were kept`r`n" +
         "Logs\                    the server's logs"
     }
-    $shopLine = if ($shop) { "The shop: $shop`r`n" } else { '' }
+    $locationLine = if ($location) { "The location: $location`r`n" } else { '' }
     Add-Text $zip 'About this archive.txt' (
       "KVNsys Server's data from the PC $env:COMPUTERNAME, packed on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss').`r`n" +
-      $shopLine + "`r`n" +
+      $locationLine + "`r`n" +
       "Inside:`r`n$inside`r`n`r`n" +
       "KVNsys can't put an archive back yet. The database copy can be put back with PostgreSQL 18's own`r`n" +
       "pg_restore.`r`n")

@@ -20,12 +20,12 @@ export type MachineStatus = (typeof MachineStatuses)[number];
 
 export const MachineLimits = { name: 60 } as const;
 
-/** A PC the shop's people sign in at (the `machines` table), the server PC among them. */
+/** A PC the location's people sign in at (the `machines` table), the server PC among them. */
 export interface Machine {
   id: string;
   /** Given when it's first recorded, and never changed: HQ-M01, or HQ-SRV for the server PC. */
   code: string;
-  /** What the shop calls it: "Counter 1". */
+  /** What the location calls it: "Counter 1". */
   name: string;
   /** Windows' name for the PC, as it last said. */
   computerName: string | null;
@@ -44,9 +44,9 @@ export interface MachineDetails {
   status: MachineStatus;
 }
 
-/** The code of a shop's nth machine: HQ-M01, HQ-M02, … HQ-M100. */
-export function machineCode(shopCode: string, number: number): string {
-  return `${shopCode}-M${String(number).padStart(2, '0')}`;
+/** The code of a location's nth machine: HQ-M01, HQ-M02, … HQ-M100. */
+export function machineCode(locationCode: string, number: number): string {
+  return `${locationCode}-M${String(number).padStart(2, '0')}`;
 }
 
 /** What a machine is called until a manager names it: "New machine (COUNTER-PC)". */
@@ -69,12 +69,12 @@ export function checkMachineDetails(details: { name: string; status: string }): 
  * The machines a server knows. KVNsysCore only describes it; KVNsysPostgres provides the real one.
  *
  * A PC is recognised by its hardware id, which survives renaming it. The first time an unknown
- * one signs in, it's recorded at the shop by itself, with the next code and a name to change.
+ * one signs in, it's recorded at the location by itself, with the next code and a name to change.
  */
 export abstract class MachineBook {
-  /** This PC as one of the shop's machines, recorded now if it's new. Its computer name is kept up to date. */
+  /** This PC as one of the location's machines, recorded now if it's new. Its computer name is kept up to date. */
   abstract recognise(pc: PcIdentity & { hardwareId: string }, locationId: string, lineage: Lineage): Promise<Machine>;
-  /** The shop's machines, the server PC first, then by code. */
+  /** The location's machines, the server PC first, then by code. */
   abstract list(locationId: string): Promise<Listed<Machine>[]>;
   abstract get(id: string): Promise<Machine | null>;
   /** Refuses switching the server PC off. */

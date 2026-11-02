@@ -3,7 +3,7 @@ import type { Listed } from '../shared/record-history.js';
 import { Refusal } from '../shared/refusal.js';
 
 /**
- * The catalogue's own lists (SCHEMA-PLAN 12–15): who the shop buys from, and the brands,
+ * The catalogue's own lists (SCHEMA-PLAN 12–15): who the business buys from, and the brands,
  * makers and categories a product is filed under. They share one shape, so one description below
  * says what each has, and one list screen, one form and one set of server calls serve all four.
  */

@@ -1,5 +1,5 @@
 import { applyDatabaseUpdates, createPrismaClient, PrismaSetupStore, PrismaUserDirectory } from '@kvnsys/postgres';
-import { InstallSeed, ScryptPasswordHasher, setUpFirstShop, SignIn, type Questions } from '@kvnsys/server';
+import { InstallSeed, ScryptPasswordHasher, setUpFirstLocation, SignIn, type Questions } from '@kvnsys/server';
 import { expect, it } from 'vitest';
 import { createThrowawayDatabase, describeWithDatabase } from './throwaway-database.js';
 
@@ -16,7 +16,7 @@ describeWithDatabase('a first start on an empty database, against a real databas
       const answers = ['Kenly Lucena', 'Kenly', 'a-good-password', 'a-good-password'];
       const next = async () => answers.shift()!;
       const questions: Questions = { ask: next, askSecret: next };
-      await setUpFirstShop(seed, questions, { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' }, () => {});
+      await setUpFirstLocation(seed, questions, { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' }, () => {});
 
       // Asked once: from now on there's someone who can sign in.
       expect(await seed.firstAdministratorNeeded()).toBe(false);

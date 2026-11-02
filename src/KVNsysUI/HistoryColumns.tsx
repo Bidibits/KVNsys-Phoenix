@@ -1,8 +1,8 @@
 import type { RecordHistory } from '@kvnsys/core';
 import type { Column } from './RecordTable';
-import { ShopTime } from './ShopTime';
+import { BusinessTime } from './BusinessTime';
 
-/** Who "made" a record nobody signed in made: setting the shop up, or a PC recording itself. */
+/** Who "made" a record nobody signed in made: setting the location up, or a PC recording itself. */
 export const ByKVNsysItself = 'KVNsys itself';
 
 /** Nothing there: a dash, so an empty cell never reads as one that didn't load. */
@@ -26,7 +26,7 @@ export function idColumn<Row extends { id: string }>(): Column<Row> {
 
 /**
  * The eight columns at the end of every list's rows, as every table ends and as Beta's and Release's
- * grids ended: who last updated the record, on which machine, at which shop and when, then the same
+ * grids ended: who last updated the record, on which machine, at which location and when, then the same
  * for who created it. A record never updated has dashes in the first four. Each sorts when its
  * heading is clicked.
  */
@@ -42,19 +42,19 @@ export function historyColumns<Row>(history: (row: Row) => RecordHistory): Colum
       sortBy: (row) => updated(row, (h) => person(h.updatedBy)),
     },
     { heading: 'Updated machine', width: '13em', cell: (row) => <TextOrDash text={updated(row, (h) => h.updatedMachine)} />, sortBy: (row) => updated(row, (h) => h.updatedMachine) },
-    { heading: 'Updated shop', width: '10em', cell: (row) => <TextOrDash text={updated(row, (h) => h.updatedShop)} />, sortBy: (row) => updated(row, (h) => h.updatedShop) },
+    { heading: 'Updated location', width: '10em', cell: (row) => <TextOrDash text={updated(row, (h) => h.updatedLocation)} />, sortBy: (row) => updated(row, (h) => h.updatedLocation) },
     {
       heading: 'Updated at',
       width: '12em',
       cell: (row) => {
         const at = history(row).updatedAt;
-        return at === null ? <Dash /> : <ShopTime at={at} />;
+        return at === null ? <Dash /> : <BusinessTime at={at} />;
       },
       sortBy: (row) => history(row).updatedAt,
     },
     { heading: 'Created by', width: '16em', cell: (row) => person(history(row).createdBy), sortBy: (row) => person(history(row).createdBy) },
     { heading: 'Created machine', width: '13em', cell: (row) => <TextOrDash text={history(row).createdMachine} />, sortBy: (row) => history(row).createdMachine },
-    { heading: 'Created shop', width: '10em', cell: (row) => <TextOrDash text={history(row).createdShop} />, sortBy: (row) => history(row).createdShop },
-    { heading: 'Created at', width: '12em', cell: (row) => <ShopTime at={history(row).createdAt} />, sortBy: (row) => history(row).createdAt },
+    { heading: 'Created location', width: '10em', cell: (row) => <TextOrDash text={history(row).createdLocation} />, sortBy: (row) => history(row).createdLocation },
+    { heading: 'Created at', width: '12em', cell: (row) => <BusinessTime at={history(row).createdAt} />, sortBy: (row) => history(row).createdAt },
   ];
 }

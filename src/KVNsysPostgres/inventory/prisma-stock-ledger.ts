@@ -13,7 +13,7 @@ import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NoSuchProduct = "That product isn't in the catalog.";
-const NoSuchShop = "That shop isn't known here.";
+const NoSuchLocation = "That location isn't known here.";
 
 type Row = Prisma.InventoryLogGetPayload<object>;
 
@@ -75,7 +75,7 @@ export class PrismaStockLedger extends StockLedger {
 function checkAll(changes: StockChange[]): StockChange[] {
   const checked = changes.map(checkStockChange);
   for (const change of checked) {
-    if (!Uuid.test(change.locationId)) throw new Refusal('not-found', NoSuchShop);
+    if (!Uuid.test(change.locationId)) throw new Refusal('not-found', NoSuchLocation);
     if (!Uuid.test(change.productId)) throw new Refusal('not-found', NoSuchProduct);
     if (change.source && !Uuid.test(change.source.id)) throw new Refusal('invalid', "The document's id isn't one KVNsys made.");
   }
@@ -93,7 +93,7 @@ export async function recordStockIn(tx: Prisma.TransactionClient, changes: Stock
 
 async function recordStock(tx: Prisma.TransactionClient, checked: StockChange[], lineage: Lineage): Promise<StockMovement[]> {
   // Two changes to the same stock wait for each other on its inventory row. Taking those rows in
-  // one fixed order (shop, then product) means two batches that share products can never each hold
+  // one fixed order (location, then product) means two batches that share products can never each hold
   // a row the other is waiting for. Changes to the same stock keep the order they were given.
   const order = checked
     .map((change, index) => ({ change, index }))
@@ -136,10 +136,10 @@ async function recordStock(tx: Prisma.TransactionClient, checked: StockChange[],
   return saved;
 }
 
-/** Every shop and product a batch names exists, or nothing in it is saved. */
+/** Every location and product a batch names exists, or nothing in it is saved. */
 async function requireKnown(tx: Prisma.TransactionClient, changes: StockChange[]) {
   const locationIds = [...new Set(changes.map((change) => change.locationId))];
   const productIds = [...new Set(changes.map((change) => change.productId))];
-  if ((await tx.location.count({ where: { id: { in: locationIds } } })) !== locationIds.length) throw new Refusal('not-found', NoSuchShop);
+  if ((await tx.location.count({ where: { id: { in: locationIds } } })) !== locationIds.length) throw new Refusal('not-found', NoSuchLocation);
   if ((await tx.product.count({ where: { id: { in: productIds } } })) !== productIds.length) throw new Refusal('not-found', NoSuchProduct);
 }

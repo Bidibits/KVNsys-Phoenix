@@ -7,47 +7,47 @@
       "old": "const username = normalizeUsername(typed);",
       "new": "const username = typed;",
       "build": ["@kvnsys/core"],
-      "tests": [["KVNsysCore.Tests", "accounts"], ["KVNsysServer.Tests", "first-shop"]]
+      "tests": [["KVNsysCore.Tests", "accounts"], ["KVNsysServer.Tests", "first-location"]]
     },
     {
       "name": "2 the setup keeps the username as typed",
-      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "file": "src/KVNsysServer/setup/first-location.ts",
       "old": "else username = normalizeUsername(typed || DefaultAdminUsername);",
       "new": "else username = typed || DefaultAdminUsername;",
       "build": ["@kvnsys/server"],
-      "tests": [["KVNsysServer.Tests", "first-shop"]]
+      "tests": [["KVNsysServer.Tests", "first-location"]]
     },
     {
       "name": "3 Enter doesn't give admin",
-      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "file": "src/KVNsysServer/setup/first-location.ts",
       "old": "const problem = usernameProblem(typed || DefaultAdminUsername);",
       "new": "const problem = usernameProblem(typed);",
       "build": ["@kvnsys/server"],
-      "tests": [["KVNsysServer.Tests", "first-shop"]]
+      "tests": [["KVNsysServer.Tests", "first-location"]]
     },
     {
       "name": "4 the setup file's username not checked",
-      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "file": "src/KVNsysServer/setup/first-location.ts",
       "old": "if (usernameIssue) return { ok: false, message: `KVNSYS_ADMIN_USERNAME: ${usernameIssue}` };",
       "new": "",
       "build": ["@kvnsys/server"],
-      "tests": [["KVNsysServer.Tests", "first-shop"]]
+      "tests": [["KVNsysServer.Tests", "first-location"]]
     },
     {
       "name": "5 the setup file's answers in the wrong order",
-      "file": "src/KVNsysServer/setup/first-shop.ts",
-      "old": "const named = [shopName, username];",
-      "new": "const named = [username, shopName];",
+      "file": "src/KVNsysServer/setup/first-location.ts",
+      "old": "const named = [locationName, username];",
+      "new": "const named = [username, locationName];",
       "build": ["@kvnsys/server"],
-      "tests": [["KVNsysServer.Tests", "first-shop"]]
+      "tests": [["KVNsysServer.Tests", "first-location"]]
     },
     {
       "name": "6 the last line names admin, not the username chosen",
-      "file": "src/KVNsysServer/setup/first-shop.ts",
+      "file": "src/KVNsysServer/setup/first-location.ts",
       "old": "On any machine, sign in as \"${username}\" with that password.",
       "new": "On any machine, sign in as \"${DefaultAdminUsername}\" with that password.",
       "build": ["@kvnsys/server"],
-      "tests": [["KVNsysServer.Tests", "first-shop"]]
+      "tests": [["KVNsysServer.Tests", "first-location"]]
     },
     {
       "name": "7 the seed takes any username",

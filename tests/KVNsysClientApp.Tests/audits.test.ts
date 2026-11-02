@@ -39,9 +39,9 @@ describeWithDatabase('the audit log in the real app', () => {
     });
     // Two saves by the administrator, at the server PC: a product, then its price and category.
     const admin = await db.user.findFirstOrThrow({ where: { username: 'admin' } });
-    const shop = await db.location.findFirstOrThrow({ where: { code: 'HQ' } });
+    const location = await db.location.findFirstOrThrow({ where: { code: 'HQ' } });
     const serverPc = await db.machine.findFirstOrThrow({ where: { code: 'HQ-SRV' } });
-    const byAdmin = { userId: admin.id, machineId: serverPc.id, locationId: shop.id };
+    const byAdmin = { userId: admin.id, machineId: serverPc.id, locationId: location.id };
     const appliances = await new PrismaCatalogBook(db).create('categories', { code: 'CAT-APP', name: 'Appliances', address: null, parentId: null, status: 'Active', description: null }, byAdmin);
     const catalog = new PrismaProductCatalog(db);
     const product = await catalog.create(fan, byAdmin);
@@ -71,11 +71,11 @@ describeWithDatabase('the audit log in the real app', () => {
   });
 
   const table = () => window.getByRole('table', { name: 'Audit log' });
-  /** Each row, read by heading, but for its id and when: By, Machine, Shop, Table, Record, Column, Change, Source, Before, After. */
-  const rowsShown = () => cellsUnder(table(), ['By', 'Machine', 'Shop', 'Table', 'Record', 'Column', 'Change', 'Source', 'Before', 'After']);
+  /** Each row, read by heading, but for its id and when: By, Machine, Location, Table, Record, Column, Change, Source, Before, After. */
+  const rowsShown = () => cellsUnder(table(), ['By', 'Machine', 'Location', 'Table', 'Record', 'Column', 'Change', 'Source', 'Before', 'After']);
   const RecordAt = 4;
 
-  it("opens from Home and shows the newest change first, its columns in the audits table's order: what changed, then who, on which machine, at which shop and when", async () => {
+  it("opens from Home and shows the newest change first, its columns in the audits table's order: what changed, then who, on which machine, at which location and when", async () => {
     await window.getByRole('button', { name: /^Audit log/ }).click();
     await table().waitFor();
     await picture(window, 'audit-log');
@@ -90,18 +90,18 @@ describeWithDatabase('the audit log in the real app', () => {
       Source: 'change_source',
       By: 'implemented_by_user',
       Machine: 'implemented_at_machine',
-      Shop: 'implemented_at_location',
+      Location: 'implemented_at_location',
       At: 'implemented_at_date',
     });
     const rows = await rowsShown();
     // This PC recorded itself when the administrator signed in, so that's the newest.
     expect(rows[0]!.slice(3, 5)).toEqual(['Machines', expect.stringMatching(/^New machine/)]);
-    // The product's last save, its columns in the form's order; setting the shop up was KVNsys's.
+    // The product's last save, its columns in the form's order; setting the location up was KVNsys's.
     expect(rows.filter((row) => row[RecordAt] === 'Stand fan (PRD-0100)').slice(0, 2)).toEqual([
       ['System Administrator (admin)', 'Server', 'Kenlyn', 'Products', 'Stand fan (PRD-0100)', 'Category', 'Updated', 'Manual', '—', 'Appliances'],
       ['System Administrator (admin)', 'Server', 'Kenlyn', 'Products', 'Stand fan (PRD-0100)', 'Price', 'Updated', 'Manual', '1899.00', '1799.00'],
     ]);
-    expect(rows).toContainEqual(['KVNsys itself', 'Server', 'Kenlyn', 'Shops', 'Kenlyn', 'Name', 'Created', 'Automatic', '—', 'Kenlyn']);
+    expect(rows).toContainEqual(['KVNsys itself', 'Server', 'Kenlyn', 'Locations', 'Kenlyn', 'Name', 'Created', 'Automatic', '—', 'Kenlyn']);
   });
 
   it('keeps every column its width, like a compact Beta grid: a long value is cut short, shown whole when pointed at, and the log scrolls sideways', async () => {

@@ -41,11 +41,11 @@ describeWithDatabase("a day's sales from the real app", () => {
     };
     const sardines = await product('PRD-0007', 'Sardines 155g', 2575);
     const rice = await product('PRD-0042', 'Sack of rice 25kg', 145050);
-    const shop = await db.location.findUniqueOrThrow({ where: { code: 'HQ' } });
+    const location = await db.location.findUniqueOrThrow({ where: { code: 'HQ' } });
     const admin = await db.user.findUniqueOrThrow({ where: { username: 'admin' } });
     const journal = new PrismaSalesJournal(db);
     const ring = (sale: ReturnType<typeof priceSale>, tendered: number) =>
-      journal.record(sale, takeCash(sale.total, tendered), shop.id, { userId: admin.id, machineId: null, locationId: shop.id });
+      journal.record(sale, takeCash(sale.total, tendered), location.id, { userId: admin.id, machineId: null, locationId: location.id });
     await ring(priceSale([{ product: sardines, quantity: 2 }], { kind: 'senior', idNumber: 'OSCA-1', customerName: 'Lola Cruz' }), 5000);
     await ring(priceSale([{ product: rice, quantity: 1 }], null), 150000);
 

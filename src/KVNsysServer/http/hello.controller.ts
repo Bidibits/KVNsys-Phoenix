@@ -9,7 +9,7 @@ export class HelloController {
 
   /**
    * Open to anyone on the network: it says what this is, and whether a machine needs the server
-   * password, and nothing about the shop's data.
+   * password, and nothing about the business's data.
    */
   @Get()
   hello(): ServerHello {

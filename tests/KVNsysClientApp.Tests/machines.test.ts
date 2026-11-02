@@ -11,7 +11,7 @@ import { createThrowawayDatabase, describeWithDatabase } from './throwaway-datab
 
 const Password = 'test-password-1234';
 const firstName = `New machine (${hostname()})`.slice(0, 60);
-/** A date and time by the shop's clock, as the lists show it: "Oct 30, 2026, 2:16 PM". */
+/** A date and time by the business's clock, as the lists show it: "Oct 30, 2026, 2:16 PM". */
 const ShownTime = /^[A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2}\s[AP]M$/;
 
 /** Set KVNSYS_SCREENSHOTS to a folder to keep a picture of each step, for a person to look at. */
@@ -96,7 +96,7 @@ describeWithDatabase('machines from the real app', () => {
 
   const table = () => window.getByRole('table', { name: 'Machines' });
 
-  it("shows every column of the machines table in the table's order: its id first, and last who changed and who made each, when, on which machine and at which shop", async () => {
+  it("shows every column of the machines table in the table's order: its id first, and last who changed and who made each, when, on which machine and at which location", async () => {
     await picture(window, 'machines');
     await expectTableOrder(db, 'machines', await headingsOf(table()), {
       Id: 'id',
@@ -104,7 +104,7 @@ describeWithDatabase('machines from the real app', () => {
       Name: 'name',
       'Hardware id': 'machine_uuid',
       'Computer name': 'machine_name',
-      Shop: 'location_id',
+      Location: 'location_id',
       Status: 'status',
       Description: 'description',
       ...HistoryColumnsShown,
@@ -120,8 +120,8 @@ describeWithDatabase('machines from the real app', () => {
     // Compact, its Edit buttons included.
     await expectCompact(table());
     const hardwareId = (await db.machine.findFirstOrThrow({ where: { code: 'HQ-M01' } })).machineUuid;
-    const who = ['Updated by', 'Updated machine', 'Updated shop', 'Created by', 'Created machine', 'Created shop'];
-    expect(await cellsUnder(table(), ['Code', 'Hardware id', 'Shop', 'Status', 'Description', ...who])).toEqual([
+    const who = ['Updated by', 'Updated machine', 'Updated location', 'Created by', 'Created machine', 'Created location'];
+    expect(await cellsUnder(table(), ['Code', 'Hardware id', 'Location', 'Status', 'Description', ...who])).toEqual([
       // Set up by KVNsys itself, on the server PC, and never changed.
       ['HQ-SRV', 'test-hardware-id', 'Head Office', 'Active', '—', '—', '—', '—', 'KVNsys itself', 'Server', 'Head Office'],
       // Recorded when the administrator first signed in at it, then renamed by them, at it.

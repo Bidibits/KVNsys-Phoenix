@@ -3,7 +3,7 @@
 import { Refusal } from '@kvnsys/core';
 import { createPrismaClient, PrismaSetupStore } from '@kvnsys/postgres';
 import { ScryptPasswordHasher } from '../identity/scrypt-password-hasher.js';
-import { DefaultAdminUsername } from './first-shop.js';
+import { DefaultAdminUsername } from './first-location.js';
 import { InstallSeed } from './install-seed.js';
 import { readPcIdentity } from './server-identity.js';
 

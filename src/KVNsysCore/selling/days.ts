@@ -1,25 +1,25 @@
 import { Refusal } from '../shared/refusal.js';
 
 /**
- * The shop's clock: Philippine time, UTC+8, all year (the Philippines has no daylight saving). A
+ * The location's clock: Philippine time, UTC+8, all year (the Philippines has no daylight saving). A
  * day is midnight to midnight here, whatever time zone the PC the server runs on is set to.
  */
-export const ShopTimeZone = 'Asia/Manila';
-const ShopOffsetMs = 8 * 60 * 60 * 1000;
+export const BusinessTimeZone = 'Asia/Manila';
+const BusinessOffsetMs = 8 * 60 * 60 * 1000;
 
-/** The shop's date at a moment: "2026-10-24". */
-export function shopDate(at: Date): string {
-  return new Date(at.getTime() + ShopOffsetMs).toISOString().slice(0, 10);
+/** The location's date at a moment: "2026-10-24". */
+export function businessDate(at: Date): string {
+  return new Date(at.getTime() + BusinessOffsetMs).toISOString().slice(0, 10);
 }
 
-/** The moments a shop's day starts and ends (the end is the next day's start), or a refusal for a date that isn't one. */
-export function shopDay(date: string): { from: Date; to: Date } {
+/** The moments a business day starts and ends (the end is the next day's start), or a refusal for a date that isn't one. */
+export function businessDay(date: string): { from: Date; to: Date } {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.trim());
   const midnightUtc = match ? Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : NaN;
   if (!match || Number.isNaN(midnightUtc) || new Date(midnightUtc).toISOString().slice(0, 10) !== date.trim()) {
     throw new Refusal('invalid', `"${date}" isn't a date. Pick one from the calendar.`);
   }
-  const from = new Date(midnightUtc - ShopOffsetMs);
+  const from = new Date(midnightUtc - BusinessOffsetMs);
   return { from, to: new Date(from.getTime() + 24 * 60 * 60 * 1000) };
 }
 

@@ -10,12 +10,12 @@ export const ShiftLimits = { note: 500 } as const;
 
 /**
  * One cashier's stretch at the till, from the cash counted into the drawer to the cash counted out.
- * It belongs to a shop and a person, not to a PC: opened at one machine, it can be closed at
+ * It belongs to a location and a person, not to a PC: opened at one machine, it can be closed at
  * another (SCHEMA-PLAN). Money is in centavos.
  */
 export interface Shift {
   id: string;
-  /** The shop's code and the shift's number there: HQ-S00001. */
+  /** The location's code and the shift's number there: HQ-S00001. */
   code: string;
   number: number;
   locationId: string;
@@ -57,11 +57,11 @@ export function checkShiftNote(note: string): string | null {
 /**
  * The shifts a server keeps. KVNsysCore only describes it; KVNsysPostgres provides the real one.
  *
- * A person has one open shift at a shop at a time. Shifts are numbered per shop with no gaps. Every
+ * A person has one open shift at a location at a time. Shifts are numbered per location with no gaps. Every
  * figure (cash sales, expected cash) is worked out from the shift's receipts, never typed.
  */
 export abstract class ShiftBook {
-  /** The person's open shift at the shop, with its figures so far, or null. */
+  /** The person's open shift at the location, with its figures so far, or null. */
   abstract current(userId: string, locationId: string): Promise<Shift | null>;
   /** Opens a shift with the cash counted into the drawer. Refuses a second open one. */
   abstract open(userId: string, locationId: string, openingCash: number, lineage: Lineage): Promise<Shift>;

@@ -10,7 +10,7 @@ describe('reading the audit log back', () => {
     expect(() => checkAuditFilter({ person: 'admin' })).toThrow("That person isn't one the audit log knows.");
   });
 
-  it("reads days by the shop's clock, the last day included", () => {
+  it("reads days by the business's clock, the last day included", () => {
     const filter = checkAuditFilter({ from: '2026-10-28', to: '2026-10-28' });
     expect(filter.from?.toISOString()).toBe('2026-10-27T16:00:00.000Z');
     expect(filter.to?.toISOString()).toBe('2026-10-28T16:00:00.000Z');

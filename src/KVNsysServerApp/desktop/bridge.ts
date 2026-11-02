@@ -27,7 +27,7 @@ export interface DashboardView {
   server: { ok: true; status: ServerStatus } | { ok: false; reason: ControlProblem; message: string };
   /** The port machines reach the server on, from its settings: shown even while it's off. */
   port: number;
-  /** This PC's addresses on the shop's network. */
+  /** This PC's addresses on the local network. */
   addresses: string[];
   stopServerOnClose: boolean;
   /** False when this window was opened without administrator rights, so Windows will refuse it. */

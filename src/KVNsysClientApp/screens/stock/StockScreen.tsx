@@ -16,7 +16,7 @@ const Columns: Column<StockItem>[] = [
 ];
 
 /**
- * Every product with how many this shop has. Each row opens its History; someone whose role may
+ * Every product with how many this location has. Each row opens its History; someone whose role may
  * receive goods gets Receive stock, which takes in a whole delivery, and someone who may put counts
  * right gets Adjust on each row. After a save the list is asked for again, so it shows what the
  * server has. The list is asked for after the screen is on show, never while it's being built.
@@ -114,7 +114,7 @@ export function StockScreen({ user, search, onSignInAgain }: { user: SignedInUse
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center gap-4">
         <p className="text-[15px] text-muted-foreground">
-          {count === 0 ? 'No products yet.' : `${count === 1 ? '1 product' : `${count} products`} at ${result.shop.name}`}
+          {count === 0 ? 'No products yet.' : `${count === 1 ? '1 product' : `${count} products`} at ${result.location.name}`}
         </p>
         {mayReceive && count > 0 && (
           <Button

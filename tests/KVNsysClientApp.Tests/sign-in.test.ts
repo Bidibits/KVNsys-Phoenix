@@ -84,7 +84,7 @@ describeWithDatabase('signing in from the real app, against a real server and da
   it('signs in with the right password, opens Home, and says who in the title bar', async () => {
     await signIn('admin', AdminPassword);
     await window.getByRole('navigation', { name: 'Areas' }).waitFor();
-    // At this PC, recorded as the shop's first machine the first time anyone signs in at it.
+    // At this PC, recorded as the location's first machine the first time anyone signs in at it.
     expect(await window.getByLabel('Signed in').innerText()).toBe(`System Administrator\nadmin · ${`New machine (${hostname()})`.slice(0, 60)}`);
     // The server handed this machine a pass, and is keeping exactly one.
     expect(server.get(Sessions).activeCount()).toBe(1);

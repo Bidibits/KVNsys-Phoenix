@@ -109,7 +109,7 @@ describe("the dashboard's channel to the running server", () => {
     }
   });
 
-  it("can't be reached from the shop's network: only on this PC", async () => {
+  it("can't be reached from the local network: only on this PC", async () => {
     // Not skipped when this PC has no network address: then the test can't check, and says so by failing.
     const outside = lanAddresses();
     expect(outside.length).toBeGreaterThan(0);
@@ -123,15 +123,15 @@ describe("the dashboard's channel to the running server", () => {
 
     expect(await join()).toMatchObject({ status: 200, body: { joined: true } });
     expect(await setServerPassword(dataDir, 'short', 'short')).toMatchObject({ ok: false, reason: 'refused', message: expect.stringMatching(/8 characters/) });
-    expect(await setServerPassword(dataDir, 'shop-door-1234', 'shop-door-1234')).toEqual({ ok: true, value: true });
+    expect(await setServerPassword(dataDir, 'location-door-1234', 'location-door-1234')).toEqual({ ok: true, value: true });
     expect((await hello()).serverPassword).toBe(true);
     expect(await join()).toMatchObject({ status: 401, body: { joined: false, message: 'This server has a password. Type it to connect.' } });
-    expect(await join('shop-door-9999')).toMatchObject({ status: 401, body: { joined: false } });
-    expect(await join('shop-door-1234')).toMatchObject({ status: 200, body: { joined: true } });
+    expect(await join('location-door-9999')).toMatchObject({ status: 401, body: { joined: false } });
+    expect(await join('location-door-1234')).toMatchObject({ status: 200, body: { joined: true } });
     expect((await serverStatus(dataDir)).ok && (await serverStatus(dataDir))).toMatchObject({ value: { serverPassword: 'on' } });
 
     expect(await setServerPassword(dataDir, 'new-door-5678', 'new-door-5678')).toEqual({ ok: true, value: true });
-    expect(await join('shop-door-1234')).toMatchObject({ status: 401 });
+    expect(await join('location-door-1234')).toMatchObject({ status: 401 });
     expect(await join('new-door-5678')).toMatchObject({ status: 200 });
 
     expect(await turnOffServerPassword(dataDir)).toEqual({ ok: true, value: true });
@@ -140,7 +140,7 @@ describe("the dashboard's channel to the running server", () => {
   });
 
   it('keeps the server password through a restart of the server', async () => {
-    await setServerPassword(dataDir, 'shop-door-1234', 'shop-door-1234');
+    await setServerPassword(dataDir, 'location-door-1234', 'location-door-1234');
     const restarted = await createServer({ logger: false, certificate, dataDir });
     await restarted.listen(0, '127.0.0.1');
     try {
@@ -260,16 +260,16 @@ describeWithDatabase("who's connected, disconnecting, and signing in with the se
 
   it('asks for the server password before the person’s, and leaves those already signed in alone', async () => {
     const before = (await signIn('BEFORE-PC')).body.session!.token;
-    await setServerPassword(dataDir, 'shop-door-1234', 'shop-door-1234');
+    await setServerPassword(dataDir, 'location-door-1234', 'location-door-1234');
     try {
       expect(await signIn('FRONT-PC')).toMatchObject({ status: 401, body: { signedIn: false, serverPassword: true } });
-      expect(await signIn('FRONT-PC', { serverPassword: 'shop-door-9999' })).toMatchObject({
+      expect(await signIn('FRONT-PC', { serverPassword: 'location-door-9999' })).toMatchObject({
         status: 401,
         body: { serverPassword: true, message: "That isn't this server's password." },
       });
       // A wrong person with no server password learns nothing about the person: it's the server password that's asked for.
       expect(await signIn('FRONT-PC', { password: 'not-the-password' })).toMatchObject({ status: 401, body: { serverPassword: true } });
-      expect(await signIn('FRONT-PC', { serverPassword: 'shop-door-1234' })).toMatchObject({ status: 200, body: { signedIn: true } });
+      expect(await signIn('FRONT-PC', { serverPassword: 'location-door-1234' })).toMatchObject({ status: 200, body: { signedIn: true } });
       expect(await sessionOf(before)).toMatchObject({ status: 200 });
     } finally {
       await turnOffServerPassword(dataDir);

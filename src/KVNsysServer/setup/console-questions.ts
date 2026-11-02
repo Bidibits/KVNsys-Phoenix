@@ -47,7 +47,7 @@ function keyboardQuestions(input: NodeJS.ReadStream, output: NodeJS.WriteStream)
           if (key === '\u0003') {
             // Ctrl+C: in this mode it arrives as a key, not as a signal.
             input.setRawMode(false);
-            output.write("\nStopped before the shop was set up. It'll ask again next time.\n");
+            output.write("\nStopped before the location was set up. It'll ask again next time.\n");
             process.exit(130);
           }
           if (key === '\b' || key === '\u007f') {

@@ -1,5 +1,5 @@
 import type { DaySalesResult, ReceiptLine, SaleResult } from '@kvnsys/client';
-import { Button, Notice, Pesos, RecordTable, ShopTime, type Column } from '@kvnsys/ui';
+import { BusinessTime, Button, Notice, Pesos, RecordTable, type Column } from '@kvnsys/ui';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { DiscountChoices } from './discounts';
 import { ReceiptPaper } from './ReceiptPaper';
@@ -35,7 +35,7 @@ function Problem({ problem, onSignInAgain }: { problem: { message: string; reaso
 }
 
 /**
- * A day's sales at the shop: today unless another day is picked, what the day came to, and every
+ * A day's sales at the location: today unless another day is picked, what the day came to, and every
  * receipt, oldest first. View shows a receipt as it was given, in place of the list.
  */
 export function SalesScreen({ search, onSignInAgain }: { search: string; onSignInAgain: () => void }) {
@@ -62,7 +62,7 @@ export function SalesScreen({ search, onSignInAgain }: { search: string; onSignI
 
   const columns: Column<ReceiptLine>[] = [
     { heading: 'Receipt', cell: (receipt) => receipt.code },
-    { heading: 'Time', cell: (receipt) => <ShopTime at={receipt.createdAt} show="time" /> },
+    { heading: 'Time', cell: (receipt) => <BusinessTime at={receipt.createdAt} show="time" /> },
     // No name when the cashier's account isn't on this server.
     { heading: 'Cashier', cell: (receipt) => receipt.cashier ?? '' },
     { heading: 'Pieces', cell: (receipt) => receipt.pieces, align: 'right' },
@@ -98,7 +98,7 @@ export function SalesScreen({ search, onSignInAgain }: { search: string; onSignI
         <Button type="button" variant="secondary" size="compact" onClick={() => setDate(null)}>
           Today
         </Button>
-        {result?.ok && <p className="ml-auto text-[15px] text-muted-foreground">{result.shop.name}</p>}
+        {result?.ok && <p className="ml-auto text-[15px] text-muted-foreground">{result.location.name}</p>}
       </div>
 
       {!result && (

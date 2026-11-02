@@ -74,7 +74,7 @@ describeWithDatabase("a person's own settings over HTTPS, through the client eng
     expect(await loadMySettings(address, ana, { pin })).toEqual({ ok: true, settings: fewer });
   });
 
-  it("isn't written to the audit log: it's how one person likes the screens, not a record of the shop's", async () => {
+  it("isn't written to the audit log: it's how one person likes the screens, not a record of the business's", async () => {
     await saveMySettings(address, await passOf('ben'), { columnWidths: { Roles: { Name: '15em' } } }, { pin });
     expect(await db.audit.count({ where: { tableName: 'user_settings' } })).toBe(0);
   });

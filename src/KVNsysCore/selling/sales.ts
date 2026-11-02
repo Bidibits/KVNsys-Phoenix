@@ -45,7 +45,7 @@ export interface CartLine {
   quantity: number;
 }
 
-/** The customer's statutory discount, with what the law asks the shop to keep: whose ID it was. */
+/** The customer's statutory discount, with what the law asks the business to keep: whose ID it was. */
 export interface StatutoryDiscount {
   kind: DiscountKind;
   idNumber: string;
@@ -192,7 +192,7 @@ export function readCash(typed: string): number {
 /** A sale as recorded: its receipt number, what was charged, and how it was paid. */
 export interface Receipt extends PricedSale {
   id: string;
-  /** The shop's code and the receipt's number at that shop: HQ-000042. */
+  /** The location's code and the receipt's number at that location: HQ-000042. */
   code: string;
   number: number;
   locationId: string;
@@ -210,14 +210,14 @@ export interface Receipt extends PricedSale {
  * The record of sales. KVNsysCore only describes it; KVNsysPostgres provides the real one.
  *
  * Recording a sale saves its receipt, its lines and its payment, and takes its pieces out of the
- * shop's stock (except a product that doesn't track stock, such as a service), all in one go: all
- * of it, or none. Receipt numbers count up per shop with no gaps.
+ * location's stock (except a product that doesn't track stock, such as a service), all in one go: all
+ * of it, or none. Receipt numbers count up per location with no gaps.
  * A recorded receipt is never changed or deleted.
  */
 export abstract class SalesJournal {
   /** `shiftId`: the cashier's open shift, which the receipt belongs to. Null only for a receipt recorded outside a till. */
   abstract record(sale: PricedSale, payment: CashPayment, locationId: string, lineage: Lineage, shiftId?: string | null): Promise<Receipt>;
   abstract get(id: string): Promise<Receipt | null>;
-  /** The shop's receipts paid from `from` up to (not including) `to`, oldest first. */
+  /** The location's receipts paid from `from` up to (not including) `to`, oldest first. */
   abstract between(locationId: string, from: Date, to: Date): Promise<ReceiptSummary[]>;
 }

@@ -52,8 +52,8 @@
     {
       "name": "7 the last day left out",
       "file": "src/KVNsysCore/audits/audit-log-book.ts",
-      "old": "shopDay(text(typed.to)).to",
-      "new": "shopDay(text(typed.to)).from",
+      "old": "businessDay(text(typed.to)).to",
+      "new": "businessDay(text(typed.to)).from",
       "build": ["@kvnsys/core"],
       "tests": [["KVNsysCore.Tests", "audit-trail"]]
     },

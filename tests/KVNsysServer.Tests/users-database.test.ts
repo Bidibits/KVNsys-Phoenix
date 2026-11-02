@@ -56,7 +56,7 @@ describeWithDatabase('accounts over HTTPS, through the client engine, against a 
       adminPassword: AdminPassword,
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
-    // A new install has only the Administrator: the shop makes its own roles.
+    // A new install has only the Administrator: the location makes its own roles.
     cashierRole = randomUUID();
     await db.role.create({ data: { id: cashierRole, code: 'CASHIER', name: 'Cashier', level: 10 } });
     await db.access.create({ data: { id: randomUUID(), roleId: cashierRole, access: 'products.view' } });

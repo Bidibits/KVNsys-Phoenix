@@ -8,8 +8,8 @@ import {
   pesosText,
   priceSale,
   serverMachineCode,
-  shopDate,
-  shopDay,
+  businessDate,
+  businessDay,
   takeCash,
   type AccessName,
   type CartLine,
@@ -20,7 +20,7 @@ import {
   type MachineBook,
   type SalesJournal,
   type ShiftBook,
-  type ShopDirectory,
+  type LocationDirectory,
   type UserAccounts,
 } from '@kvnsys/core';
 import {
@@ -32,27 +32,27 @@ import {
   type SaleProductReply,
 } from '@kvnsys/wire';
 import type { Authorizer } from '../identity/authorizer.js';
-import { FirstShopCode } from '../setup/first-shop.js';
+import { FirstLocationCode } from '../setup/first-location.js';
 import { bearerToken, NoDatabase, problem } from './problems.js';
 import { saving } from './saving.js';
 import { SalesOperation } from './tokens.js';
 
 const NotInCatalog = "That product isn't in the catalog.";
 const NotUnderstood = "The sale didn't arrive in a form the server understands.";
-const NoShop =
-  "KVNsys Server can't tell which shop it serves: this PC isn't recorded as any shop's server. " +
+const NoLocation =
+  "KVNsys Server can't tell which location it serves: this PC isn't recorded as any location's server. " +
   'Was the database moved here from another PC?';
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface SalesOperationParts {
   journal: SalesJournal;
   catalog: ProductCatalog;
-  shops: ShopDirectory;
+  locations: LocationDirectory;
   accounts: UserAccounts;
   machines: MachineBook;
   shifts: ShiftBook;
   authorizer: Authorizer;
-  /** The PC this server runs on, which says which shop it sells at. */
+  /** The PC this server runs on, which says which location it sells at. */
   server: PcIdentity;
 }
 
@@ -114,7 +114,7 @@ export class SalesController {
   @Post()
   @HttpCode(201)
   async record(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<ReceiptReply> {
-    const { parts, shop, person, machine } = await this.allow(authorization, Accesses.SalesSell);
+    const { parts, location, person, machine } = await this.allow(authorization, Accesses.SalesSell);
     const fields = SaleFields.safeParse(body);
     if (!fields.success) throw problem(400, NotUnderstood);
     const { lines, discount } = fields.data;
@@ -123,7 +123,7 @@ export class SalesController {
     if (tendered === null || expectedTotal === null) throw problem(400, NotUnderstood);
 
     // Into the cashier's open shift: without one, there's no drawer for the cash to go into.
-    const shift = await parts.shifts.current(person.id, shop.id);
+    const shift = await parts.shifts.current(person.id, location.id);
     if (!shift) throw problem(409, NoShiftYet);
 
     // Priced again from the catalog as it is now, never from what the machine says a price is.
@@ -143,24 +143,24 @@ export class SalesController {
             'Check the cart, then take payment again.',
         );
       }
-      // At the machine signed in at; the shop is always the server's own.
-      const lineage = { userId: person.id, machineId: machine?.machineId ?? null, locationId: shop.id };
-      return parts.journal.record(sale, takeCash(sale.total, tendered), shop.id, lineage, shift.id);
+      // At the machine signed in at; the location is always the server's own.
+      const lineage = { userId: person.id, machineId: machine?.machineId ?? null, locationId: location.id };
+      return parts.journal.record(sale, takeCash(sale.total, tendered), location.id, lineage, shift.id);
     });
-    return { receipt: receiptOnWire(receipt), shop, cashier: person.displayName, machine: machine?.name ?? null };
+    return { receipt: receiptOnWire(receipt), location, cashier: person.displayName, machine: machine?.name ?? null };
   }
 
-  /** A day's receipts at this shop, oldest first, and their totals. Today, by the shop's clock, when no date is given. */
+  /** A day's receipts at this location, oldest first, and their totals. Today, by the business's clock, when no date is given. */
   @Get()
   async day(@Headers('authorization') authorization: string | undefined, @Query('date') date: unknown): Promise<DaySalesReply> {
-    const { parts, shop } = await this.allow(authorization, Accesses.SalesView);
-    const day = typeof date === 'string' && date ? date : shopDate(new Date());
-    const { from, to } = await saving(async () => shopDay(day));
-    const receipts = await parts.journal.between(shop.id, from, to);
+    const { parts, location } = await this.allow(authorization, Accesses.SalesView);
+    const day = typeof date === 'string' && date ? date : businessDate(new Date());
+    const { from, to } = await saving(async () => businessDay(day));
+    const receipts = await parts.journal.between(location.id, from, to);
     const names = await namesOf(parts.accounts, receipts.map((receipt) => receipt.createdByUser));
     const totals = dayTotals(receipts);
     return {
-      shop,
+      location,
       date: day,
       receipts: receipts.map(({ createdByUser, subtotal, discountTotal, total, discountKind, ...receipt }) => ({
         ...receipt,
@@ -174,26 +174,26 @@ export class SalesController {
     };
   }
 
-  /** One receipt, as it was given. Only this shop's: another shop's receipt isn't one it gave. Declared after "find". */
+  /** One receipt, as it was given. Only this location's: another location's receipt isn't one it gave. Declared after "find". */
   @Get(':id')
   async receipt(@Headers('authorization') authorization: string | undefined, @Param('id') id: string): Promise<ReceiptReply> {
-    const { parts, shop } = await this.allow(authorization, Accesses.SalesView);
+    const { parts, location } = await this.allow(authorization, Accesses.SalesView);
     const receipt = await parts.journal.get(id);
-    if (!receipt || receipt.locationId !== shop.id) throw problem(404, "That receipt isn't one this shop gave.");
+    if (!receipt || receipt.locationId !== location.id) throw problem(404, "That receipt isn't one this location gave.");
     const names = await namesOf(parts.accounts, [receipt.createdByUser]);
     const machine = receipt.machineId ? await parts.machines.get(receipt.machineId) : null;
-    return { receipt: receiptOnWire(receipt), shop, cashier: names.get(receipt.createdByUser) ?? null, machine: machine?.name ?? null };
+    return { receipt: receiptOnWire(receipt), location, cashier: names.get(receipt.createdByUser) ?? null, machine: machine?.name ?? null };
   }
 
-  /** The pass and the right, checked before anything else is answered; then the server's own shop. */
+  /** The pass and the right, checked before anything else is answered; then the server's own location. */
   private async allow(authorization: string | undefined, access: AccessName) {
     const parts = this.operation.sales;
     if (!parts) throw problem(503, NoDatabase);
     const verdict = await parts.authorizer.check(bearerToken(authorization), access);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
-    const shop = await parts.shops.serverShop(parts.server, serverMachineCode(FirstShopCode));
-    if (!shop) throw problem(503, NoShop);
-    return { parts, shop, person: verdict.person, machine: verdict.machine };
+    const location = await parts.locations.serverLocation(parts.server, serverMachineCode(FirstLocationCode));
+    if (!location) throw problem(503, NoLocation);
+    return { parts, location, person: verdict.person, machine: verdict.machine };
   }
 }
 

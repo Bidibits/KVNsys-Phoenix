@@ -11,7 +11,7 @@ const refusalOf = (work: () => unknown) => {
 };
 
 describe('a machine', () => {
-  it("is coded by its shop and its number there, and named by its PC until a manager names it", () => {
+  it("is coded by its location and its number there, and named by its PC until a manager names it", () => {
     expect([machineCode('HQ', 1), machineCode('HQ', 12), machineCode('GUMACA', 100)]).toEqual(['HQ-M01', 'HQ-M12', 'GUMACA-M100']);
     expect(newMachineName('COUNTER-PC')).toBe('New machine (COUNTER-PC)');
     expect(newMachineName(' ')).toBe('New machine (unnamed PC)');

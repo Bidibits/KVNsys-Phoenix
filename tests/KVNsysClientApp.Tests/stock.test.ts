@@ -17,7 +17,7 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
   let app: ElectronApplication;
   let window: Page;
 
-  /** A role made by hand, as a shop makes one: a new install has only the Administrator. */
+  /** A role made by hand, as a location makes one: a new install has only the Administrator. */
   async function addRole(code: string, rights: string[]): Promise<void> {
     const role = await db.role.create({ data: { id: randomUUID(), code, name: code, level: 10 } });
     for (const access of rights) await db.access.create({ data: { id: randomUUID(), roleId: role.id, access } });
@@ -97,7 +97,7 @@ describeWithDatabase('stock from the real app: deliveries, counts and history', 
   const stockShown = async () => (await rowsShown()).map((row) => [row[1], row[3]]);
   const isFocused = (locator: ReturnType<Page['getByLabel']>) => locator.evaluate((element) => element === document.activeElement);
 
-  it('lists every product with how many the shop has, never-moved ones at 0', async () => {
+  it('lists every product with how many the location has, never-moved ones at 0', async () => {
     await signIn('admin');
     await openStock();
     expect(await window.getByText('2 products at Head Office').isVisible()).toBe(true);

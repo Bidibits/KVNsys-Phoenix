@@ -1,4 +1,4 @@
-// Starts KVNsys Server on this PC, reachable from the shop's network: `pnpm start:server` from
+// Starts KVNsys Server on this PC, reachable from the local network: `pnpm start:server` from
 // source, double-clicking KVNsys Server.exe, or as the Windows service the server's setup installs.
 import { createInterface } from 'node:readline/promises';
 import { isSea } from 'node:sea';
@@ -18,14 +18,14 @@ import { ScryptPasswordHasher } from './identity/scrypt-password-hasher.js';
 import { loadOrCreateServerCertificate } from './security/server-certificate.js';
 import { earlierServerDataDir, serverDataDir } from './setup/server-folder.js';
 import { consoleQuestions } from './setup/console-questions.js';
-import { answersFrom, setUpFirstShop } from './setup/first-shop.js';
+import { answersFrom, setUpFirstLocation } from './setup/first-location.js';
 import { InstallSeed } from './setup/install-seed.js';
 import { NoAnswer } from './setup/questions.js';
 import { readPcIdentity } from './setup/server-identity.js';
 import { adoptEarlierServerData, loadServerSettings } from './setup/server-settings.js';
 
 // `KVNsys Server.exe --set-up` is what the server's setup file runs once, with administrator rights.
-// It makes and sets up the database. On a new install it takes the shop's name and the administrator's
+// It makes and sets up the database. On a new install it takes the location's name and the administrator's
 // username and password from KVNSYS_LOCATION_NAME, KVNSYS_ADMIN_USERNAME and KVNSYS_ADMIN_PASSWORD,
 // which the setup's own page fills in.
 // Then it stops without serving: the Windows service does the serving.
@@ -103,11 +103,11 @@ async function main(): Promise<void> {
     if (brandNew && setUpOnly) {
       const answers = answersFrom(process.env);
       if (!answers.ok) return stop(answers.message);
-      await setUpFirstShop(seed, answers.questions, readPcIdentity(), (line) => console.log(line));
+      await setUpFirstLocation(seed, answers.questions, readPcIdentity(), (line) => console.log(line));
     } else if (brandNew) {
       const questions = consoleQuestions();
       try {
-        await setUpFirstShop(seed, questions, readPcIdentity(), (line) => console.log(line));
+        await setUpFirstLocation(seed, questions, readPcIdentity(), (line) => console.log(line));
       } catch (error) {
         if (!(error instanceof NoAnswer)) throw error;
         return stop(
@@ -137,7 +137,7 @@ async function main(): Promise<void> {
 
   const app = await createServer({ databaseUrl, certificate, dataDir });
   try {
-    // 0.0.0.0, not localhost: the machines are other PCs on the shop's network.
+    // 0.0.0.0, not localhost: the machines are other PCs on the local network.
     await app.listen(port, '0.0.0.0');
   } catch (error) {
     await app.close();

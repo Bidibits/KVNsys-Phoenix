@@ -7,7 +7,7 @@ import { listed } from './history.js';
  * look, machines.manage to rename a machine or switch it off. A machine records itself the first
  * time someone signs in at it (see sign-in.ts); these only look and change.
  *
- *   GET  /api/machines          the shop's machines, the server PC first, each with its shop and history
+ *   GET  /api/machines          the location's machines, the server PC first, each with its location and history
  *   PUT  /api/machines/<id>     rename one, or switch it off or on; switched off, its sign-ins end
  *
  * A refusal is a ProblemReply (see products.ts).
@@ -28,8 +28,8 @@ export const MachineOnWire = MachineFields.extend({
 });
 export type MachineOnWire = z.infer<typeof MachineOnWire>;
 
-/** A machine in the list, with the name of the shop it belongs to. */
-export const ListedMachineOnWire = listed(MachineOnWire).extend({ shopName: z.string() });
+/** A machine in the list, with the name of the location it belongs to. */
+export const ListedMachineOnWire = listed(MachineOnWire).extend({ locationName: z.string() });
 export type ListedMachineOnWire = z.infer<typeof ListedMachineOnWire>;
 
 export const MachineListReply = z.object({ machines: z.array(ListedMachineOnWire) });

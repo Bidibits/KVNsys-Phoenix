@@ -29,7 +29,7 @@ const Areas: { area: Area; title: string; description: string; right: AccessName
   {
     area: 'suppliers',
     title: 'Suppliers',
-    description: 'Who the shop buys from, and where they are.',
+    description: 'Who the business buys from, and where they are.',
     right: 'products.view',
     cannot: "Your role can't see the product lists. Ask a manager.",
   },
@@ -57,7 +57,7 @@ const Areas: { area: Area; title: string; description: string; right: AccessName
   {
     area: 'stock',
     title: 'Stock',
-    description: 'How many of each product the shop has, deliveries in, and counts put right.',
+    description: 'How many of each product the location has, deliveries in, and counts put right.',
     right: 'stock.view',
     cannot: "Your role can't see stock. Ask a manager.",
   },

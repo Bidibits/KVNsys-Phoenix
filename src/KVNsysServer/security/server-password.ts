@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { readNewPassword, type PasswordHasher } from '@kvnsys/core';
 import { ServerPasswordFile } from '../setup/server-folder.js';
 
-/** Off: anyone on the shop's network may sign in. On: a machine must give the server password first. */
+/** Off: anyone on the local network may sign in. On: a machine must give the server password first. */
 export type ServerPasswordState = 'off' | 'on' | 'damaged';
 
 /** What a machine is told when it gave no server password, or the wrong one. */
@@ -60,7 +60,7 @@ export class ServerPassword {
     this.damaged = false;
   }
 
-  /** Anyone on the shop's network may sign in again. */
+  /** Anyone on the local network may sign in again. */
   turnOff(): void {
     if (this.dir) rmSync(join(this.dir, ServerPasswordFile), { force: true });
     this.hash = null;

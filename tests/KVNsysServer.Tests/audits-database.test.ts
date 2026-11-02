@@ -53,14 +53,14 @@ describeWithDatabase('the audit log over HTTPS, through the client engine, again
     await database?.drop();
   });
 
-  it("shows the Administrator every change, with who, where and the shop's own setup as KVNsys's", async () => {
+  it("shows the Administrator every change, with who, where and the location's own setup as KVNsys's", async () => {
     const admin = await signInAt('admin');
     const added = await addProduct(address, admin.session, { code: 'PRD-0007', barcode: null, name: 'Sardines 155g', retailPrice: 2575, status: 'Active', description: null }, { pin });
     if (!added.ok) throw new Error(added.message);
 
     const log = await listAudits(address, admin.session, any, { pin });
     if (!log.ok) throw new Error(log.message);
-    expect(log.entries[0]).toMatchObject({ tableLabel: 'Products', recordName: 'Sardines 155g (PRD-0007)', userName: 'System Administrator (admin)', machineName: 'New machine (COUNTER-PC)', shopName: 'Kenlyn' });
+    expect(log.entries[0]).toMatchObject({ tableLabel: 'Products', recordName: 'Sardines 155g (PRD-0007)', userName: 'System Administrator (admin)', machineName: 'New machine (COUNTER-PC)', locationName: 'Kenlyn' });
     expect(log.entries).toContainEqual(expect.objectContaining({ table: 'locations', columnLabel: 'Name', after: 'Kenlyn', source: 'Automatic', userName: null }));
     expect(log.byKVNsys).toBe(true);
     expect(log.people.map((p) => p.name)).toContain('System Administrator (admin)');

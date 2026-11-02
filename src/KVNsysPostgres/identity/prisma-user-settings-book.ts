@@ -3,7 +3,7 @@ import type { PrismaClient } from '../generated/prisma/client.js';
 
 /**
  * Each person's settings, as JSON text in user_settings: one row per person who has changed any.
- * Not audited: they're how one person likes the screens, not a record of the shop's.
+ * Not audited: they're how one person likes the screens, not a record of the business's.
  */
 export class PrismaUserSettingsBook extends UserSettingsBook {
   constructor(private readonly db: PrismaClient) {

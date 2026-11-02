@@ -198,7 +198,7 @@ describe('a server with a password', () => {
     kvnsys = await createServer({ logger: false, certificate });
     await kvnsys.listen(0, '127.0.0.1');
     address = `https://127.0.0.1:${(kvnsys.getHttpServer().address() as AddressInfo).port}`;
-    await kvnsys.get(ServerPassword).set('shop-door-1234', 'shop-door-1234');
+    await kvnsys.get(ServerPassword).set('location-door-1234', 'location-door-1234');
     trust = new MemoryTrust();
   });
 
@@ -211,11 +211,11 @@ describe('a server with a password', () => {
   });
 
   it('lets the machine join with the right password', async () => {
-    expect(await joinServer(address, 'shop-door-1234', { pin: trust.pinFor(address) })).toEqual({ ok: true });
+    expect(await joinServer(address, 'location-door-1234', { pin: trust.pinFor(address) })).toEqual({ ok: true });
   });
 
   it('turns the wrong password down, and says it was the server password', async () => {
-    const result = await joinServer(address, 'shop-door-9999', { pin: trust.pinFor(address) });
+    const result = await joinServer(address, 'location-door-9999', { pin: trust.pinFor(address) });
     expect(result).toEqual({ ok: false, reason: 'server-password', message: "That isn't this server's password." });
   });
 
@@ -230,7 +230,7 @@ describe('a server with a password', () => {
       res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ joined: true }));
     });
     try {
-      const result = await joinServer(`https://${listener.address}`, 'shop-door-1234', { pin: null });
+      const result = await joinServer(`https://${listener.address}`, 'location-door-1234', { pin: null });
       expect(result).toMatchObject({ ok: false, reason: 'not-connected' });
       expect(asked).toBe(0);
     } finally {

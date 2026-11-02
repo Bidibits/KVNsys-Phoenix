@@ -15,7 +15,7 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
   const clerk = randomUUID();
   const lineage = () => ({ userId: clerk, machineId: null, locationId: hq });
 
-  const shop = async (code: string) => (await db.location.create({ data: { id: randomUUID(), code, name: code } })).id;
+  const location = async (code: string) => (await db.location.create({ data: { id: randomUUID(), code, name: code } })).id;
   const product = async (code: string, name: string) =>
     (await db.product.create({ data: { id: randomUUID(), code, name, retailPrice: '100.00' } })).id;
   const change = (productId: string, type: StockChange['type'], quantityChange: number, extra: Partial<StockChange> = {}): StockChange => ({
@@ -41,8 +41,8 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
     database = await createThrowawayDatabase();
     db = createPrismaClient(database.url);
     ledger = new PrismaStockLedger(db);
-    hq = await shop('HQ');
-    branch = await shop('GUMACA');
+    hq = await location('HQ');
+    branch = await location('GUMACA');
     rice = await product('PRD-0042', 'Sack of rice 25kg');
     sardines = await product('PRD-0007', 'Sardines 155g');
   });
@@ -103,7 +103,7 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
       kind: 'invalid',
     });
     await expect(ledger.record([change(rice, 'from_supplier', 5, { locationId: randomUUID() })], lineage())).rejects.toMatchObject({
-      message: "That shop isn't known here.",
+      message: "That location isn't known here.",
     });
     expect(await ledger.onHand(hq, rice)).toBe(0);
     expect(await db.inventoryLog.count()).toBe(0);
@@ -130,7 +130,7 @@ describeWithDatabase('the stock ledger in PostgreSQL', () => {
     await expect(insert(1, 'from_supplier', 'sales', null)).rejects.toThrow(/inventory_logs_source_whole/);
   });
 
-  it("keeps each shop's stock separate, and lists a shop's stock by product name", async () => {
+  it("keeps each location's stock separate, and lists a location's stock by product name", async () => {
     await ledger.record([change(rice, 'from_supplier', 7), change(sardines, 'from_supplier', 9)], lineage());
     await ledger.record([change(rice, 'from_supplier', 2, { locationId: branch })], lineage());
     expect(await ledger.levels(hq)).toEqual([

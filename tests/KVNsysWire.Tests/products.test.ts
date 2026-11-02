@@ -101,11 +101,11 @@ describe('the product calls', () => {
       createdAt: '2026-10-30T02:00:00.000Z',
       createdBy: 'System Administrator (admin)',
       createdMachine: 'Server',
-      createdShop: 'Kenlyn',
+      createdLocation: 'Kenlyn',
       updatedAt: null,
       updatedBy: null,
       updatedMachine: null,
-      updatedShop: null,
+      updatedLocation: null,
     };
     expect(ProductListReply.safeParse({ products: [{ ...saved, history }, { ...saved, history }] }).success).toBe(true);
     expect(ProductListReply.safeParse({ products: [saved] }).success).toBe(false);

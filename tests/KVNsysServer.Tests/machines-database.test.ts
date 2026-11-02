@@ -30,7 +30,7 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
   let address: string;
   let certificate: ServerCertificate;
   let pin: ServerPin;
-  let shopId: string;
+  let hqId: string;
 
   async function addUser(username: string, roleCode: string, rights: string[]): Promise<void> {
     const role = await db.role.create({ data: { id: randomUUID(), code: roleCode, name: roleCode, level: 10 } });
@@ -55,7 +55,7 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
       adminPassword: Password,
       server: ServerPc,
     });
-    shopId = (await db.location.findUniqueOrThrow({ where: { code: 'HQ' } })).id;
+    hqId = (await db.location.findUniqueOrThrow({ where: { code: 'HQ' } })).id;
     await addUser('ana', 'CASHIER', ['sales.sell', 'sales.view']);
     await addUser('ben', 'LOOKER', ['machines.view']);
 
@@ -72,13 +72,13 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
     await database?.drop();
   });
 
-  it('records a PC as a machine of the shop the first time someone signs in at it, and knows it after', async () => {
+  it('records a PC as a machine of the location the first time someone signs in at it, and knows it after', async () => {
     const first = await signInAt('ana', counter);
     expect(first.user.machine).toEqual({ code: 'HQ-M01', name: 'New machine (COUNTER-PC)' });
     expect((await signInAt('admin', counter)).user.machine).toEqual({ code: 'HQ-M01', name: 'New machine (COUNTER-PC)' });
     expect((await signInAt('admin', backOffice)).user.machine).toMatchObject({ code: 'HQ-M02' });
     expect(await checkSession(address, first.session, { pin })).toMatchObject({ ok: true, user: { machine: { code: 'HQ-M01' } } });
-    expect(await db.machine.findUniqueOrThrow({ where: { code: 'HQ-M01' } })).toMatchObject({ locationId: shopId, machineUuid: 'counter-pc-guid' });
+    expect(await db.machine.findUniqueOrThrow({ where: { code: 'HQ-M01' } })).toMatchObject({ locationId: hqId, machineUuid: 'counter-pc-guid' });
   });
 
   it("never records a PC for a wrong password, and a PC that can't read its id signs in at no machine", async () => {
@@ -93,7 +93,7 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
     const machine = await db.machine.findUniqueOrThrow({ where: { code: 'HQ-M01' } });
     const added = await addProduct(address, admin.session, { code: 'PRD-0007', barcode: null, name: 'Sardines 155g', retailPrice: 2575, status: 'Active', description: null }, { pin });
     if (!added.ok) throw new Error(added.message);
-    expect(await db.product.findUniqueOrThrow({ where: { id: added.product.id } })).toMatchObject({ createdAtMachine: machine.id, createdAtLocation: shopId });
+    expect(await db.product.findUniqueOrThrow({ where: { id: added.product.id } })).toMatchObject({ createdAtMachine: machine.id, createdAtLocation: hqId });
 
     const ana = await signInAt('ana', counter);
     expect(await openShift(address, ana.session, '500', { pin })).toMatchObject({ ok: true });
@@ -108,7 +108,7 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
     expect(elsewhere).toMatchObject({ ok: true, machine: null });
   });
 
-  it("lists the shop's machines, server first, renames one, and the receipts it rang show the new name", async () => {
+  it("lists the location's machines, server first, renames one, and the receipts it rang show the new name", async () => {
     const admin = await signInAt('admin', backOffice);
     const listed = await listMachines(address, admin.session, { pin });
     if (!listed.ok) throw new Error(listed.message);
@@ -117,21 +117,21 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
       ['HQ-M01', false, 'COUNTER-PC'],
       ['HQ-M02', false, 'OFFICE-PC'],
     ]);
-    // Each with its hardware id and shop, and its history: the server PC set up by KVNsys itself on itself,
+    // Each with its hardware id and location, and its history: the server PC set up by KVNsys itself on itself,
     // each machine recorded by whoever first signed in at it.
-    expect(listed.machines.map((r) => [r.code, r.hardwareId, r.shopName])).toEqual([
+    expect(listed.machines.map((r) => [r.code, r.hardwareId, r.locationName])).toEqual([
       ['HQ-SRV', 'test-hardware-id', 'Head Office'],
       ['HQ-M01', 'counter-pc-guid', 'Head Office'],
       ['HQ-M02', 'back-office-guid', 'Head Office'],
     ]);
-    expect(listed.machines[0]!.history).toMatchObject({ createdBy: null, createdMachine: 'Server', createdShop: 'Head Office', updatedAt: null });
-    expect(listed.machines[1]!.history).toMatchObject({ createdBy: expect.stringMatching(/ \(\w+\)$/), createdMachine: null, createdShop: 'Head Office' });
+    expect(listed.machines[0]!.history).toMatchObject({ createdBy: null, createdMachine: 'Server', createdLocation: 'Head Office', updatedAt: null });
+    expect(listed.machines[1]!.history).toMatchObject({ createdBy: expect.stringMatching(/ \(\w+\)$/), createdMachine: null, createdLocation: 'Head Office' });
     const m01 = listed.machines[1]!;
     expect(await changeMachine(address, admin.session, m01.id, { name: ' Counter 1 ', status: 'Active' }, { pin })).toMatchObject({ ok: true, machine: { name: 'Counter 1' } });
     // Renamed by the administrator at the back office's PC.
     const renamed = await listMachines(address, admin.session, { pin });
     if (!renamed.ok) throw new Error(renamed.message);
-    expect(renamed.machines[1]!.history).toMatchObject({ updatedBy: expect.stringMatching(/\(admin\)$/), updatedMachine: 'New machine (OFFICE-PC)', updatedShop: 'Head Office' });
+    expect(renamed.machines[1]!.history).toMatchObject({ updatedBy: expect.stringMatching(/\(admin\)$/), updatedMachine: 'New machine (OFFICE-PC)', updatedLocation: 'Head Office' });
     const receipt = await db.receipt.findFirstOrThrow({ where: { settledAtMachine: m01.id } });
     expect(await getReceipt(address, (await signInAt('ana', counter)).session, receipt.id, { pin })).toMatchObject({ ok: true, machine: 'Counter 1' });
     expect((await signInAt('ana', counter)).user.machine).toEqual({ code: 'HQ-M01', name: 'Counter 1' });
@@ -153,7 +153,7 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
     expect((await signInAt('ana', counter)).user.machine).toMatchObject({ code: 'HQ-M01' });
   });
 
-  it("never switches the server PC off, and changes only this shop's machines, for a role that may", async () => {
+  it("never switches the server PC off, and changes only this location's machines, for a role that may", async () => {
     const admin = await signInAt('admin', backOffice);
     const server = await db.machine.findUniqueOrThrow({ where: { code: 'HQ-SRV' } });
     expect(await changeMachine(address, admin.session, server.id, { name: 'Server', status: 'Inactive' }, { pin })).toMatchObject({ ok: false, reason: 'refused', message: /^The server PC stays switched on/ });
@@ -162,7 +162,7 @@ describeWithDatabase('machines over HTTPS, through the client engine, against a 
     expect(await changeMachine(address, admin.session, theirs.id, { name: 'Mine now', status: 'Active' }, { pin })).toEqual({
       ok: false,
       reason: 'not-found',
-      message: "That machine isn't one of this shop's.",
+      message: "That machine isn't one of this location's.",
     });
     expect((await listMachines(address, admin.session, { pin })) as { machines: { code: string }[] }).not.toMatchObject({ machines: expect.arrayContaining([expect.objectContaining({ code: 'GUMACA-M01' })]) });
 

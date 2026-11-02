@@ -8,23 +8,23 @@ import {
   type PcIdentity,
   type Shift,
   type ShiftBook,
-  type ShopDirectory,
+  type LocationDirectory,
   type UserAccounts,
 } from '@kvnsys/core';
 import { CloseShiftFields, OpenShiftFields, type CurrentShiftReply, type ShiftOnWire, type ShiftReply } from '@kvnsys/wire';
 import type { Authorizer } from '../identity/authorizer.js';
-import { FirstShopCode } from '../setup/first-shop.js';
+import { FirstLocationCode } from '../setup/first-location.js';
 import { bearerToken, NoDatabase, problem } from './problems.js';
 import { lineageOf, saving } from './saving.js';
 import { ShiftsOperation } from './tokens.js';
 
-const NoShop =
-  "KVNsys Server can't tell which shop it serves: this PC isn't recorded as any shop's server. " +
+const NoLocation =
+  "KVNsys Server can't tell which location it serves: this PC isn't recorded as any location's server. " +
   'Was the database moved here from another PC?';
 
 export interface ShiftsOperationParts {
   shifts: ShiftBook;
-  shops: ShopDirectory;
+  locations: LocationDirectory;
   accounts: UserAccounts;
   authorizer: Authorizer;
   server: PcIdentity;
@@ -58,45 +58,45 @@ export class ShiftsController {
 
   @Get('current')
   async current(@Headers('authorization') authorization: string | undefined): Promise<CurrentShiftReply> {
-    const { parts, shop, person } = await this.allow(authorization);
-    const shift = await parts.shifts.current(person.id, shop.id);
+    const { parts, location, person } = await this.allow(authorization);
+    const shift = await parts.shifts.current(person.id, location.id);
     return { shift: shift && (await shiftOnWire(shift, parts.accounts)) };
   }
 
   @Post()
   @HttpCode(201)
   async open(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<ShiftReply> {
-    const { parts, shop, person, machine } = await this.allow(authorization);
+    const { parts, location, person, machine } = await this.allow(authorization);
     const fields = OpenShiftFields.safeParse(body);
     const openingCash = fields.success ? parsePesos(fields.data.openingCash) : null;
     if (openingCash === null) throw problem(400, "The cash in the drawer didn't arrive in a form the server understands.");
-    const lineage = { ...lineageOf(person, machine), locationId: shop.id };
-    const shift = await saving(() => parts.shifts.open(person.id, shop.id, openingCash, lineage));
+    const lineage = { ...lineageOf(person, machine), locationId: location.id };
+    const shift = await saving(() => parts.shifts.open(person.id, location.id, openingCash, lineage));
     return { shift: await shiftOnWire(shift, parts.accounts) };
   }
 
   @Post('current/close')
   @HttpCode(200)
   async close(@Headers('authorization') authorization: string | undefined, @Body() body: unknown): Promise<ShiftReply> {
-    const { parts, shop, person, machine } = await this.allow(authorization);
+    const { parts, location, person, machine } = await this.allow(authorization);
     const fields = CloseShiftFields.safeParse(body);
     const countedCash = fields.success ? parsePesos(fields.data.countedCash) : null;
     if (!fields.success || countedCash === null) throw problem(400, "The cash counted didn't arrive in a form the server understands.");
-    const current = await parts.shifts.current(person.id, shop.id);
+    const current = await parts.shifts.current(person.id, location.id);
     if (!current) throw problem(409, "You haven't a shift open to end.");
-    const lineage = { ...lineageOf(person, machine), locationId: shop.id };
+    const lineage = { ...lineageOf(person, machine), locationId: location.id };
     const shift = await saving(async () => parts.shifts.close(current.id, countedCash, checkShiftNote(fields.data.note), lineage));
     return { shift: await shiftOnWire(shift, parts.accounts) };
   }
 
-  /** The pass and the right to sell, checked before anything else is answered; then the server's own shop. */
+  /** The pass and the right to sell, checked before anything else is answered; then the server's own location. */
   private async allow(authorization: string | undefined) {
     const parts = this.operation.shifts;
     if (!parts) throw problem(503, NoDatabase);
     const verdict = await parts.authorizer.check(bearerToken(authorization), Accesses.SalesSell);
     if (!verdict.ok) throw problem(verdict.status, verdict.message);
-    const shop = await parts.shops.serverShop(parts.server, serverMachineCode(FirstShopCode));
-    if (!shop) throw problem(503, NoShop);
-    return { parts, shop, person: verdict.person, machine: verdict.machine };
+    const location = await parts.locations.serverLocation(parts.server, serverMachineCode(FirstLocationCode));
+    if (!location) throw problem(503, NoLocation);
+    return { parts, location, person: verdict.person, machine: verdict.machine };
   }
 }

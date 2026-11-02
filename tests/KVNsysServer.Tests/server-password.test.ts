@@ -33,26 +33,26 @@ describe('ServerPassword', () => {
 
   it('once set, lets in the right password only, and says what was wrong', async () => {
     const password = new ServerPassword(dir, hasher);
-    await password.set('shop-door-1234', 'shop-door-1234');
+    await password.set('location-door-1234', 'location-door-1234');
     expect(password.state()).toBe('on');
-    expect(await password.check('shop-door-1234')).toBeNull();
-    expect(await password.check('shop-door-9999')).toBe(WrongServerPassword);
+    expect(await password.check('location-door-1234')).toBeNull();
+    expect(await password.check('location-door-9999')).toBe(WrongServerPassword);
     expect(await password.check(undefined)).toBe(NeedsServerPassword);
     expect(await password.check('')).toBe(NeedsServerPassword);
   });
 
   it('keeps it through a restart, as a scrambled copy only', async () => {
-    await new ServerPassword(dir, hasher).set('shop-door-1234', 'shop-door-1234');
+    await new ServerPassword(dir, hasher).set('location-door-1234', 'location-door-1234');
     const file = readFileSync(join(dir, ServerPasswordFile), 'utf8');
-    expect(file).not.toContain('shop-door-1234');
+    expect(file).not.toContain('location-door-1234');
     const afterRestart = new ServerPassword(dir, hasher);
     expect(afterRestart.state()).toBe('on');
-    expect(await afterRestart.check('shop-door-1234')).toBeNull();
+    expect(await afterRestart.check('location-door-1234')).toBeNull();
   });
 
   it('turns off for good: the file goes, and a restart finds it off', async () => {
     const password = new ServerPassword(dir, hasher);
-    await password.set('shop-door-1234', 'shop-door-1234');
+    await password.set('location-door-1234', 'location-door-1234');
     password.turnOff();
     expect(password.state()).toBe('off');
     expect(existsSync(join(dir, ServerPasswordFile))).toBe(false);
@@ -62,7 +62,7 @@ describe('ServerPassword', () => {
   it('holds a new password to the same rule as an account: 8 characters, typed the same twice', async () => {
     const password = new ServerPassword(dir, hasher);
     await expect(password.set('short', 'short')).rejects.toThrow(Refusal);
-    await expect(password.set('shop-door-1234', 'shop-door-1235')).rejects.toThrow(/didn't match/);
+    await expect(password.set('location-door-1234', 'location-door-1235')).rejects.toThrow(/didn't match/);
     expect(password.state()).toBe('off');
   });
 
@@ -76,8 +76,8 @@ describe('ServerPassword', () => {
     expect(await password.check(undefined)).toBe(DamagedServerPassword);
     expect(await password.check('plain-text')).toBe(DamagedServerPassword);
     // Setting a new one mends it.
-    await password.set('shop-door-1234', 'shop-door-1234');
-    expect(await password.check('shop-door-1234')).toBeNull();
+    await password.set('location-door-1234', 'location-door-1234');
+    expect(await password.check('location-door-1234')).toBeNull();
   });
 
   it('refuses everyone when the file is there but cannot be read', async () => {

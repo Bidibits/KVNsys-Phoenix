@@ -23,7 +23,7 @@ import {
   SalesPath,
   type ReceiptOnWire,
   type SessionPass,
-  type ShopOnWire,
+  type LocationOnWire,
 } from '@kvnsys/wire';
 import { callServer as call, readOrRefuse, type CallOptions, type Refused } from '../connection/server-call.js';
 
@@ -32,8 +32,8 @@ export type PaidReceipt = Omit<Receipt, 'locationId' | 'createdByUser' | 'machin
 
 export type SaleProductResult = { ok: true; product: SaleProduct } | Refused;
 export type PriceResult = { ok: true; sale: PricedSale } | Refused;
-/** A receipt with its shop and who rang it up: null when their account isn't on this server. */
-export type SaleResult = { ok: true; receipt: PaidReceipt; shop: ShopOnWire; cashier: string | null; machine: string | null } | Refused;
+/** A receipt with its location and who rang it up: null when their account isn't on this server. */
+export type SaleResult = { ok: true; receipt: PaidReceipt; location: LocationOnWire; cashier: string | null; machine: string | null } | Refused;
 
 /** One receipt as a day's list shows it. Money is in centavos. */
 export interface ReceiptLine {
@@ -48,7 +48,7 @@ export interface ReceiptLine {
   total: number;
   discountKind: DiscountKind | null;
 }
-export type DaySalesResult = { ok: true; shop: ShopOnWire; date: string; receipts: ReceiptLine[]; totals: DayTotals } | Refused;
+export type DaySalesResult = { ok: true; location: LocationOnWire; date: string; receipts: ReceiptLine[]; totals: DayTotals } | Refused;
 
 /** What the cashier rang up, as the selling screen holds it: the cart, a discount if one was given, and the cash as typed. */
 export interface SaleForm {
@@ -102,19 +102,19 @@ export async function recordSale(address: string, pass: SessionPass, form: SaleF
   };
   const answer = await call(address, pass, options, { path: SalesPath, method: 'POST', body }, ReceiptReply);
   if (!answer.ok) return answer;
-  const { shop, cashier, machine } = answer.reply;
-  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop, cashier, machine };
+  const { location, cashier, machine } = answer.reply;
+  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), location, cashier, machine };
 }
 
-/** A day's receipts at the shop, oldest first, with their totals. Today, by the shop's clock, when the date is null. */
+/** A day's receipts at the location, oldest first, with their totals. Today, by the business's clock, when the date is null. */
 export async function listDaySales(address: string, pass: SessionPass, date: string | null, options: CallOptions): Promise<DaySalesResult> {
   const path = date === null ? SalesPath : `${SalesPath}?date=${encodeURIComponent(date)}`;
   const answer = await call(address, pass, options, { path }, DaySalesReply);
   if (!answer.ok) return answer;
-  const { shop, totals } = answer.reply;
+  const { location, totals } = answer.reply;
   return {
     ok: true,
-    shop,
+    location,
     date: answer.reply.date,
     receipts: answer.reply.receipts.map((receipt) => ({
       ...receipt,
@@ -130,8 +130,8 @@ export async function listDaySales(address: string, pass: SessionPass, date: str
 export async function getReceipt(address: string, pass: SessionPass, id: string, options: CallOptions): Promise<SaleResult> {
   const answer = await call(address, pass, options, { path: receiptPath(id) }, ReceiptReply);
   if (!answer.ok) return answer;
-  const { shop, cashier, machine } = answer.reply;
-  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), shop, cashier, machine };
+  const { location, cashier, machine } = answer.reply;
+  return { ok: true, receipt: receiptFromWire(answer.reply.receipt), location, cashier, machine };
 }
 
 function receiptFromWire(receipt: ReceiptOnWire): PaidReceipt {

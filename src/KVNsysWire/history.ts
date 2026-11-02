@@ -8,11 +8,11 @@ export const RecordHistoryOnWire = z.object({
   createdAt: z.string(),
   createdBy: z.string().nullable(),
   createdMachine: z.string().nullable(),
-  createdShop: z.string().nullable(),
+  createdLocation: z.string().nullable(),
   updatedAt: z.string().nullable(),
   updatedBy: z.string().nullable(),
   updatedMachine: z.string().nullable(),
-  updatedShop: z.string().nullable(),
+  updatedLocation: z.string().nullable(),
 });
 export type RecordHistoryOnWire = z.infer<typeof RecordHistoryOnWire>;
 

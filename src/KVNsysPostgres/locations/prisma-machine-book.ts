@@ -18,7 +18,7 @@ import type { Machine as MachineRow, PrismaClient } from '../generated/prisma/cl
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NotThere = "That machine isn't there any more.";
 
-/** The seed gives the server PC its shop's code and -SRV; the other machines get -M01 and up. */
+/** The seed gives the server PC its location's code and -SRV; the other machines get -M01 and up. */
 const isServerCode = (code: string) => code.endsWith('-SRV');
 
 function toMachine(row: MachineRow): Machine {
@@ -62,23 +62,23 @@ export class PrismaMachineBook extends MachineBook {
         return toMachine(row);
       });
     }
-    if (!Uuid.test(locationId)) throw new Refusal('not-found', "That shop isn't known here.");
+    if (!Uuid.test(locationId)) throw new Refusal('not-found', "That location isn't known here.");
 
     return this.db.$transaction(async (tx) => {
-      // One new machine at a time per shop takes the next code, so two PCs signing in for the first
+      // One new machine at a time per location takes the next code, so two PCs signing in for the first
       // time together never get the same one.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`machines:${locationId}`}))`;
       const again = await tx.machine.findUnique({ where: { machineUuid: pc.hardwareId } });
       if (again) return toMachine(again);
-      const shop = await tx.location.findUnique({ where: { id: locationId }, select: { code: true } });
-      if (!shop) throw new Refusal('not-found', "That shop isn't known here.");
-      const prefix = `${shop.code}-M`;
+      const location = await tx.location.findUnique({ where: { id: locationId }, select: { code: true } });
+      if (!location) throw new Refusal('not-found', "That location isn't known here.");
+      const prefix = `${location.code}-M`;
       const taken = await tx.machine.findMany({ where: { locationId, code: { startsWith: prefix } }, select: { code: true } });
       const numbers = taken.map((row) => Number(row.code.slice(prefix.length))).filter((n) => Number.isSafeInteger(n) && n > 0);
       const row = await tx.machine.create({
         data: {
           id: newId(),
-          code: machineCode(shop.code, Math.max(0, ...numbers) + 1),
+          code: machineCode(location.code, Math.max(0, ...numbers) + 1),
           name: newMachineName(pc.computerName),
           machineUuid: pc.hardwareId,
           machineName: pc.computerName,

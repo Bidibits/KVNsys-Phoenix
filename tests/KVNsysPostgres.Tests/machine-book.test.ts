@@ -27,7 +27,7 @@ describeWithDatabase('machines in PostgreSQL', () => {
     await database.drop();
   });
 
-  it("records a PC the first time it's seen, with the shop's next code, and knows it again after", async () => {
+  it("records a PC the first time it's seen, with the location's next code, and knows it again after", async () => {
     const first = await book.recognise(pc('pc-1', 'COUNTER-PC'), hq, someone);
     expect(first).toMatchObject({ code: 'HQ-M01', name: 'New machine (COUNTER-PC)', computerName: 'COUNTER-PC', status: 'Active', isServer: false, locationId: hq });
     expect((await book.recognise(pc('pc-2'), hq, someone)).code).toBe('HQ-M02');
@@ -49,7 +49,7 @@ describeWithDatabase('machines in PostgreSQL', () => {
     expect(new Set(same.map((r) => r.id)).size).toBe(1);
   });
 
-  it("lists a shop's machines, the server PC first, and renames one or switches it off", async () => {
+  it("lists a location's machines, the server PC first, and renames one or switches it off", async () => {
     const counter = await book.recognise(pc('pc-1'), hq, someone);
     await book.recognise(pc('pc-9'), gumaca, someone);
     expect((await book.list(hq)).map((r) => [r.code, r.isServer])).toEqual([

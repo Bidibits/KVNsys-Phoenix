@@ -1,4 +1,4 @@
-import { shopDay } from '../selling/days.js';
+import { businessDay } from '../selling/days.js';
 import type { ChangeSource, ChangeType } from '../shared/audit-trail.js';
 import { Refusal } from '../shared/refusal.js';
 
@@ -17,7 +17,7 @@ export const AuditedTables = {
   users: 'Users',
   roles: 'Roles',
   machines: 'Machines',
-  locations: 'Shops',
+  locations: 'Locations',
 } as const;
 export type AuditedTable = keyof typeof AuditedTables;
 export const AuditedTableNames = Object.keys(AuditedTables) as AuditedTable[];
@@ -44,7 +44,7 @@ const ColumnLabels: Readonly<Record<string, string>> = {
   supplier_id: 'Supplier',
   manufacturer_id: 'Manufacturer',
   role_id: 'Role',
-  location_id: 'Shop',
+  location_id: 'Location',
   retail_price: 'Price',
   cost_price: 'Cost',
   unit_of_measure: 'Unit',
@@ -86,7 +86,7 @@ export function shownValue(column: string | null, value: string | null, names: R
 /** The newest this many changes are shown; the filters find older ones. */
 export const AuditLimit = 500;
 
-/** Stands for "nobody": the changes KVNsys made itself, setting a shop up or recording a PC. */
+/** Stands for "nobody": the changes KVNsys made itself, setting a location up or recording a PC. */
 export const ByKVNsys = 'kvnsys';
 
 /** What to look for. Each part left empty means any. `to` is the end of the last day, not included. */
@@ -105,7 +105,7 @@ function refuse(message: string): never {
   throw new Refusal('invalid', message);
 }
 
-/** The filters as typed and picked (empty for any), checked: a day is a shop day, by Philippine time. */
+/** The filters as typed and picked (empty for any), checked: a day is a business day, by Philippine time. */
 export function checkAuditFilter(typed: { table?: string; record?: string; person?: string; from?: string; to?: string }): AuditFilter {
   const text = (value: string | undefined) => (value ?? '').trim();
   const table = text(typed.table);
@@ -114,8 +114,8 @@ export function checkAuditFilter(typed: { table?: string; record?: string; perso
   if (record && !Uuid.test(record)) refuse("That record isn't one the audit log knows.");
   const person = text(typed.person);
   if (person && person !== ByKVNsys && !Uuid.test(person)) refuse("That person isn't one the audit log knows.");
-  const from = text(typed.from) ? shopDay(text(typed.from)).from : null;
-  const to = text(typed.to) ? shopDay(text(typed.to)).to : null;
+  const from = text(typed.from) ? businessDay(text(typed.from)).from : null;
+  const to = text(typed.to) ? businessDay(text(typed.to)).to : null;
   if (from && to && from >= to) refuse('The first day comes after the last one. Swap them round.');
   return { table: (table || null) as AuditedTable | null, recordId: record || null, person: person || null, from, to };
 }
@@ -140,7 +140,7 @@ export interface AuditEntry {
   userId: string | null;
   userName: string | null;
   machineName: string | null;
-  shopName: string | null;
+  locationName: string | null;
 }
 
 /** Someone who has made a change, for the screen's "who" choice. */

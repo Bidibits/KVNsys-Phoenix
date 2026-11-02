@@ -48,8 +48,8 @@ describe('a stock change', () => {
     expect(MovementTypes).toEqual(['from_supplier', 'to_customer', 'adjustment']);
   });
 
-  it('needs a shop, a product, and a whole source if it names one', () => {
-    expect(refusalOf(() => checkStockChange({ ...received, locationId: ' ' }))).toMatchObject({ message: /needs the shop/ });
+  it('needs a location, a product, and a whole source if it names one', () => {
+    expect(refusalOf(() => checkStockChange({ ...received, locationId: ' ' }))).toMatchObject({ message: /needs the location/ });
     expect(refusalOf(() => checkStockChange({ ...received, productId: '' }))).toMatchObject({ message: /needs the product/ });
     expect(refusalOf(() => checkStockChange({ ...received, source: { table: 'sales', id: ' ' } }))).toMatchObject({ message: /both its kind and its id/ });
   });

@@ -15,16 +15,16 @@ export const UsersOperation = Symbol('UsersOperation');
 /** The roles, the rights check and the sessions, or null when there's no database. */
 export const RolesOperation = Symbol('RolesOperation');
 
-/** The stock ledger, the catalog, the server's shop and the rights check, or null when there's no database. */
+/** The stock ledger, the catalog, the server's location and the rights check, or null when there's no database. */
 export const StockOperation = Symbol('StockOperation');
 
-/** The record of sales, the catalog, the server's shop and the rights check, or null when there's no database. */
+/** The record of sales, the catalog, the server's location and the rights check, or null when there's no database. */
 export const SalesOperation = Symbol('SalesOperation');
 
-/** The machines, the server's shop, the rights check and the sessions, or null when there's no database. */
+/** The machines, the server's location, the rights check and the sessions, or null when there's no database. */
 export const MachinesOperation = Symbol('MachinesOperation');
 
-/** The shifts, the server's shop, the accounts and the rights check, or null when there's no database. */
+/** The shifts, the server's location, the accounts and the rights check, or null when there's no database. */
 export const ShiftsOperation = Symbol('ShiftsOperation');
 
 /** The catalogue's four lists and the rights check, or null when there's no database. */

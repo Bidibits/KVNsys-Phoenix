@@ -1,0 +1,69 @@
+{
+  "step": "\"Shop\" is \"Location\", on screen and in the code (2026-11-03)",
+  "plants": [
+    {
+      "name": "1 the Machines list's column called Shop again",
+      "file": "src/KVNsysClientApp/screens/machines/MachinesScreen.tsx",
+      "old": "{ heading: 'Location', width: '10em', cell: (machine) => machine.locationName",
+      "new": "{ heading: 'Shop', width: '10em', cell: (machine) => machine.locationName",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "2 the history column called Updated shop again",
+      "file": "src/KVNsysUI/HistoryColumns.tsx",
+      "old": "heading: 'Updated location'",
+      "new": "heading: 'Updated shop'",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "machines"]]
+    },
+    {
+      "name": "3 the Audit log's column called Shop again",
+      "file": "src/KVNsysClientApp/screens/audits/AuditLogScreen.tsx",
+      "old": "{ heading: 'Location', width: '10em', cell: (entry)",
+      "new": "{ heading: 'Shop', width: '10em', cell: (entry)",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "audits"]]
+    },
+    {
+      "name": "4 the stock list naming the location by its code",
+      "file": "src/KVNsysClient/inventory/stock.ts",
+      "old": "return { ok: true, location: answer.reply.location, items };",
+      "new": "return { ok: true, location: { ...answer.reply.location, name: answer.reply.location.code }, items };",
+      "build": ["@kvnsys/client", "@kvnsys/client-app"],
+      "tests": [["KVNsysClient.Tests", "stock"], ["KVNsysClientApp.Tests", "stock"]]
+    },
+    {
+      "name": "5 the Stock screen saying the location's code",
+      "file": "src/KVNsysClientApp/screens/stock/StockScreen.tsx",
+      "old": "at ${result.location.name}`}",
+      "new": "at ${result.location.code}`}",
+      "build": ["@kvnsys/client-app"],
+      "tests": [["KVNsysClientApp.Tests", "stock"]]
+    },
+    {
+      "name": "6 the first start asking for the shop's name again",
+      "file": "src/KVNsysServer/setup/first-location.ts",
+      "old": "if (!locationName) say(\"Type the location's name, the way people know it.\");",
+      "new": "if (!locationName) say(\"Type the shop's name, the way people know it.\");",
+      "build": ["@kvnsys/server"],
+      "tests": [["KVNsysServer.Tests", "first-location"]]
+    },
+    {
+      "name": "7 a business day by the PC's clock, not Philippine time",
+      "file": "src/KVNsysCore/selling/days.ts",
+      "old": "return new Date(at.getTime() + BusinessOffsetMs).toISOString().slice(0, 10);",
+      "new": "return at.toISOString().slice(0, 10);",
+      "build": ["@kvnsys/core"],
+      "tests": [["KVNsysCore.Tests", "days"]]
+    },
+    {
+      "name": "8 the server not finding the location it serves",
+      "file": "src/KVNsysPostgres/locations/prisma-location-directory.ts",
+      "old": "return machine?.location ?? null;",
+      "new": "return null;",
+      "build": ["@kvnsys/postgres"],
+      "tests": [["KVNsysPostgres.Tests", "location-directory"]]
+    }
+  ]
+}

@@ -9,7 +9,7 @@ import { z } from 'zod';
  *
  * Every part of the question may be left out: table is a table's database name (products, users…),
  * record a record's id, person someone's id or "kvnsys" for the changes KVNsys made itself, and
- * from and to are shop days ("2026-10-28"), both included. A refusal is a ProblemReply (see products.ts).
+ * from and to are business days ("2026-10-28"), both included. A refusal is a ProblemReply (see products.ts).
  */
 export const AuditsPath = '/api/audits';
 
@@ -29,7 +29,7 @@ export const AuditEntryOnWire = z.object({
   userId: z.string().nullable(),
   userName: z.string().nullable(),
   machineName: z.string().nullable(),
-  shopName: z.string().nullable(),
+  locationName: z.string().nullable(),
 });
 export type AuditEntryOnWire = z.infer<typeof AuditEntryOnWire>;
 

@@ -39,12 +39,12 @@ export {
 } from './users.js';
 export {
   FindStockItemPath,
+  LocationOnWire,
   MovementFields,
   MovementOnWire,
   MovementsShown,
   ProductStockReply,
   productStockPath,
-  ShopOnWire,
   StockListReply,
   StockMovementsPath,
   StockMovementsReply,

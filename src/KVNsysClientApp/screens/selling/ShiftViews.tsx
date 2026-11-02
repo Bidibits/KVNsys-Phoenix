@@ -1,5 +1,5 @@
 import type { ShiftResult, ShiftView } from '@kvnsys/client';
-import { Button, Notice, Pesos, ShopTime, TextField } from '@kvnsys/ui';
+import { BusinessTime, Button, Notice, Pesos, TextField } from '@kvnsys/ui';
 import { useState } from 'react';
 
 /** Before the first sale: the cash counted into the drawer starts the cashier's shift. */
@@ -73,7 +73,7 @@ export function ShiftReport({ shift, onDone }: { shift: ShiftView; onDone: () =>
         <header className="mb-4 text-center">
           <p className="text-lg font-semibold">Shift {shift.code}</p>
           <p className="text-muted-foreground">
-            <ShopTime at={shift.openedAt} /> to {shift.closedAt && <ShopTime at={shift.closedAt} show="time" />}
+            <BusinessTime at={shift.openedAt} /> to {shift.closedAt && <BusinessTime at={shift.closedAt} show="time" />}
           </p>
           {shift.openedBy && <p className="text-muted-foreground">Cashier: {shift.openedBy}</p>}
         </header>

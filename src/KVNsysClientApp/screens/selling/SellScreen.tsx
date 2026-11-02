@@ -1,5 +1,5 @@
 import type { CurrentShiftResult, PricedLine, SaleResult, ShiftView, TillResult, TillView } from '@kvnsys/client';
-import { Button, ConfirmDialog, Notice, Pesos, RecordTable, ShopTime, TextField, type Column } from '@kvnsys/ui';
+import { BusinessTime, Button, ConfirmDialog, Notice, Pesos, RecordTable, TextField, type Column } from '@kvnsys/ui';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { DiscountPanel } from './DiscountPanel';
@@ -237,7 +237,7 @@ function SaleArea({
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex items-center gap-3 text-[15px] text-muted-foreground">
           <span>
-            Shift {shift.code} · started <ShopTime at={shift.openedAt} show="time" />
+            Shift {shift.code} · started <BusinessTime at={shift.openedAt} show="time" />
           </span>
           <Button type="button" variant="secondary" size="compact" className="ml-auto h-8 px-3" disabled={busy || !empty} onClick={() => setEnding(true)}>
             End shift

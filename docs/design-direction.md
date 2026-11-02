@@ -179,14 +179,14 @@ Key:
 
 | Capstone 3Re | What it does there | Phoenix |
 |---|---|---|
-| Log in (`logInLocalDatabase`, `logInConnectToServer`) | Sign in, against a local database or a server | ✅ Connect to the shop's server over secure HTTPS, sign in, sessions. Machines always go through the server: no local-database mode, by design. |
+| Log in (`logInLocalDatabase`, `logInConnectToServer`) | Sign in, against a local database or a server | ✅ Connect to the location's server over secure HTTPS, sign in, sessions. Machines always go through the server: no local-database mode, by design. |
 | Users (list, form, search) | Accounts and their roles | ✅ A users list and form, to create the cashiers' accounts (2026-10-19) · ⏭ search |
-| Roles (list, form, search) | Roles and the rights each holds | ✅ Only the Administrator is made at install (decided 2026-10-19) · ✅ making and editing roles and their rights, so a shop can make a cashier role (2026-10-19) · ⏭ search |
+| Roles (list, form, search) | Roles and the rights each holds | ✅ Only the Administrator is made at install (decided 2026-10-19) · ✅ making and editing roles and their rights, so the business can make a cashier role (2026-10-19) · ⏭ search |
 | Terminals (list, form, search) | The machines | ✅ Each machine recorded by itself the first time someone signs in at it, plus a list to name them or switch them off (2026-10-24) · ⏭ search |
-| Configurations | This PC's shop and machine | ✅ It remembers its server · ⏭ a settings page |
-| Locations (list, form, search) | The shops | ✅ The first shop is made at install · ⏭ screens, when a second branch joins |
-| Storages (list, form, search) | Places stock is kept inside a shop | ⏭ |
-| Server Manager | Start or stop the server, change its port, see connected machines | ✅ The server sets up its own database and first shop, and its port is a setting · ✅ the server's dashboard, from a desktop icon on the server PC: turn the server on and off, start it with the PC or not (not, after install), turn it off with the dashboard or not (not, unless ticked), who's connected and disconnecting them, the server password on or off and changing it (2026-10-27) · ⏭ changing the port from the dashboard, and showing the logs |
+| Configurations | This PC's location and machine | ✅ It remembers its server · ⏭ a settings page |
+| Locations (list, form, search) | The locations | ✅ The first location is made at install · ⏭ screens, when a second branch joins |
+| Storages (list, form, search) | Places stock is kept inside a location | ⏭ |
+| Server Manager | Start or stop the server, change its port, see connected machines | ✅ The server sets up its own database and first location, and its port is a setting · ✅ the server's dashboard, from a desktop icon on the server PC: turn the server on and off, start it with the PC or not (not, after install), turn it off with the dashboard or not (not, unless ticked), who's connected and disconnecting them, the server password on or off and changing it (2026-10-27) · ⏭ changing the port from the dashboard, and showing the logs |
 
 ### Selling and the day
 

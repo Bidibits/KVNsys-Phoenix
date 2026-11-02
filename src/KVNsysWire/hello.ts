@@ -31,8 +31,11 @@ import { z } from 'zod';
  *     signed in and a receipt say `machine` where they said `register`.
  * 21: a person's own settings, kept on the server for them (/api/my-settings): so far, the widths
  *     they dragged each list's columns to.
+ * 22: shops are called locations: the stock, sales and receipt replies say `location` where they
+ *     said `shop`, the machine list and the audit log `locationName` for `shopName`, and a record's
+ *     history `createdLocation` and `updatedLocation`.
  */
-export const ProtocolVersion = 21;
+export const ProtocolVersion = 22;
 
 /** The port KVNsys Server listens on unless told otherwise. The old KVNsys used it too. */
 export const DefaultPort = 9000;
@@ -40,7 +43,7 @@ export const DefaultPort = 9000;
 /** Where a client asks "are you a KVNsys server, and which version?" */
 export const HelloPath = '/api/hello';
 
-/** The server's answer. It says what the server is, and nothing about the shop's data. */
+/** The server's answer. It says what the server is, and nothing about the business's data. */
 export const ServerHello = z.object({
   product: z.literal('KVNsys Server'),
   version: z.string(),

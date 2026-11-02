@@ -1,21 +1,21 @@
 import type { SaleResult } from '@kvnsys/client';
-import { Pesos, ShopTime } from '@kvnsys/ui';
+import { BusinessTime, Pesos } from '@kvnsys/ui';
 import { DiscountChoices } from './discounts';
 import { PriceBasisWords } from './prices';
 
 /**
- * A receipt as it was given, on screen until there's a printer: the shop, the receipt's number,
+ * A receipt as it was given, on screen until there's a printer: the location, the receipt's number,
  * when, who and at which machine, every line, the discount and whose ID it was, the total, the cash and the change.
  */
 export function ReceiptPaper({ sale }: { sale: Extract<SaleResult, { ok: true }> }) {
-  const { receipt, shop, cashier, machine } = sale;
+  const { receipt, location, cashier, machine } = sale;
   return (
     <article aria-label="Receipt" className="w-[420px] shrink-0 self-start rounded-lg border border-border bg-field p-6 text-[15px] shadow-sm">
       <header className="mb-4 text-center">
-        <p className="text-lg font-semibold">{shop.name}</p>
+        <p className="text-lg font-semibold">{location.name}</p>
         <p>Receipt {receipt.code}</p>
         <p className="text-muted-foreground">
-          <ShopTime at={receipt.createdAt} />
+          <BusinessTime at={receipt.createdAt} />
         </p>
         {/* No name when the cashier's account isn't on this server. */}
         {cashier && <p className="text-muted-foreground">Cashier: {cashier}</p>}

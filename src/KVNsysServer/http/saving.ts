@@ -15,7 +15,7 @@ export async function saving<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Who saved it, at which machine, and so at which shop. A sign-in at no machine says neither. */
+/** Who saved it, at which machine, and so at which location. A sign-in at no machine says neither. */
 export function lineageOf(person: SignedInPerson, machine: SessionMachine | null): Lineage {
   return { userId: person.id, machineId: machine?.machineId ?? null, locationId: machine?.locationId ?? null };
 }

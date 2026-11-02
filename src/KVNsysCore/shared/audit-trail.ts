@@ -12,7 +12,7 @@
 export const ChangeTypes = ['Created', 'Updated', 'Decommissioned'] as const;
 export type ChangeType = (typeof ChangeTypes)[number];
 
-/** Manual: a person, through a screen. Automatic: KVNsys itself, setting a shop up or recording a PC. */
+/** Manual: a person, through a screen. Automatic: KVNsys itself, setting a location up or recording a PC. */
 export const ChangeSources = ['Manual', 'Automatic'] as const;
 export type ChangeSource = (typeof ChangeSources)[number];
 

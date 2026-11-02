@@ -17,7 +17,7 @@ import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 import { recordStockIn } from '../inventory/prisma-stock-ledger.js';
 
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const NoSuchShop = "That shop isn't known here.";
+const NoSuchLocation = "That location isn't known here.";
 const NotInCatalog = "That product isn't in the catalog.";
 const withLines = { items: { orderBy: { lineNumber: 'asc' } }, payments: true } as const;
 
@@ -87,8 +87,8 @@ function requireSound(sale: PricedSale, payment: CashPayment): void {
 
 /**
  * Sales, kept in PostgreSQL. Recording one is a single transaction: the next receipt number at the
- * shop, the receipt with its lines (each with the price it was charged at) and payment, and the
- * pieces out of the shop's stock through the ledger, for the products that track stock. All of it is saved, or none. The database refuses to change or delete a receipt.
+ * location, the receipt with its lines (each with the price it was charged at) and payment, and the
+ * pieces out of the location's stock through the ledger, for the products that track stock. All of it is saved, or none. The database refuses to change or delete a receipt.
  */
 export class PrismaSalesJournal extends SalesJournal {
   constructor(private readonly db: PrismaClient) {
@@ -97,7 +97,7 @@ export class PrismaSalesJournal extends SalesJournal {
 
   async record(sale: PricedSale, payment: CashPayment, locationId: string, lineage: Lineage, shiftId: string | null = null): Promise<Receipt> {
     requireSound(sale, payment);
-    if (!Uuid.test(locationId)) throw new Refusal('not-found', NoSuchShop);
+    if (!Uuid.test(locationId)) throw new Refusal('not-found', NoSuchLocation);
     if (shiftId !== null && !Uuid.test(shiftId)) throw new Refusal('not-found', "That shift isn't there.");
     const id = newId();
 
@@ -110,12 +110,12 @@ export class PrismaSalesJournal extends SalesJournal {
         if (!shift || shift.location_id !== locationId) throw new Refusal('not-found', "That shift isn't there.");
         if (shift.status !== 'Open') throw new Refusal('conflict', `Shift ${shift.code} is closed. Start a new shift to sell.`);
       }
-      // One sale at a time takes a shop's next number, so numbers never repeat or skip: a sale that
-      // fails gives its number back with everything else. A lock of its own, not the shop's row,
+      // One sale at a time takes a location's next number, so numbers never repeat or skip: a sale that
+      // fails gives its number back with everything else. A lock of its own, not the location's row,
       // so it never waits on anything stock does.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`receipts:${locationId}`}))`;
-      const shop = await tx.location.findUnique({ where: { id: locationId }, select: { code: true } });
-      if (!shop) throw new Refusal('not-found', NoSuchShop);
+      const location = await tx.location.findUnique({ where: { id: locationId }, select: { code: true } });
+      if (!location) throw new Refusal('not-found', NoSuchLocation);
       const last = await tx.receipt.aggregate({ where: { locationId }, _max: { number: true } });
       const number = (last._max.number ?? 0) + 1;
 
@@ -155,7 +155,7 @@ export class PrismaSalesJournal extends SalesJournal {
       const row = await tx.receipt.create({
         data: {
           id,
-          code: `${shop.code}-${String(number).padStart(6, '0')}`,
+          code: `${location.code}-${String(number).padStart(6, '0')}`,
           shiftId,
           locationId,
           number,

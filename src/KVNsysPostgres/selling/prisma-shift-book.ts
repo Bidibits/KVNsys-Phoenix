@@ -42,7 +42,7 @@ function toShift(row: ShiftRow, sold: Awaited<ReturnType<typeof takings>>): Shif
 }
 
 /**
- * Shifts, kept in PostgreSQL. Opening takes the shop's next number (one at a time, on a lock of its
+ * Shifts, kept in PostgreSQL. Opening takes the location's next number (one at a time, on a lock of its
  * own) and refuses a second open shift for the same person. Closing locks the shift's row, so a sale
  * being recorded in it finishes first, and nothing is recorded in it after.
  */
@@ -58,19 +58,19 @@ export class PrismaShiftBook extends ShiftBook {
   }
 
   async open(userId: string, locationId: string, openingCash: number, lineage: Lineage): Promise<Shift> {
-    if (!Uuid.test(locationId)) throw new Refusal('not-found', "That shop isn't known here.");
+    if (!Uuid.test(locationId)) throw new Refusal('not-found', "That location isn't known here.");
     return this.db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`shifts:${locationId}`}))`;
       const already = await tx.shift.findFirst({ where: { locationId, openedByUser: userId, status: 'Open' } });
       if (already) throw new Refusal('conflict', `Your shift ${already.code} is still open. End it before starting another.`);
-      const shop = await tx.location.findUnique({ where: { id: locationId }, select: { code: true } });
-      if (!shop) throw new Refusal('not-found', "That shop isn't known here.");
+      const location = await tx.location.findUnique({ where: { id: locationId }, select: { code: true } });
+      if (!location) throw new Refusal('not-found', "That location isn't known here.");
       const last = await tx.shift.aggregate({ where: { locationId }, _max: { number: true } });
       const number = (last._max.number ?? 0) + 1;
       const row = await tx.shift.create({
         data: {
           id: newId(),
-          code: `${shop.code}-S${String(number).padStart(5, '0')}`,
+          code: `${location.code}-S${String(number).padStart(5, '0')}`,
           locationId,
           number,
           openingCash: pesosText(openingCash),

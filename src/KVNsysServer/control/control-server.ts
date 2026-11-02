@@ -37,7 +37,7 @@ const MaxBody = 8 * 1024;
 
 /**
  * Lets the server's dashboard see and steer the running server: who's connected, disconnecting
- * them, and the server password. It answers only on 127.0.0.1, never on the shop's network, and
+ * them, and the server password. It answers only on 127.0.0.1, never on the local network, and
  * only to a request showing this run's key. The key is written into the server's folder, which only
  * the server's service and the PC's administrators can read, so being able to read it is what makes
  * someone allowed to steer the server. A new key every run, so an old copy is worthless.

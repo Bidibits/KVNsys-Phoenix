@@ -1,11 +1,11 @@
 import { DiscountKinds, PaymentTypes, PriceBases, ProductStatuses } from '@kvnsys/core';
 import { z } from 'zod';
-import { ShopOnWire } from './stock.js';
+import { LocationOnWire } from './stock.js';
 
 /**
  * The selling calls. Every one needs a signed-in pass, and a role with sales.sell. The app
  * keeps the cart while the cashier scans; the server records the sale whole, at payment, at its
- * own shop.
+ * own location.
  *
  *   GET  /api/sales/find?codeOrBarcode=4800249211116   one product to ring up, by what was scanned or typed
  *   POST /api/sales                                   record a sale paid in cash             (201)
@@ -92,14 +92,14 @@ export const ReceiptOnWire = z.object({
 export type ReceiptOnWire = z.infer<typeof ReceiptOnWire>;
 
 /**
- * A receipt, with what it prints at the top: the shop, who rang it up and where. The cashier is
+ * A receipt, with what it prints at the top: the location, who rang it up and where. The cashier is
  * null when their account isn't on this server.
  */
 export const ReceiptReply = z.object({
   receipt: ReceiptOnWire,
-  shop: ShopOnWire,
+  location: LocationOnWire,
   cashier: z.string().nullable(),
-  /** The machine it was rung up at, as the shop calls it now, or null when it was at none. */
+  /** The machine it was rung up at, as the location calls it now, or null when it was at none. */
   machine: z.string().nullable(),
 });
 export type ReceiptReply = z.infer<typeof ReceiptReply>;
@@ -119,9 +119,9 @@ export const ReceiptSummaryOnWire = z.object({
 });
 export type ReceiptSummaryOnWire = z.infer<typeof ReceiptSummaryOnWire>;
 
-/** A day at the shop (midnight to midnight, Philippine time): its receipts, oldest first, and their totals. */
+/** A day at the location (midnight to midnight, Philippine time): its receipts, oldest first, and their totals. */
 export const DaySalesReply = z.object({
-  shop: ShopOnWire,
+  location: LocationOnWire,
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   receipts: z.array(ReceiptSummaryOnWire),
   totals: z.object({

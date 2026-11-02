@@ -28,7 +28,7 @@ describeWithDatabase('managing user accounts from the real app', () => {
       adminPassword: AdminPassword,
       server: { hardwareId: 'test-hardware-id', computerName: 'TEST-SERVER' },
     });
-    // A new install has only the Administrator role; the shop makes a cashier role itself.
+    // A new install has only the Administrator role; the location makes a cashier role itself.
     const cashier = await db.role.create({ data: { id: randomUUID(), code: 'CASHIER', name: 'Cashier', level: 10 } });
     await db.access.create({ data: { id: randomUUID(), roleId: cashier.id, access: 'products.view' } });
 

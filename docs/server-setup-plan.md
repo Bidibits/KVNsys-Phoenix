@@ -5,7 +5,7 @@
   service, and `remove-postgresql.ps1` takes it away again.
 - Part 2: `KVNsys Server Setup.exe` (`scripts/server-setup/kvnsys-server.iss`) wraps that and KVNsys
   Server into one setup file.
-- Part 3: KVNsys Server runs as a Windows service through WinSW, and the setup asks the shop's name
+- Part 3: KVNsys Server runs as a Windows service through WinSW, and the setup asks the location's name
   and the administrator's password on its own page.
 - The nightly backup: a scheduled task saves the database every night and keeps 14 copies, and
   `check-backup.ps1` proves a copy can be put back. See "The nightly backup".
@@ -20,7 +20,7 @@ test settled".
 
 1. Copy `KVNsys Server Setup.exe` to the branch's server PC and double-click it.
 2. Windows asks once for administrator rights. A Windows service can't be installed without them.
-3. On a new install, one page asks the shop's name and an administrator's username and password
+3. On a new install, one page asks the location's name and an administrator's username and password
    (the username box starts as `admin`; added 2026-10-30).
 4. The setup installs PostgreSQL, KVNsys Server and the nightly backup, and starts them. Both run as
    Windows services from then on, so there's no window to open.
@@ -64,10 +64,10 @@ Owning the steps is more work once, and fewer surprises at every branch.
 |---|---|---|---|
 | PostgreSQL's programs | `C:\Program Files\KVNsys\PostgreSQL\18\` | Replaced | Yes |
 | KVNsys Server's programs | `C:\Program Files\KVNsys\Server\` | Replaced | Yes |
-| The shop's database | `C:\ProgramData\KVNsys\PostgreSQL\18\data\` | Never | Yes, once it's packed into an archive |
+| The location's database | `C:\ProgramData\KVNsys\PostgreSQL\18\data\` | Never | Yes, once it's packed into an archive |
 | KVNsys Server's settings and certificate | `C:\ProgramData\KVNsys\Server\` | Never | Yes (a new install makes its own) |
 | Backups and logs | `C:\ProgramData\KVNsys\Backups\`, `Logs\` | Never | Yes, once they're packed into an archive |
-| Archives of uninstalled shops | `C:\KVNsys Archives\` | Never | **No**: they're what's left of a shop |
+| Archives of uninstalled locations | `C:\KVNsys Archives\` | Never | **No**: they're what's left of a location |
 
 - **The settings move.** A service runs under no person's Windows account, so its settings have to
   be machine-wide. Today the server keeps them in `%LOCALAPPDATA%`; the step that builds this
@@ -138,18 +138,18 @@ writes it into the settings.
 
 **Where KVNsys Server is installed, the setup updates it:** the data folder is kept and used,
 never initialised again. That's what makes updating safe. **Where it isn't installed, the setup
-always starts a new shop.** A data folder an earlier install left behind is packed into an archive
+always starts a new location.** A data folder an earlier install left behind is packed into an archive
 and removed before anything is copied, so it's never picked back up. Windows' list of apps says
 which case it is. Either way the setup first closes the dashboard if it's open, since Windows won't
 let a running program's files be replaced.
 
 ## Uninstalling (since 2026-10-28)
 
-Uninstalling leaves nothing loose behind, and never loses a shop:
+Uninstalling leaves nothing loose behind, and never loses a location's records:
 
-1. The dashboard is closed and the server stopped, so nothing changes while the shop is copied.
+1. The dashboard is closed and the server stopped, so nothing changes while the location's records are copied.
    PostgreSQL keeps running.
-2. `archive-shop.ps1` packs the shop into one `.zip` in `C:\KVNsys Archives`, named after the shop
+2. `archive-location.ps1` packs the location's records into one `.zip` in `C:\KVNsys Archives`, named after the location
    and the time: the whole database (`pg_dump`, read back in full like a nightly backup), the
    nightly backups and the logs. The server's settings, its private key and the stored passwords
    stay out; a new install makes its own. If the database can't be copied that way, the whole data
@@ -159,7 +159,7 @@ Uninstalling leaves nothing loose behind, and never loses a shop:
 4. Only if the archive was made: everything in `C:\ProgramData\KVNsys`, and the dashboard's own
    folder in AppData. If it couldn't be made, the data stays where it is and the uninstaller says so.
 
-Only Administrators and SYSTEM can open `C:\KVNsys Archives`, since an archive holds the whole shop.
+Only Administrators and SYSTEM can open `C:\KVNsys Archives`, since an archive holds all the location's records.
 Putting an archive back into KVNsys isn't built yet; the database copy inside can be restored with
 PostgreSQL 18's `pg_restore`.
 
@@ -210,10 +210,10 @@ The install script, run for real on the development PC next to its own PostgreSQ
 
 ## What the part 3 test settled (2026-10-18)
 
-- **A silent install** (`/ShopName` and `/AdminPassword` standing in for the page, and since
+- **A silent install** (`/LocationName` and `/AdminPassword` standing in for the page, and since
   2026-10-30 `/AdminUsername`, `admin` without it; firewall option
   off) worked:
-  - `KVNsys Server.exe --set-up` made the database and the shop.
+  - `KVNsys Server.exe --set-up` made the database and the location.
   - Both services run automatically, under `NT SERVICE\kvnsys-postgresql` and `NT SERVICE\kvnsys-server`.
     WinSW accepts that kind of account, so the LocalService fallback wasn't needed.
   - The server listens on port 9000, starts after PostgreSQL, and restarts if it stops.
@@ -224,7 +224,7 @@ The install script, run for real on the development PC next to its own PostgreSQ
 
   Both are fixed. The setup now also repairs the folder's permissions before writing to it.
 - **Installing again over that install** stopped the services, replaced the programs, kept the
-  database and the shop (no shop page, no questions), and started the service.
+  database and the location (no location page, no questions), and started the service.
 - **The installed app** connected to the server running as a service and signed in with the
   first install's password. An ordinary account can't read the settings folder.
 - **Uninstalling** removed both services, the programs and the app list entry, and kept the data.
@@ -237,14 +237,14 @@ The install script, run for real on the development PC next to its own PostgreSQ
   PostgreSQL to answer.
 - **What:** `backup-database.ps1` saves the whole `kvnsys` database with `pg_dump --format=custom`,
   one file per copy, `kvnsys-<date>-<time>.dump`, in `C:\ProgramData\KVNsys\Backups`. It signs in as
-  `kvnsys` with the server's own settings, so it can read the shop's data and nothing else.
+  `kvnsys` with the server's own settings, so it can read the location's data and nothing else.
 - **Only whole copies count:** a copy is written under a temporary name, read back in full
   (`pg_restore` to NUL), and only then given its real name. A copy cut short by a full disk or a power
   cut never stands in for a good one.
 - **Keeping 14:** after a good copy, all but the newest 14 are deleted. A failed night deletes
   nothing. The copy just made always stays, even if the PC's clock has gone wrong, and the log then
   asks whether the date is right.
-- **Who can open them:** Administrators and SYSTEM only. A copy holds the whole shop, including the
+- **Who can open them:** Administrators and SYSTEM only. A copy holds all the location's records, including the
   accounts (passwords only as scrypt hashes).
 - **The record:** one line a night in `C:\ProgramData\KVNsys\Logs\backup.log`. Don't rely on Task
   Scheduler's "last run time": after the task is re-registered (every reinstall does that), runs
@@ -252,7 +252,7 @@ The install script, run for real on the development PC next to its own PostgreSQ
 - **Checking a copy:** `check-backup.ps1`, from an administrator PowerShell, restores the newest copy
   (or the one named) into a throwaway database. It compares every table with the live database, by
   row count and a fingerprint of every row, then drops the throwaway database. Differences are normal
-  once the shop has used KVNsys since the copy; `-RequireMatch` makes them a failure, for tests.
+  once the location has used KVNsys since the copy; `-RequireMatch` makes them a failure, for tests.
 - **Uninstalling** removes the task and keeps the copies.
 - **Not yet:** a copy that leaves the PC (the USB copy), and a restore that replaces the live database
   (the launch plan's week 8).
@@ -284,15 +284,15 @@ The install script, run for real on the development PC next to its own PostgreSQ
 One run with administrator rights on the development PC, silent installs, 51 checks, all passed:
 
 - **A new install**, then **an update with the dashboard open:** the setup closed the dashboard,
-  kept the shop and made no archive. Before this, an open dashboard stopped an update with "Access
+  kept the location and made no archive. Before this, an open dashboard stopped an update with "Access
   is denied" on its files.
-- **Uninstalling with the dashboard open** closed it and made one archive, named after the shop
+- **Uninstalling with the dashboard open** closed it and made one archive, named after the location
   (`KVNsys Archive Test <date> <time>.zip`, 15 KB): `database.dump`, the logs and the note, and no
   settings, keys or passwords. PostgreSQL 18's `pg_restore` read the dump, `locations` table included.
   Only Administrators and SYSTEM can open `C:\KVNsys Archives`. Nothing else was left: no services,
   program folders, `C:\ProgramData\KVNsys`, app list entry, backup task or dashboard folder in AppData.
 - **Leftovers like the old uninstall left them** (a data folder with no install): the setup packed
-  them whole into an archive, removed them, and set up the new shop it was given.
+  them whole into an archive, removed them, and set up the new location it was given.
 - **Uninstalling with PostgreSQL unable to start:** the database couldn't be copied, so the whole
   data folder went into the archive (1,428 files, 7.5 MB), and then nothing was left.
 - **The app:** an update kept its settings; uninstalling removed them and the app.

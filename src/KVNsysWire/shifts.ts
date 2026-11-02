@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 /**
  * The shift calls. Every one needs a signed-in pass and sales.sell: a cashier opens and closes their
- * own shift at the server's own shop, and can't record a sale without one open.
+ * own shift at the server's own location, and can't record a sale without one open.
  *
  *   GET  /api/shifts/current          the signed-in person's open shift, with its figures so far, or none
  *   POST /api/shifts                  start a shift with the cash counted into the drawer   (201)
@@ -17,7 +17,7 @@ export const CloseShiftPath = '/api/shifts/current/close';
 
 const PesosOnWire = z.string().regex(/^\d+\.\d{2}$/);
 
-/** A shift as the server sends it: every amount as pesos text, and names as the shop knows them. */
+/** A shift as the server sends it: every amount as pesos text, and names as the location knows them. */
 export const ShiftOnWire = z.object({
   id: z.string(),
   /** HQ-S00001 */

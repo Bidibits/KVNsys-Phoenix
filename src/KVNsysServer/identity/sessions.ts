@@ -10,7 +10,7 @@ export const SignInEnded = 'Your sign-in has ended. Sign in again.';
 /** What a machine is told when someone disconnected it from the server's dashboard. */
 export const DisconnectedAtServer = 'You were disconnected at the server. Sign in again.';
 
-/** The machine a sign-in is at: the PC, its shop, and what the shop calls it. */
+/** The machine a sign-in is at: the PC, its location, and what the location calls it. */
 export interface SessionMachine {
   machineId: string;
   locationId: string;

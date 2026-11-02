@@ -12,7 +12,7 @@ export interface MySettingsOperationParts {
 
 /**
  * The signed-in person's own settings (see KVNsysWire's user-settings.ts). They need a pass but no
- * right, since they're the person's own and change nothing of the shop's; for the same reason they
+ * right, since they're the person's own and change nothing of the business's; for the same reason they
  * aren't written to the audit log.
  */
 @Controller('my-settings')

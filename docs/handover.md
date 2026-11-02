@@ -45,7 +45,7 @@ pnpm build
 
 **Use a new database.** The tables changed, and they live in one baseline migration that's edited in
 place (see below), so a database made before 2026-10-25 won't match. In `.env`, point `DATABASE_URL`
-at a database name you haven't used yet. Never put a real shop's password in `.env` or anywhere it
+at a database name you haven't used yet. Never put a real install's password in `.env` or anywhere it
 could be copied from.
 
 Then, in one window:
@@ -54,7 +54,7 @@ Then, in one window:
 pnpm start:server
 ```
 
-It creates the database, asks once for the shop's name and the first administrator's username (Enter
+It creates the database, asks once for the location's name and the first administrator's username (Enter
 for `admin`) and password, and prints the
 address the machines use. In a second window:
 
@@ -89,7 +89,7 @@ been checked these four ways before it was committed:
    checks each mistake's text is still in its file. Run it with nothing else building: it takes
    about a minute a mistake, and the window tests open the app again and again.
 3. **`pnpm check:package`** (after `pnpm package`): runs the programs in `out/` together, as the
-   setup files will install them, on a throwaway database. The server sets a new shop up the way
+   setup files will install them, on a throwaway database. The server sets a new location up the way
    its setup file does, then serves on a spare port; the built app connects, signs in with the
    username the setup chose, goes through Home, Machines and the Audit log, and drags a column
    narrower, which it finds again after signing in anew. It checks the
@@ -131,7 +131,7 @@ Most of this is in the README and `decisions.md`; these are the ones that are ea
   breaks the table in the README.
 - **Money is whole centavos** in code, and pesos as text on the wire (`"1500.50"`). Never a
   fraction of a centavo, never a floating-point peso.
-- **A shop day is Philippine time,** whatever the PC is set to. Use `shopDate` and `shopDay` in
+- **A business day is Philippine time,** whatever the PC is set to. Use `businessDate` and `businessDay` in
   `KVNsysCore/selling/days.ts`.
 - **Every save records who and at which machine.** On the server, `lineageOf(person, machine)` in
   `KVNsysServer/http/saving.ts`.
@@ -139,10 +139,10 @@ Most of this is in the README and `decisions.md`; these are the ones that are ea
   `recordCreated` / `recordChanged` in `KVNsysPostgres/audits/audit-log.ts`. A new save path that
   skips it leaves changes with no history.
 - **The database is one baseline migration,** `src/KVNsysPostgres/prisma/migrations/20261017101440_baseline`,
-  edited in place while no real shop has data. After changing `schema.prisma`, regenerate the half
+  edited in place while no real location has data. After changing `schema.prisma`, regenerate the half
   Prisma writes, keep the hand-written half (the CHECKs and the triggers that refuse changes),
   check that Prisma finds no difference against the schema, and recreate every test database. Once
-  a real shop has data, this stops: every change becomes a new migration.
+  a real location has data, this stops: every change becomes a new migration.
 - **A call's shape changes, the protocol goes up:** `ProtocolVersion` in `KVNsysWire/hello.ts`.
 - **A new right** goes in `Accesses`, `AccessDescriptions` and `RightGroups`, in
   `KVNsysCore/identity/accesses.ts`. The Administrator holds it without being told.
@@ -161,7 +161,7 @@ Most of this is in the README and `decisions.md`; these are the ones that are ea
 | 10–20 rows of the current system's product export | The import converter. It has to exist before December's practice runs. |
 | The receipt printer's make and model | Printing the receipt, the last 🟢 on the selling screen |
 | One restore tested on the real server PC (`check-backup.ps1`) | "A nightly backup, and one restore actually tested" |
-| Answers to the questions in `decisions.md`, "Open" | Above all: which goods the senior/PWD discount covers (ask the accountant), how the shop counts stock, and whether a sale may take stock below zero (built as yes) |
+| Answers to the questions in `decisions.md`, "Open" | Above all: which goods the senior/PWD discount covers (ask the accountant), how the business counts stock, and whether a sale may take stock below zero (built as yes) |
 
 **Still 🟢 in `design-direction.md`,** once the above arrives: printing, the import, and building
 each list and form from one description.
@@ -172,8 +172,8 @@ each list and form from one description.
 
 | To do | What it takes |
 |---|---|
-| ~~**Rename Registers to Machines,** on screen and in the code~~ | **Done** (2026-11-02, protocol 20): the screen, its tile, the messages ("this machine"), and in the code the files, types and calls (`/api/machines`, `MachineBook`, `ListedMachine` and the rest). New machines get codes like `HQ-M01`. "Register" as a verb stays (the `machines.register` right, `pg_ctl register`, `Register-ScheduledTask`), and so does "the old register", the shop's old POS. |
-| ~~**The Machines list shows every column**~~ | **Done** (2026-10-30), and every other list too: each shows every column, then who made the record and who last updated it, when, on which machine and at which shop, in a grid like Beta's (`decisions.md`). |
+| ~~**Rename Registers to Machines,** on screen and in the code~~ | **Done** (2026-11-02, protocol 20): the screen, its tile, the messages ("this machine"), and in the code the files, types and calls (`/api/machines`, `MachineBook`, `ListedMachine` and the rest). New machines get codes like `HQ-M01`. "Register" as a verb stays (the `machines.register` right, `pg_ctl register`, `Register-ScheduledTask`), and so does "the old register", the location's old POS. |
+| ~~**The Machines list shows every column**~~ | **Done** (2026-10-30), and every other list too: each shows every column, then who made the record and who last updated it, when, on which machine and at which location, in a grid like Beta's (`decisions.md`). |
 | ~~**An audits screen,** to see each change by table, record and column~~ | **Done.** Every save writes its changes (2026-10-28) and the Audit log screen shows them (2026-10-29): `schema.md`, "What the audit log records". |
 | ~~**The first account's username**~~ | **Done** (2026-10-30): the setup's page asks for it, starting as `admin`. `decisions.md`, Settled. |
 
@@ -183,7 +183,7 @@ None of it needs a change to the database's tables.
 | To do | What it takes |
 |---|---|
 | ~~**Lines between columns, dragged to resize**~~ | **Done** (2026-11-02, protocol 21): double-click fits; each person's widths kept on the server (`decisions.md`, Settled). |
-| **"Shop" becomes "Location"**, on screen and in the code; "Address" for where it is | A rename like the Machines one. The database already says `locations` and `*_at_location`. |
+| ~~**"Shop" becomes "Location"**, on screen and in the code; "Address" for where it is~~ | **Done** (2026-11-03, protocol 22): the screens, the setup, the messages and the code. Where "shop" meant the whole business it says "the business", the network is "the local network", and the clock and its days are the business's (`businessDate`, `businessDay`). "Address" waits for the Locations screen, below. |
 | **The place tables in use** | PSA's list of regions, provinces, cities and municipalities and barangays checked and loaded at setup (SCHEMA-PLAN, "Still open" 1), and a Locations screen that picks each, narrowing the next, then the street. Each branch's own code is set there; today every install is `HQ`. |
 | **What the setup makes is credited to the admin it makes** | The location, the server PC, the Administrator role and the admin account say they were made by that admin, not "KVNsys itself"; anything still made by nobody shows a dash. |
 | **"Stock" becomes "Inventory"** | Screens, code and the rights (`stock.view` becomes `inventory.view`, and so on). The tables are already `inventory` and `inventory_logs`. |

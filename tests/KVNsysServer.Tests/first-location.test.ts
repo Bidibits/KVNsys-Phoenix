@@ -3,9 +3,9 @@ import {
   answersFrom,
   consoleQuestions,
   DefaultAdminUsername,
-  FirstShopCode,
+  FirstLocationCode,
   NoAnswer,
-  setUpFirstShop,
+  setUpFirstLocation,
   type InstallSeed,
   type Questions,
   type SeedInput,
@@ -33,15 +33,15 @@ function recordingSeed() {
   return { seed, runs };
 }
 
-describe('setUpFirstShop', () => {
-  it("asks for the shop's name and the first administrator's username and password, then sets them up", async () => {
+describe('setUpFirstLocation', () => {
+  it("asks for the location's name and the first administrator's username and password, then sets them up", async () => {
     const { seed, runs } = recordingSeed();
     const said: string[] = [];
     const questions = answering('  Kenly Lucena ', ' Kenly ', 'a-good-password', 'a-good-password');
-    await setUpFirstShop(seed, questions, server, (line) => said.push(line));
+    await setUpFirstLocation(seed, questions, server, (line) => said.push(line));
     expect(runs).toEqual([
       {
-        locationCode: FirstShopCode,
+        locationCode: FirstLocationCode,
         locationName: 'Kenly Lucena',
         adminUsername: 'kenly',
         adminPassword: 'a-good-password',
@@ -57,7 +57,7 @@ describe('setUpFirstShop', () => {
   it('offers admin as the username, and says so, when none is typed', async () => {
     const { seed, runs } = recordingSeed();
     const questions = answering('Kenly Lucena', '', 'a-good-password', 'a-good-password');
-    await setUpFirstShop(seed, questions, server, () => {});
+    await setUpFirstLocation(seed, questions, server, () => {});
     expect(questions.asked[1]).toContain(`"${DefaultAdminUsername}"`);
     expect(runs[0]).toMatchObject({ adminUsername: DefaultAdminUsername });
   });
@@ -65,7 +65,7 @@ describe('setUpFirstShop', () => {
   it('asks again for a missing name, a username with a space, a short password, and a password typed differently the second time', async () => {
     const { seed, runs } = recordingSeed();
     const said: string[] = [];
-    await setUpFirstShop(
+    await setUpFirstLocation(
       seed,
       answering('', 'Kenly Lucena', 'kenly lucena', 'kenly', 'short', 'a-good-password', 'a-good-pasword', 'a-good-password', 'a-good-password'),
       server,
@@ -74,7 +74,7 @@ describe('setUpFirstShop', () => {
     expect(runs[0]).toMatchObject({ locationName: 'Kenly Lucena', adminUsername: 'kenly', adminPassword: 'a-good-password' });
     expect(said).toEqual(
       expect.arrayContaining([
-        "Type the shop's name, the way people know it.",
+        "Type the location's name, the way people know it.",
         'A username is letters, numbers, dots, dashes or underscores, with no spaces.',
         'A password needs at least 8 characters.',
         "Those didn't match. Once more.",
@@ -84,7 +84,7 @@ describe('setUpFirstShop', () => {
 
   it('sets up nothing when the answers run out', async () => {
     const { seed, runs } = recordingSeed();
-    await expect(setUpFirstShop(seed, answering('Kenly Lucena', 'kenly'), server, () => {})).rejects.toBeInstanceOf(NoAnswer);
+    await expect(setUpFirstLocation(seed, answering('Kenly Lucena', 'kenly'), server, () => {})).rejects.toBeInstanceOf(NoAnswer);
     expect(runs).toEqual([]);
   });
 });
@@ -105,11 +105,11 @@ describe('consoleQuestions, reading answers from a pipe', () => {
 describe('answersFrom, for the setup file to give the answers ahead of time', () => {
   const given = { KVNSYS_LOCATION_NAME: ' Kenly Lucena ', KVNSYS_ADMIN_USERNAME: ' Kenly ', KVNSYS_ADMIN_PASSWORD: 'a-good-password' };
 
-  it("answers with the shop's name, the username and the password it's given", async () => {
+  it("answers with the location's name, the username and the password it's given", async () => {
     const answers = answersFrom(given);
     if (!answers.ok) throw new Error(answers.message);
     const { seed, runs } = recordingSeed();
-    await setUpFirstShop(seed, answers.questions, server, () => {});
+    await setUpFirstLocation(seed, answers.questions, server, () => {});
     expect(runs[0]).toMatchObject({ locationName: 'Kenly Lucena', adminUsername: 'kenly', adminPassword: 'a-good-password' });
   });
 

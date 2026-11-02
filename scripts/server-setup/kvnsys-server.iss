@@ -1,12 +1,12 @@
-; KVNsys Server Setup.exe: installs KVNsys Server and its own PostgreSQL on a shop's server PC, both as
+; KVNsys Server Setup.exe: installs KVNsys Server and its own PostgreSQL on a location's server PC, both as
 ; Windows services, the server's dashboard with its desktop icon, and the nightly backup. PostgreSQL
 ; starts with Windows. On a new install the server itself is off until someone turns it on from the
 ; dashboard, which is also where it's set to start with Windows; a reinstall keeps whatever was
 ; chosen.
 ;
-; Run where KVNsys Server is installed, it updates it and keeps the shop. Run where it isn't, it
-; always starts a new shop: anything an earlier install left behind is packed into an archive in
-; C:\KVNsys Archives first (archive-shop.ps1), never picked back up. Uninstalling packs the shop
+; Run where KVNsys Server is installed, it updates it and keeps the location and its records. Run where it isn't, it
+; always starts a new location: anything an earlier install left behind is packed into an archive in
+; C:\KVNsys Archives first (archive-location.ps1), never picked back up. Uninstalling packs the location's records
 ; into an archive the same way, then removes everything else.
 ;
 ; `pnpm package` builds it with Inno Setup 7, passing the version. Paths are relative to this
@@ -47,11 +47,11 @@ SetupLogging=yes
 FinishedLabel=KVNsys Server is installed. Open it from the KVNsys Server icon on the desktop to turn the server on or off, see who's connected, and choose whether it starts when this PC starts.
 
 [Tasks]
-Name: firewall; Description: "Let the shop's machines reach KVNsys Server through Windows Firewall (private networks only)"
+Name: firewall; Description: "Let the location's machines reach KVNsys Server through Windows Firewall (private networks only)"
 
 [Dirs]
 ; The server's settings and certificate, the logs and the backups. Inno Setup never removes them
-; itself: they're the shop's, so the uninstall packs them into an archive first and removes them
+; itself: they're the location's, so the uninstall packs them into an archive first and removes them
 ; only once that worked (CurUninstallStepChanged). Who may use the settings folder is set below,
 ; once the service exists; the backups folder, by install-backup-task.ps1.
 Name: "{commonappdata}\KVNsys\Server"; Flags: uninsneveruninstall
@@ -70,7 +70,7 @@ Source: "..\postgresql\remove-postgresql.ps1"; DestDir: "{app}\setup"; Flags: ig
 Source: "..\postgresql\install-backup-task.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 Source: "..\postgresql\backup-database.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 Source: "..\postgresql\check-backup.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
-Source: "archive-shop.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
+Source: "archive-location.ps1"; DestDir: "{app}\setup"; Flags: ignoreversion
 ; PostgreSQL's programs, trimmed to what a server needs.
 Source: "..\..\vendor\postgresql\pgsql\bin\*"; DestDir: "{autopf}\KVNsys\PostgreSQL\18\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\vendor\postgresql\pgsql\lib\*"; DestDir: "{autopf}\KVNsys\PostgreSQL\18\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -90,7 +90,7 @@ Filename: "{app}\Dashboard\KVNsys Server Dashboard.exe"; Description: "Open KVNs
 
 [UninstallRun]
 ; In this order, before any file goes: the nightly backup's task, the server's service, its firewall
-; rule, then PostgreSQL's service and programs. The shop was packed into an archive just before
+; rule, then PostgreSQL's service and programs. The location's records were packed into an archive just before
 ; (CurUninstallStepChanged), and its data goes once these are done.
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""KVNsys Nightly Backup"" /F"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveBackupTask"
 Filename: "{app}\kvnsys-server-service.exe"; Parameters: "stop"; Flags: runhidden waituntilterminated; RunOnceId: "StopServer"
@@ -109,16 +109,16 @@ const
   DefaultAdminUsername = 'admin';
 
 var
-  ShopPage: TInputQueryWizardPage;
-  { No database on this PC yet, so there's a shop to set up. An update finds the one it keeps. }
-  IsNewShop: Boolean;
+  LocationPage: TInputQueryWizardPage;
+  { No database on this PC yet, so there's a location to set up. An update finds the one it keeps. }
+  IsNewLocation: Boolean;
   { KVNsys Server isn't installed, but an earlier install left its data. It's packed into an
-    archive before anything is installed, and this install starts a new shop. }
+    archive before anything is installed, and this install starts a new location. }
   HasLeftovers: Boolean;
   { The server was on when this setup began. A new install's never is. }
   ServerWasRunning: Boolean;
-  { Uninstalling: the shop was packed into an archive, so its data may go. }
-  ShopArchived: Boolean;
+  { Uninstalling: the location's records were packed into an archive, so its data may go. }
+  LocationArchived: Boolean;
 
 function SetEnvironmentVariable(Name, Value: String): Boolean;
   external 'SetEnvironmentVariableW@kernel32.dll stdcall';
@@ -168,49 +168,49 @@ begin
   Run(Sys('taskkill.exe'), '/F /T /IM "' + DashboardProgram + '"');
 end;
 
-{ Packs the shop's data into one archive in C:\KVNsys Archives. True once the archive is made and
+{ Packs the location's data into one archive in C:\KVNsys Archives. True once the archive is made and
   checked; only then may the data be removed. }
-function ArchiveShop(const Script: String): Boolean;
+function ArchiveLocation(const Script: String): Boolean;
 begin
   Result := Run(Sys('WindowsPowerShell\v1.0\powershell.exe'),
     '-NoProfile -ExecutionPolicy Bypass -File "' + Script + '"' +
     ' -DataDir "' + DataFolder + '" -ArchiveDir "' + ArchiveFolder + '"' +
     ' -InstallDir "' + ExpandConstant('{autopf}\KVNsys\PostgreSQL\18') + '"' +
-    ' -LogFile "' + DataFolder + '\Logs\archive-shop.log"') = 0;
+    ' -LogFile "' + DataFolder + '\Logs\archive-location.log"') = 0;
 end;
 
 procedure InitializeWizard;
 var
   About: String;
 begin
-  { Installed means updating: the shop is kept. Not installed means a new shop, always. }
+  { Installed means updating: the location is kept. Not installed means a new location, always. }
   HasLeftovers := (not RegKeyExists(HKLM64, UninstallKey)) and DirExists(DataFolder);
-  IsNewShop := HasLeftovers or not FileExists(DataFolder + '\PostgreSQL\18\data\PG_VERSION');
+  IsNewLocation := HasLeftovers or not FileExists(DataFolder + '\PostgreSQL\18\data\PG_VERSION');
   About := 'This makes the first account, the administrator, who can do everything and adds everyone else. ' +
     'Sign in with this username and password on any machine. Write them down and keep them somewhere safe: ' +
     'there''s no other administrator to reset the password.';
   if HasLeftovers then
     About := 'KVNsys Server was on this PC before. What it left behind will be packed into one archive in ' +
-      ArchiveFolder + ', and this install starts a new shop.' + #13#10#13#10 + About;
-  ShopPage := CreateInputQueryPage(wpSelectTasks, 'The shop',
+      ArchiveFolder + ', and this install starts a new location.' + #13#10#13#10 + About;
+  LocationPage := CreateInputQueryPage(wpSelectTasks, 'The location',
     'This new install needs three answers, just this once.', About);
-  ShopPage.Add('The shop''s name:', False);
-  ShopPage.Add('The administrator''s username (letters, numbers, dots, dashes or underscores):', False);
-  ShopPage.Add('The administrator''s password (at least 8 characters):', True);
-  ShopPage.Add('Type the password again:', True);
-  ShopPage.Values[1] := DefaultAdminUsername;
+  LocationPage.Add('The location''s name:', False);
+  LocationPage.Add('The administrator''s username (letters, numbers, dots, dashes or underscores):', False);
+  LocationPage.Add('The administrator''s password (at least 8 characters):', True);
+  LocationPage.Add('Type the password again:', True);
+  LocationPage.Values[1] := DefaultAdminUsername;
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  Result := (PageID = ShopPage.ID) and not IsNewShop;
+  Result := (PageID = LocationPage.ID) and not IsNewLocation;
 end;
 
-{ A silent install shows no pages, so it's given these as /ShopName="..." /AdminUsername="..."
+{ A silent install shows no pages, so it's given these as /LocationName="..." /AdminUsername="..."
   /AdminPassword="...". Without /AdminUsername it's admin, as the page's box starts. }
-function ShopName: String;
+function LocationName: String;
 begin
-  if WizardSilent then Result := Trim(ExpandConstant('{param:ShopName}')) else Result := Trim(ShopPage.Values[0]);
+  if WizardSilent then Result := Trim(ExpandConstant('{param:LocationName}')) else Result := Trim(LocationPage.Values[0]);
 end;
 
 function AdminUsername: String;
@@ -218,14 +218,14 @@ begin
   if WizardSilent then
     Result := Trim(ExpandConstant('{param:AdminUsername|' + DefaultAdminUsername + '}'))
   else
-    Result := Trim(ShopPage.Values[1]);
+    Result := Trim(LocationPage.Values[1]);
   { Kept in lowercase, as KVNsys keeps every username. }
   Result := Lowercase(Result);
 end;
 
 function AdminPassword: String;
 begin
-  if WizardSilent then Result := ExpandConstant('{param:AdminPassword}') else Result := ShopPage.Values[2];
+  if WizardSilent then Result := ExpandConstant('{param:AdminPassword}') else Result := LocationPage.Values[2];
 end;
 
 { The rule KVNsys holds every username to (usernameProblem in KVNsysCore), so a username KVNsys
@@ -255,14 +255,14 @@ var
   Problem: String;
 begin
   Result := True;
-  if CurPageID <> ShopPage.ID then Exit;
-  if ShopName = '' then
-    Problem := 'Type the shop''s name, the way people know it.'
+  if CurPageID <> LocationPage.ID then Exit;
+  if LocationName = '' then
+    Problem := 'Type the location''s name, the way people know it.'
   else if UsernameProblem(AdminUsername) <> '' then
     Problem := UsernameProblem(AdminUsername)
   else if Length(AdminPassword) < 8 then
     Problem := 'A password needs at least 8 characters.'
-  else if (not WizardSilent) and (ShopPage.Values[2] <> ShopPage.Values[3]) then
+  else if (not WizardSilent) and (LocationPage.Values[2] <> LocationPage.Values[3]) then
     Problem := 'Those two passwords didn''t match. Once more.';
   if Problem <> '' then
   begin
@@ -312,12 +312,12 @@ begin
   if not HasLeftovers then Exit;
 
   WizardForm.PreparingLabel.Caption := 'Packing what an earlier install left behind into an archive...';
-  ExtractTemporaryFile('archive-shop.ps1');
-  if not ArchiveShop(ExpandConstant('{tmp}\archive-shop.ps1')) then
+  ExtractTemporaryFile('archive-location.ps1');
+  if not ArchiveLocation(ExpandConstant('{tmp}\archive-location.ps1')) then
   begin
     Result := 'KVNsys Server was on this PC before, and what it left behind is still in ' + DataFolder +
       '. It couldn''t be packed into an archive, so nothing was changed. The details are in ' +
-      DataFolder + '\Logs\archive-shop.log.';
+      DataFolder + '\Logs\archive-location.log.';
     Exit;
   end;
   { A PostgreSQL an earlier install left registered would still have its files open. }
@@ -375,13 +375,13 @@ begin
     Exit;
   end;
 
-  { KVNsys Server sets up its tables, and on a new install the shop. The answers reach it in its
+  { KVNsys Server sets up its tables, and on a new install the location. The answers reach it in its
     environment for this one run, never on disk or on a command line. }
-  WizardForm.StatusLabel.Caption := 'Setting up the shop...';
+  WizardForm.StatusLabel.Caption := 'Setting up the location...';
   SetUpLog := ExpandConstant('{commonappdata}\KVNsys\Logs\set-up.log');
-  if IsNewShop then
+  if IsNewLocation then
   begin
-    SetEnvironmentVariable('KVNSYS_LOCATION_NAME', ShopName);
+    SetEnvironmentVariable('KVNSYS_LOCATION_NAME', LocationName);
     SetEnvironmentVariable('KVNSYS_ADMIN_USERNAME', AdminUsername);
     SetEnvironmentVariable('KVNSYS_ADMIN_PASSWORD', AdminPassword);
   end;
@@ -391,7 +391,7 @@ begin
   SetEnvironmentVariable('KVNSYS_ADMIN_PASSWORD', '');
   if Code <> 0 then
   begin
-    ReportFailure('setting up the shop', SetUpLog);
+    ReportFailure('setting up the location', SetUpLog);
     Exit;
   end;
 
@@ -432,9 +432,9 @@ begin
     ReportFailure('setting up the nightly backup', ExpandConstant('{commonappdata}\KVNsys\Logs\install-backup-task.log'));
 end;
 
-{ Uninstalling. Before anything is removed, the shop is packed into an archive: with the server
+{ Uninstalling. Before anything is removed, the location's records are packed into an archive: with the server
   stopped, so nothing changes while it's copied, and PostgreSQL still running, so the database can be
-  copied properly. Once everything else is gone, the shop's data goes too, but only if the archive
+  copied properly. Once everything else is gone, the location's data goes too, but only if the archive
   was made. }
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
@@ -444,23 +444,23 @@ begin
   begin
     CloseDashboard;
     Run(Sys('net.exe'), 'stop ' + ServerService);
-    ShopArchived := ArchiveShop(ExpandConstant('{app}\setup\archive-shop.ps1'));
+    LocationArchived := ArchiveLocation(ExpandConstant('{app}\setup\archive-location.ps1'));
   end;
   if CurUninstallStep <> usPostUninstall then Exit;
 
   { The dashboard's window keeps its own small folder for the person who opened it. }
   DelTree(ExpandConstant('{userappdata}\KVNsys Server'), True, True, True);
-  if ShopArchived then
+  if LocationArchived then
   begin
     DelTree(DataFolder, True, True, True);
-    Said := 'KVNsys Server is removed. The shop''s records were packed into one archive, in ' + ArchiveFolder + '.';
+    Said := 'KVNsys Server is removed. The location''s records were packed into one archive, in ' + ArchiveFolder + '.';
     if DirExists(DataFolder) then
       Said := Said + #13#10#13#10 + 'Some files in ' + DataFolder + ' couldn''t be removed. The archive has them all, ' +
         'so that folder can be deleted by hand.';
   end
   else
-    Said := 'KVNsys Server is removed, but the shop''s records couldn''t be packed into an archive, so they were ' +
-      'left where they are, in ' + DataFolder + '. The details are in ' + DataFolder + '\Logs\archive-shop.log.';
+    Said := 'KVNsys Server is removed, but the location''s records couldn''t be packed into an archive, so they were ' +
+      'left where they are, in ' + DataFolder + '. The details are in ' + DataFolder + '\Logs\archive-location.log.';
   Log(Said);
   if not UninstallSilent then
     MsgBox(Said, mbInformation, MB_OK);

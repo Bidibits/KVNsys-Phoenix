@@ -62,7 +62,7 @@ describe('the till: the sale being rung up on a machine', () => {
     expect(await till.pay('10', async (form) => (sent.push(form), refused))).toEqual(refused);
     expect(till.view().total).toBe(2060);
 
-    const recorded = { ok: true, receipt: {}, shop: {}, cashier: 'Ana' } as unknown as SaleResult;
+    const recorded = { ok: true, receipt: {}, location: {}, cashier: 'Ana' } as unknown as SaleResult;
     expect(await till.pay('50', async (form) => (sent.push(form), recorded))).toBe(recorded);
     expect(sent[1]).toEqual({ cart: [{ product: sardines, quantity: 1 }], discount: senior, tendered: '50' });
     expect(till.view()).toEqual({ lines: [], subtotal: 0, discountTotal: 0, total: 0, discount: null });

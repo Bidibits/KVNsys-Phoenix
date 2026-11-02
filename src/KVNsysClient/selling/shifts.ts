@@ -53,7 +53,7 @@ function fromWire(shift: ShiftOnWire): ShiftView {
   };
 }
 
-/** The signed-in person's open shift at the shop, with its figures so far, or none. */
+/** The signed-in person's open shift at the location, with its figures so far, or none. */
 export async function currentShift(address: string, pass: SessionPass, options: CallOptions): Promise<CurrentShiftResult> {
   const answer = await call(address, pass, options, { path: CurrentShiftPath }, CurrentShiftReply);
   return answer.ok ? { ok: true, shift: answer.reply.shift && fromWire(answer.reply.shift) } : answer;

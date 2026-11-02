@@ -1,6 +1,6 @@
 import { networkInterfaces } from 'node:os';
 
-/** This PC's addresses on the shop's network: the ones other PCs use to reach it. */
+/** This PC's addresses on the local network: the ones other PCs use to reach it. */
 export function lanAddresses(): string[] {
   return Object.values(networkInterfaces())
     .flat()

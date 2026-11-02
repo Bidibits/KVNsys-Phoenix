@@ -30,7 +30,7 @@ async function picture(window: Page, name: string) {
   if (folder) await window.screenshot({ path: join(folder, `${name}.png`), animations: 'disabled' });
 }
 
-/** A port nothing on this PC is using, so the shop's own server on 9000 is never in the way. */
+/** A port nothing on this PC is using, so the location's own server on 9000 is never in the way. */
 function freePort(): Promise<number> {
   return new Promise((done, fail) => {
     const probe = createServer();
@@ -64,7 +64,7 @@ function get(port: number, path: string): Promise<{ status: number; body: unknow
   });
 }
 
-describeWithDatabase('the built programs in out\\, run together on a throwaway shop (after pnpm package)', () => {
+describeWithDatabase('the built programs in out\\, run together on a throwaway location (after pnpm package)', () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
   let serverData: string;
@@ -79,7 +79,7 @@ describeWithDatabase('the built programs in out\\, run together on a throwaway s
 
   beforeAll(async () => {
     if (!existsSync(serverExe) || !existsSync(appExe)) throw new Error(`There are no built programs in ${out}: run pnpm package first.`);
-    // Empty: the built server sets its own database up, as it does at a shop.
+    // Empty: the built server sets its own database up, as it does at a location.
     database = await createThrowawayDatabase({ migrate: false });
     db = createPrismaClient(database.url);
     serverData = mkdtempSync(join(tmpdir(), 'kvnsys-built-server-'));
@@ -95,7 +95,7 @@ describeWithDatabase('the built programs in out\\, run together on a throwaway s
     for (const folder of [serverData, appData]) if (folder) rmSync(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   });
 
-  it('sets a new shop up as the server setup file does, the username typed "Kenly" kept as kenly', () => {
+  it('sets a new location up as the server setup file does, the username typed "Kenly" kept as kenly', () => {
     const setUp = spawnSync(serverExe, ['--set-up'], {
       env: { ...serverEnv(), KVNSYS_LOCATION_NAME: 'Package Check', KVNSYS_ADMIN_USERNAME: 'Kenly', KVNSYS_ADMIN_PASSWORD: Password },
       encoding: 'utf8',
@@ -156,7 +156,7 @@ describeWithDatabase('the built programs in out\\, run together on a throwaway s
       Name: 'name',
       'Hardware id': 'machine_uuid',
       'Computer name': 'machine_name',
-      Shop: 'location_id',
+      Location: 'location_id',
       Status: 'status',
       Description: 'description',
       ...HistoryColumnsShown,

@@ -171,19 +171,19 @@ describeWithDatabase('the dashboard, with the server on and people connected', (
     await section.getByRole('alert').getByText('A password needs at least 8 characters.').waitFor();
     expect(await section.getByLabel('Server password').inputValue()).toBe('');
 
-    await section.getByLabel('Server password').fill('shop-door-1234');
-    await section.getByLabel('Type it again').fill('shop-door-1235');
+    await section.getByLabel('Server password').fill('location-door-1234');
+    await section.getByLabel('Type it again').fill('location-door-1235');
     await section.getByRole('button', { name: 'Save' }).click();
     await section.getByRole('alert').getByText(/didn't match/).waitFor();
 
-    await section.getByLabel('Server password').fill('shop-door-1234');
-    await section.getByLabel('Type it again').fill('shop-door-1234');
+    await section.getByLabel('Server password').fill('location-door-1234');
+    await section.getByLabel('Type it again').fill('location-door-1234');
     await section.getByRole('button', { name: 'Save' }).click();
     await window.getByText('The server password is on. Machines ask for it the next time they connect.').waitFor();
     await expect.poll(() => section.textContent()).toContain('On.');
-    expect(await server.get(ServerPassword).check('shop-door-1234')).toBeNull();
+    expect(await server.get(ServerPassword).check('location-door-1234')).toBeNull();
     // Never written anywhere as typed.
-    expect(readFileSync(join(serverDir, 'server-password.json'), 'utf8')).not.toContain('shop-door-1234');
+    expect(readFileSync(join(serverDir, 'server-password.json'), 'utf8')).not.toContain('location-door-1234');
   });
 
   it('changes the server password, then turns it off after asking', async () => {

@@ -35,7 +35,7 @@ const product = {
   warrantyMonths: 0,
   hasPicture: false,
 };
-const shop = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
+const location = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
 const line = {
   id: '0199c7a0-0000-7000-8000-0000000000bb',
   productId: product.id,
@@ -59,13 +59,13 @@ describe('the stock calls', () => {
     expect(ProtocolVersion).toBeGreaterThanOrEqual(8);
   });
 
-  it("answer with the shop and every product's stock, or one product's stock and newest lines", () => {
-    expect(StockListReply.safeParse({ shop, items: [{ product, stock: 24 }] }).success).toBe(true);
-    expect(StockListReply.safeParse({ shop, items: [{ product, stock: 2.5 }] }).success).toBe(false);
-    expect(ProductStockReply.safeParse({ shop, product, stock: 24, movements: [line], more: false }).success).toBe(true);
-    expect(ProductStockReply.safeParse({ shop, product, stock: 24, movements: [line] }).success).toBe(false);
+  it("answer with the location and every product's stock, or one product's stock and newest lines", () => {
+    expect(StockListReply.safeParse({ location, items: [{ product, stock: 24 }] }).success).toBe(true);
+    expect(StockListReply.safeParse({ location, items: [{ product, stock: 2.5 }] }).success).toBe(false);
+    expect(ProductStockReply.safeParse({ location, product, stock: 24, movements: [line], more: false }).success).toBe(true);
+    expect(ProductStockReply.safeParse({ location, product, stock: 24, movements: [line] }).success).toBe(false);
     expect(MovementsShown).toBeGreaterThan(0);
-    expect(StockItemReply.safeParse({ shop, product, stock: -3 }).success).toBe(true);
+    expect(StockItemReply.safeParse({ location, product, stock: -3 }).success).toBe(true);
   });
 
   it("carry who saved a line, with no name when their account isn't on this server, or nobody", () => {

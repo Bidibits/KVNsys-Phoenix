@@ -5,11 +5,11 @@ export const history: RecordHistory = {
   createdAt: '2026-10-30T02:00:00.000Z',
   createdBy: 'System Administrator (admin)',
   createdMachine: 'Server',
-  createdShop: 'Kenlyn',
+  createdLocation: 'Kenlyn',
   updatedAt: '2026-10-30T03:30:00.000Z',
   updatedBy: 'Ana Santos Cruz (ana)',
   updatedMachine: 'Counter 1',
-  updatedShop: 'Kenlyn',
+  updatedLocation: 'Kenlyn',
 };
 
 /** A record as a list sends it: with its history. A reply about one record has none. */

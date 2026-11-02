@@ -65,7 +65,7 @@ function refuse(message: string): never {
  */
 export function checkStockChange(change: StockChange): StockChange {
   if (!MovementTypes.includes(change.type)) refuse(`"${change.type}" isn't a kind of stock movement this version of KVNsys knows.`);
-  if (!change.locationId.trim()) refuse('A stock movement needs the shop it happens at.');
+  if (!change.locationId.trim()) refuse('A stock movement needs the location it happens at.');
   if (!change.productId.trim()) refuse('A stock movement needs the product that moves.');
   const quantity = change.quantityChange;
   if (!Number.isSafeInteger(quantity)) refuse('Stock moves in whole pieces.');

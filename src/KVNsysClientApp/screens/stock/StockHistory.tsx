@@ -1,5 +1,5 @@
 import type { MovementType, ProductStockResult, RecordedMovement, StockItem } from '@kvnsys/client';
-import { Button, Notice, Pieces, RecordTable, ShopTime, type Column } from '@kvnsys/ui';
+import { BusinessTime, Button, Notice, Pieces, RecordTable, type Column } from '@kvnsys/ui';
 import { useEffect, useState } from 'react';
 
 /** What each kind of movement is called on screen. Naming them by MovementType makes the build fail if one is missing. */
@@ -14,15 +14,15 @@ const Columns: Column<RecordedMovement>[] = [
     heading: 'When',
     cell: (line) => (
       <span className="whitespace-nowrap">
-        <ShopTime at={line.createdAt} />
+        <BusinessTime at={line.createdAt} />
       </span>
     ),
   },
   { heading: 'What', cell: (line) => What[line.type] },
   { heading: 'Pieces', cell: (line) => <Pieces count={line.quantityChange} signed />, align: 'right' },
   { heading: 'In stock after', cell: (line) => <Pieces count={line.resultingOnHand} />, align: 'right' },
-  // No name: saved by someone whose account is at another shop, such as HQ.
-  { heading: 'Who', cell: (line) => (line.createdBy ? (line.createdBy.name ?? 'Someone from another shop') : '') },
+  // No name: saved by someone whose account is at another location, such as HQ.
+  { heading: 'Who', cell: (line) => (line.createdBy ? (line.createdBy.name ?? 'Someone from another location') : '') },
   { heading: 'Note', cell: (line) => <span className="block max-w-[320px] py-2 leading-snug">{line.note ?? ''}</span> },
 ];
 

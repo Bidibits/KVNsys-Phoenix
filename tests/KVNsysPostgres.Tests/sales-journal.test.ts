@@ -16,7 +16,7 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
   const cashier = randomUUID();
   const at = (locationId: string) => ({ userId: cashier, machineId: null, locationId });
 
-  const shop = async (code: string) => (await db.location.create({ data: { id: randomUUID(), code, name: code } })).id;
+  const location = async (code: string) => (await db.location.create({ data: { id: randomUUID(), code, name: code } })).id;
   const product = async (code: string, name: string, retailPrice: number): Promise<SaleProduct> => {
     const id = randomUUID();
     await db.product.create({ data: { id, code, name, retailPrice: (retailPrice / 100).toFixed(2) } });
@@ -30,8 +30,8 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     db = createPrismaClient(database.url);
     journal = new PrismaSalesJournal(db);
     ledger = new PrismaStockLedger(db);
-    hq = await shop('HQ');
-    branch = await shop('GUMACA');
+    hq = await location('HQ');
+    branch = await location('GUMACA');
     sardines = await product('PRD-0007', 'Sardines 155g', 2575);
     rice = await product('PRD-0042', 'Sack of rice 25kg', 145050);
   });
@@ -67,7 +67,7 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     expect((await journal.get(receipt.id))!.lines[0]).toMatchObject({ name: 'Sardines 155g', unitPrice: 2575, total: 5150 });
   });
 
-  it('numbers receipts from 1 at each shop, with no gaps, even after a sale that failed', async () => {
+  it('numbers receipts from 1 at each location, with no gaps, even after a sale that failed', async () => {
     const one = priceSale([{ product: sardines, quantity: 1 }], null);
     expect((await sell(one)).code).toBe('HQ-000001');
     expect((await sell(one, branch)).code).toBe('GUMACA-000001');
@@ -97,7 +97,7 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     await expect(journal.record(sale, { type: 'Cash', tendered: 10000, change: 9999 }, hq, at(hq))).rejects.toMatchObject({ message });
     const tampered = { ...sale, lines: [{ ...sale.lines[0]!, quantity: 1 }] };
     await expect(journal.record(tampered, takeCash(sale.total, sale.total), hq, at(hq))).rejects.toMatchObject({ message });
-    await expect(sell(sale, randomUUID())).rejects.toMatchObject({ kind: 'not-found', message: "That shop isn't known here." });
+    await expect(sell(sale, randomUUID())).rejects.toMatchObject({ kind: 'not-found', message: "That location isn't known here." });
     expect(await db.receipt.count()).toBe(0);
   });
 
@@ -121,7 +121,7 @@ describeWithDatabase('the record of sales in PostgreSQL', () => {
     expect(await insert('80.00', 'senior', 'OSCA-1')).toBe(1);
   });
 
-  it("lists a shop's receipts paid within a time, oldest first, from its start up to but not including its end", async () => {
+  it("lists a location's receipts paid within a time, oldest first, from its start up to but not including its end", async () => {
     const one = await sell(priceSale([{ product: sardines, quantity: 2 }, { product: rice, quantity: 1 }], null));
     const two = await sell(priceSale([{ product: sardines, quantity: 1 }], { kind: 'pwd', idNumber: 'PWD-1', customerName: 'Juan' }));
     await sell(priceSale([{ product: rice, quantity: 5 }], null), branch);

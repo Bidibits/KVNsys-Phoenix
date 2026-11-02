@@ -84,7 +84,7 @@ export class PrismaAuditLog extends AuditLogBook {
         userId: row.implementedByUser,
         userName: nameOf(row.implementedByUser),
         machineName: nameOf(row.implementedAtMachine),
-        shopName: nameOf(row.implementedAtLocation),
+        locationName: nameOf(row.implementedAtLocation),
       })),
       more: rows.length > AuditLimit,
       people: everyone

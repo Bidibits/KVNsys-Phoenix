@@ -2,7 +2,7 @@
 ; after the other and quietly, the uninstallers already there:
 ;   KVNsys POS & Inventory's, which removes the app and its settings;
 ;   a copy `pnpm install:here` made, removed with its desktop icons;
-;   KVNsys Server's, which packs the shop into one archive in C:\KVNsys Archives first, then removes
+;   KVNsys Server's, which packs the location's records into one archive in C:\KVNsys Archives first, then removes
 ;   the server, its PostgreSQL, the dashboard, the nightly backup and the firewall rule.
 ; The archives in C:\KVNsys Archives are kept. It says what it found before it removes anything, and
 ; what happened after. It installs nothing itself, so there's nothing of it to uninstall.
@@ -44,7 +44,7 @@ ReadyLabel2a=Click Remove to go on, or Cancel to leave everything as it is.
 ReadyLabel2b=Click Remove to go on, or Cancel to leave everything as it is.
 ButtonInstall=&Remove
 WizardInstalling=Taking KVNsys off this PC
-InstallingLabel=Please wait. Packing the shop into an archive can take a few minutes.
+InstallingLabel=Please wait. Packing the location's records into an archive can take a few minutes.
 ClickFinish=Click Finish to close this window.
 ExitSetupMessage=Nothing has been removed yet. Close and leave everything as it is?
 
@@ -56,7 +56,7 @@ const
     after the app's id, com.kvnsys.pos-inventory, which never changes. }
   AppUninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\2b496fba-f10a-5cc0-9abd-0156bf729cf7';
   AppProgram = 'KVNsys POS & Inventory.exe';
-  { The longest an uninstaller is waited for: packing a big shop into an archive takes a while. }
+  { The longest an uninstaller is waited for: packing years of records into an archive takes a while. }
   WaitSeconds = '900';
 
 var
@@ -195,7 +195,7 @@ begin
     Found := 'KVNsys isn''t installed on this PC, so there''s nothing to remove.';
     if DirExists(DataFolder) then
       Found := Found + #13#10#13#10 + DataFolder + ' still holds what an earlier KVNsys Server left. The next KVNsys Server Setup ' +
-        'packs it into an archive in ' + ArchiveFolder + ' before it starts a new shop.';
+        'packs it into an archive in ' + ArchiveFolder + ' before it starts a new location.';
     SuppressibleMsgBox(Found, mbInformation, MB_OK, IDOK);
   end;
 end;
@@ -209,7 +209,7 @@ begin
     Result := Result + Space + 'The copy pnpm install:here made, in ' + HereCopy + ', and its desktop icons.' + NewLine;
   if ServerUninstaller <> '' then
     Result := Result + Space + 'KVNsys Server, with its database, dashboard, nightly backup and firewall rule. ' +
-      'The shop is packed into one archive in ' + ArchiveFolder + ' first.' + NewLine;
+      'The location''s records are packed into one archive in ' + ArchiveFolder + ' first.' + NewLine;
   Result := Result + NewLine + 'KVNsys windows that are open are closed: a sale not yet paid is lost.' + NewLine +
     'Kept: the archives in ' + ArchiveFolder + '.';
 end;
@@ -257,25 +257,25 @@ procedure RemoveServer;
 var
   Before: Integer;
 begin
-  Doing('Packing the shop into an archive and removing KVNsys Server...');
+  Doing('Packing the location''s records into an archive and removing KVNsys Server...');
   Before := ArchiveCount;
   Run(ServerUninstaller, '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART');
   WaitForUninstaller('Registry::HKEY_LOCAL_MACHINE\' + ServerUninstallKey, ServerUninstaller);
   if RegKeyExists(HKLM64, ServerUninstallKey) then
   begin
-    Say('KVNsys Server couldn''t be removed. Remove it from Windows'' Settings, Apps; its own uninstaller packs the shop up first.');
+    Say('KVNsys Server couldn''t be removed. Remove it from Windows'' Settings, Apps; its own uninstaller packs the location''s records up first.');
     Exit;
   end;
   Removed := True;
   if not DirExists(DataFolder) then
-    Say('KVNsys Server is removed. The shop was packed into one archive in ' + ArchiveFolder + ', then removed.')
+    Say('KVNsys Server is removed. The location''s records were packed into one archive in ' + ArchiveFolder + ', then removed.')
   else if ArchiveCount > Before then
-    Say('KVNsys Server is removed, and the shop was packed into one archive in ' + ArchiveFolder + '. Some files in ' +
+    Say('KVNsys Server is removed, and the location''s records were packed into one archive in ' + ArchiveFolder + '. Some files in ' +
       DataFolder + ' couldn''t be removed; the archive has them all, so that folder can be deleted by hand.')
   else
-    Say('KVNsys Server is removed, but the shop couldn''t be packed into an archive, so its records were left in ' +
-      DataFolder + ' (' + DataFolder + '\Logs\archive-shop.log says why). The next KVNsys Server Setup packs them up ' +
-      'before it starts a new shop.');
+    Say('KVNsys Server is removed, but the location''s records couldn''t be packed into an archive, so they were left in ' +
+      DataFolder + ' (its log in ' + DataFolder + '\Logs says why). The next KVNsys Server Setup packs them up ' +
+      'before it starts a new location.');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

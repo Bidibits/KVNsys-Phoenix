@@ -47,7 +47,7 @@ async function fakeServer(certificate: ServerCertificate, status: number, reply:
 
 const pass: SessionPass = { token: 'the-pass-the-pass-the-pass-the-pass-the-pas', expiresAt: '2026-10-18T20:00:00.000Z' };
 const id = '0199c7a0-0000-7000-8000-000000000001';
-const shop = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
+const location = { id: '0199c7a0-0000-7000-8000-0000000000aa', code: 'HQ', name: 'Head Office' };
 /** The fields after the launch list's, as a product left without them has them. */
 const extras = {
   categoryId: null,
@@ -91,15 +91,15 @@ afterEach(async () => {
 });
 
 describe('the stock calls', () => {
-  it("list the shop's stock, with prices back in centavos", async () => {
-    server = await fakeServer(certificate, 200, { shop, items: [{ product: riceOnWire, stock: 24 }] });
-    expect(await listStock(server.address, pass, pinned())).toEqual({ ok: true, shop, items: [{ product: rice, stock: 24 }] });
+  it("list the location's stock, with prices back in centavos", async () => {
+    server = await fakeServer(certificate, 200, { location, items: [{ product: riceOnWire, stock: 24 }] });
+    expect(await listStock(server.address, pass, pinned())).toEqual({ ok: true, location, items: [{ product: rice, stock: 24 }] });
     expect(server.received).toEqual([{ method: 'GET', url: '/api/stock', authorization: `Bearer ${pass.token}`, body: undefined }]);
   });
 
   it("get one product's stock and its newest lines, by its id made safe for an address", async () => {
-    server = await fakeServer(certificate, 200, { shop, product: riceOnWire, stock: 24, movements: [line], more: true });
-    expect(await getProductStock(server.address, pass, id, pinned())).toEqual({ ok: true, shop, product: rice, stock: 24, movements: [line], more: true });
+    server = await fakeServer(certificate, 200, { location, product: riceOnWire, stock: 24, movements: [line], more: true });
+    expect(await getProductStock(server.address, pass, id, pinned())).toEqual({ ok: true, location, product: rice, stock: 24, movements: [line], more: true });
     await getProductStock(server.address, pass, 'a/b', pinned());
     expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual([`GET /api/stock/${id}`, 'GET /api/stock/a%2Fb']);
   });
@@ -116,8 +116,8 @@ describe('the stock calls', () => {
   });
 
   it('find a product by what was typed or scanned, made safe for an address', async () => {
-    server = await fakeServer(certificate, 200, { shop, product: riceOnWire, stock: -3 });
-    expect(await findStockItem(server.address, pass, 'A&B 1/2', pinned())).toEqual({ ok: true, shop, item: { product: rice, stock: -3 } });
+    server = await fakeServer(certificate, 200, { location, product: riceOnWire, stock: -3 });
+    expect(await findStockItem(server.address, pass, 'A&B 1/2', pinned())).toEqual({ ok: true, location, item: { product: rice, stock: -3 } });
     expect(server.received.map((r) => `${r.method} ${r.url}`)).toEqual(['GET /api/stock/find?codeOrBarcode=A%26B%201%2F2']);
   });
 
@@ -154,7 +154,7 @@ describe('the stock calls', () => {
       [401, 'ended', 'Your sign-in has ended. Sign in again.'],
       [403, 'not-allowed', "This needs a right your role doesn't have."],
       [404, 'not-found', "That product isn't in the catalog."],
-      [503, 'refused', "KVNsys Server can't tell which shop it serves."],
+      [503, 'refused', "KVNsys Server can't tell which location it serves."],
     ] as const;
     for (const [status, reason, message] of cases) {
       server = await fakeServer(certificate, status, { message });
@@ -166,7 +166,7 @@ describe('the stock calls', () => {
   });
 
   it("says plainly when an answer isn't stock, and never shows the pass to an unpinned server", async () => {
-    server = await fakeServer(certificate, 200, { shop, items: [{ product: riceOnWire, stock: '24' }] });
+    server = await fakeServer(certificate, 200, { location, items: [{ product: riceOnWire, stock: '24' }] });
     expect(await listStock(server.address, pass, pinned())).toMatchObject({ ok: false, reason: 'not-kvnsys' });
     expect(await listStock(server.address, pass, { pin: null })).toMatchObject({ ok: false, reason: 'not-connected' });
     expect(server.received).toHaveLength(1);

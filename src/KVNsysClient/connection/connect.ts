@@ -29,7 +29,7 @@ export interface ServerTrust {
   remember(address: string, pin: ServerPin): void;
 }
 
-/** A shop's network answers in milliseconds. This allows for a slow or busy server PC. */
+/** A local network answers in milliseconds. This allows for a slow or busy server PC. */
 const DefaultTimeoutMs = 5000;
 
 /**

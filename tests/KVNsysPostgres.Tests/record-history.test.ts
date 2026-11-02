@@ -17,7 +17,7 @@ const brand = (code: string, name: string) => ({ code, name, address: null, pare
 describeWithDatabase("every list's history, read from PostgreSQL", () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
-  let shopId: string;
+  let hqId: string;
   let serverPc: string;
   let counter: string;
   let atServer: Lineage;
@@ -26,12 +26,12 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
   beforeEach(async () => {
     database = await createThrowawayDatabase();
     db = createPrismaClient(database.url);
-    shopId = randomUUID();
-    await db.location.create({ data: { id: shopId, code: 'HQ', name: 'Kenlyn' } });
+    hqId = randomUUID();
+    await db.location.create({ data: { id: hqId, code: 'HQ', name: 'Kenlyn' } });
     serverPc = randomUUID();
     counter = randomUUID();
-    await db.machine.create({ data: { id: serverPc, code: 'HQ-SRV', name: 'Server', machineUuid: 'hw-server', machineName: 'SERVER-PC', locationId: shopId } });
-    await db.machine.create({ data: { id: counter, code: 'HQ-M01', name: 'Counter 1', machineUuid: 'hw-counter', machineName: 'COUNTER-PC', locationId: shopId } });
+    await db.machine.create({ data: { id: serverPc, code: 'HQ-SRV', name: 'Server', machineUuid: 'hw-server', machineName: 'SERVER-PC', locationId: hqId } });
+    await db.machine.create({ data: { id: counter, code: 'HQ-M01', name: 'Counter 1', machineUuid: 'hw-counter', machineName: 'COUNTER-PC', locationId: hqId } });
     const role = randomUUID();
     await db.role.create({ data: { id: role, code: 'ADMIN', name: 'Administrator', level: 100 } });
     const accounts = new PrismaUserAccounts(db);
@@ -39,8 +39,8 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
       accounts.create({ username, firstName, middleName, lastName, roleId: role, status: 'Active' }, 'hash', { userId: null, machineId: null, locationId: null });
     const admin = await person('admin', 'System', null, 'Administrator');
     const ana = await person('ana', 'Ana', 'Santos', 'Cruz');
-    atServer = { userId: admin.id, machineId: serverPc, locationId: shopId };
-    atCounter = { userId: ana.id, machineId: counter, locationId: shopId };
+    atServer = { userId: admin.id, machineId: serverPc, locationId: hqId };
+    atCounter = { userId: ana.id, machineId: counter, locationId: hqId };
   });
 
   afterEach(async () => {
@@ -48,7 +48,7 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
     await database.drop();
   });
 
-  it('names who made a record, on which machine, at which shop and when; never updated, the updated half is empty', async () => {
+  it('names who made a record, on which machine, at which location and when; never updated, the updated half is empty', async () => {
     const catalog = new PrismaCatalogBook(db);
     const before = Date.now();
     await catalog.create('brands', brand('BR-HAN', 'Hanabishi'), atServer);
@@ -57,11 +57,11 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
       createdAt: expect.stringMatching(/Z$/),
       createdBy: 'System Administrator (admin)',
       createdMachine: 'Server',
-      createdShop: 'Kenlyn',
+      createdLocation: 'Kenlyn',
       updatedAt: null,
       updatedBy: null,
       updatedMachine: null,
-      updatedShop: null,
+      updatedLocation: null,
     });
     expect(Date.parse(hanabishi!.history.createdAt)).toBeGreaterThanOrEqual(before - 5000);
   });
@@ -77,22 +77,22 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
       createdMachine: 'Server',
       updatedBy: 'Ana Santos Cruz (ana)',
       updatedMachine: 'Counter 1',
-      updatedShop: 'Kenlyn',
+      updatedLocation: 'Kenlyn',
     });
     expect(Date.parse(changed!.history.updatedAt!)).toBeGreaterThanOrEqual(Date.parse(changed!.history.createdAt));
     expect([asahi!.name, asahi!.history.createdBy, asahi!.history.createdMachine, asahi!.history.updatedAt]).toEqual(['Asahi', 'Ana Santos Cruz (ana)', 'Counter 1', null]);
   });
 
   it("leaves the person out when nobody signed in made it, and says so when a name isn't on this server", async () => {
-    await new PrismaRoleCatalog(db).create({ name: 'Cashier', status: 'Active', rights: [] }, { userId: null, machineId: serverPc, locationId: shopId });
+    await new PrismaRoleCatalog(db).create({ name: 'Cashier', status: 'Active', rights: [] }, { userId: null, machineId: serverPc, locationId: hqId });
     const cashier = (await new PrismaRoleCatalog(db).list()).find((role) => role.name === 'Cashier')!;
-    expect(cashier.history).toMatchObject({ createdBy: null, createdMachine: 'Server', createdShop: 'Kenlyn' });
+    expect(cashier.history).toMatchObject({ createdBy: null, createdMachine: 'Server', createdLocation: 'Kenlyn' });
 
-    // Made at another shop, by someone this server has never had: lineage isn't a foreign key.
+    // Made at another location, by someone this server has never had: lineage isn't a foreign key.
     const elsewhere = { userId: randomUUID(), machineId: randomUUID(), locationId: randomUUID() };
     await new PrismaCatalogBook(db).create('brands', brand('BR-HQ', 'From HQ'), elsewhere);
     const [fromHq] = await new PrismaCatalogBook(db).list('brands');
-    expect(fromHq!.history).toMatchObject({ createdBy: NotOnThisServer, createdMachine: NotOnThisServer, createdShop: NotOnThisServer });
+    expect(fromHq!.history).toMatchObject({ createdBy: NotOnThisServer, createdMachine: NotOnThisServer, createdLocation: NotOnThisServer });
   });
 
   it('comes with every list: products, the catalogue, users, roles and machines, which also carry their hardware id', async () => {
@@ -100,7 +100,7 @@ describeWithDatabase("every list's history, read from PostgreSQL", () => {
     expect((await new PrismaProductCatalog(db).list())[0]!.history).toMatchObject({ createdBy: 'Ana Santos Cruz (ana)', createdMachine: 'Counter 1' });
     expect((await new PrismaUserAccounts(db).list()).map((account) => account.history.createdAt)).toHaveLength(2);
     expect((await new PrismaRoleCatalog(db).list())[0]!.history.createdAt).toMatch(/Z$/);
-    const machines = await new PrismaMachineBook(db).list(shopId);
+    const machines = await new PrismaMachineBook(db).list(hqId);
     expect(machines.map((machine) => [machine.code, machine.hardwareId, machine.description, typeof machine.history.createdAt])).toEqual([
       ['HQ-SRV', 'hw-server', null, 'string'],
       ['HQ-M01', 'hw-counter', null, 'string'],

@@ -53,7 +53,7 @@ describeWithDatabase('products over HTTPS, through the client engine, against a 
   let pin: ServerPin;
   const passes: Record<string, SessionPass> = {};
 
-  /** A role made by hand, as a shop makes one: a new install has only the Administrator. */
+  /** A role made by hand, as a location makes one: a new install has only the Administrator. */
   async function addRole(code: string, rights: string[]): Promise<void> {
     const role = await db.role.create({ data: { id: randomUUID(), code, name: code, level: 10 } });
     for (const access of rights) await db.access.create({ data: { id: randomUUID(), roleId: role.id, access } });

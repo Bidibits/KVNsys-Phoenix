@@ -69,7 +69,7 @@ export function ServerPasswordSection({ view, serverIsOn, onChanged }: { view: D
       )}
       {state === 'off' && (
         <p className="text-[15px]">
-          <strong>Off.</strong> Any machine on the shop's network can connect.
+          <strong>Off.</strong> Any machine on the local network can connect.
         </p>
       )}
       {state === 'on' && (
@@ -131,7 +131,7 @@ export function ServerPasswordSection({ view, serverIsOn, onChanged }: { view: D
       {confirmOff && (
         <ConfirmDialog
           title="Turn the server password off?"
-          message="Any machine on the shop's network will be able to connect, without it."
+          message="Any machine on the local network will be able to connect, without it."
           confirmLabel="Turn it off"
           onConfirm={() => void turnOff()}
           onCancel={() => setConfirmOff(false)}

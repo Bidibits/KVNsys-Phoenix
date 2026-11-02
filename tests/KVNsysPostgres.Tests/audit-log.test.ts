@@ -148,10 +148,10 @@ describeWithDatabase('the audit log, written by every save', () => {
   });
 
   it('logs a PC recording itself and its new Windows name as Automatic, and a change on the screen as Manual', async () => {
-    const shop = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Head Office' } })).id;
+    const location = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Head Office' } })).id;
     const book = new PrismaMachineBook(db);
-    const pc = await book.recognise({ hardwareId: 'pc-1', computerName: 'OLD-NAME' }, shop, ana);
-    await book.recognise({ hardwareId: 'pc-1', computerName: 'NEW-NAME' }, shop, ana);
+    const pc = await book.recognise({ hardwareId: 'pc-1', computerName: 'OLD-NAME' }, location, ana);
+    await book.recognise({ hardwareId: 'pc-1', computerName: 'NEW-NAME' }, location, ana);
     await book.update(pc.id, { name: 'Counter 1', status: 'Active' }, ana);
     const rows = await logged('machines', pc.id);
     expect(rows).toContainEqual(['machine_uuid', null, 'pc-1', 'Created', 'Automatic']);
@@ -162,14 +162,14 @@ describeWithDatabase('the audit log, written by every save', () => {
   });
 
   it('reads the log back newest first, with names in place of ids, and narrows it by table, record, person and day', async () => {
-    const shop = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Kenlyn' } })).id;
+    const location = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Kenlyn' } })).id;
     const admin = randomUUID();
     await db.role.create({ data: { id: admin, code: 'ADMIN', name: 'Administrator', level: 100 } });
     const accounts = new PrismaUserAccounts(db);
     const person = { username: 'ana', firstName: 'Ana', middleName: null, lastName: 'Cruz', roleId: admin, status: 'Active' as const };
     const anaId = (await accounts.create(person, 'scrypt$x', ana)).id;
-    const counter = await new PrismaMachineBook(db).recognise({ hardwareId: 'pc-1', computerName: 'COUNTER' }, shop, ana);
-    const byAna = { userId: anaId, machineId: counter.id, locationId: shop };
+    const counter = await new PrismaMachineBook(db).recognise({ hardwareId: 'pc-1', computerName: 'COUNTER' }, location, ana);
+    const byAna = { userId: anaId, machineId: counter.id, locationId: location };
 
     const book = new PrismaCatalogBook(db);
     const appliances = await book.create('categories', entry('CAT-APP', 'Appliances'), byAna);
@@ -192,7 +192,7 @@ describeWithDatabase('the audit log, written by every save', () => {
       source: 'Manual',
       userName: 'Ana Cruz (ana)',
       machineName: 'New machine (COUNTER)',
-      shopName: 'Kenlyn',
+      locationName: 'Kenlyn',
     });
     const times = all.entries.map((e) => e.at);
     expect([...times].sort().reverse()).toEqual(times);
@@ -225,7 +225,7 @@ describeWithDatabase('the audit log, written by every save', () => {
     expect(page.entries[0]!.recordName).toBeNull();
   });
 
-  it("logs setting a shop up as Automatic, by nobody, including the Administrator role's rights", async () => {
+  it("logs setting a location up as Automatic, by nobody, including the Administrator role's rights", async () => {
     const lineage = { userId: null, machineId: randomUUID(), locationId: randomUUID() };
     const roleId = randomUUID();
     await new PrismaSetupStore(db).transaction(async (tx) => {

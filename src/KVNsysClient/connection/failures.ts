@@ -36,7 +36,7 @@ export function describeTransportFailure(
         reason: 'unreachable',
         message:
           `Couldn't reach a server at ${address}. Check the address, that the server PC is on with KVNsys Server ` +
-          "running, and that this PC is on the shop's network.",
+          "running, and that this PC is on the local network.",
       };
   }
 }

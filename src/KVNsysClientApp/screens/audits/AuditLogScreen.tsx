@@ -1,5 +1,5 @@
 import type { AuditFilterForm, AuditLine, AuditListResult } from '@kvnsys/client';
-import { Button, ByKVNsysItself, idColumn, Notice, RecordTable, ShopTime, StatusLabel, TextOrDash, type Column } from '@kvnsys/ui';
+import { BusinessTime, Button, ByKVNsysItself, idColumn, Notice, RecordTable, StatusLabel, TextOrDash, type Column } from '@kvnsys/ui';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 
 /** Stands for "nobody": the changes KVNsys made itself (the server's ByKVNsys). */
@@ -25,7 +25,7 @@ function Labelled({ label, children }: { label: string; children: (id: string) =
 
 /**
  * The audit log: every change saved, newest first, one row per column, in a grid like Beta's Audits
- * dashboard: when, by whom, on which machine, at which shop, then what changed. Narrowed by table,
+ * dashboard: when, by whom, on which machine, at which location, then what changed. Narrowed by table,
  * by who made it and by days; a record's name shows only that record's history. The title bar's
  * search box then filters the rows shown, and each heading sorts them.
  */
@@ -88,8 +88,8 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
     { heading: 'Source', width: '8em', cell: (entry) => entry.source, sortBy: (entry) => entry.source },
     { heading: 'By', width: '16em', cell: (entry) => entry.userName ?? ByKVNsysItself, sortBy: (entry) => entry.userName ?? ByKVNsysItself },
     { heading: 'Machine', width: '13em', cell: (entry) => <TextOrDash text={entry.machineName} />, sortBy: (entry) => entry.machineName },
-    { heading: 'Shop', width: '10em', cell: (entry) => <TextOrDash text={entry.shopName} />, sortBy: (entry) => entry.shopName },
-    { heading: 'At', width: '12em', cell: (entry) => <ShopTime at={entry.at} />, sortBy: (entry) => entry.at },
+    { heading: 'Location', width: '10em', cell: (entry) => <TextOrDash text={entry.locationName} />, sortBy: (entry) => entry.locationName },
+    { heading: 'At', width: '12em', cell: (entry) => <BusinessTime at={entry.at} />, sortBy: (entry) => entry.at },
   ];
 
   const tables = result?.ok ? result.tables : [];
@@ -190,7 +190,7 @@ export function AuditLogScreen({ search, onSignInAgain }: { search: string; onSi
             rowKey={(entry) => entry.id}
             filter={search}
             searchText={(entry) =>
-              [entry.userName ?? ByKVNsysItself, entry.machineName ?? '', entry.shopName ?? '', entry.tableLabel, entry.recordName ?? '', entry.columnLabel, entry.before ?? '', entry.after ?? ''].join(' ')
+              [entry.userName ?? ByKVNsysItself, entry.machineName ?? '', entry.locationName ?? '', entry.tableLabel, entry.recordName ?? '', entry.columnLabel, entry.before ?? '', entry.after ?? ''].join(' ')
             }
           />
         </>

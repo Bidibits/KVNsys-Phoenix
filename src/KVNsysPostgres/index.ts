@@ -5,7 +5,7 @@ export { createPrismaClient, type PrismaClient } from './connection.js';
 export { PrismaCatalogBook } from './catalog/prisma-catalog-book.js';
 export { PrismaProductCatalog } from './catalog/prisma-product-catalog.js';
 export { PrismaStockLedger } from './inventory/prisma-stock-ledger.js';
-export { PrismaShopDirectory } from './locations/prisma-shop-directory.js';
+export { PrismaLocationDirectory } from './locations/prisma-location-directory.js';
 export { PrismaMachineBook } from './locations/prisma-machine-book.js';
 export { PrismaSalesJournal } from './selling/prisma-sales-journal.js';
 export { PrismaShiftBook } from './selling/prisma-shift-book.js';

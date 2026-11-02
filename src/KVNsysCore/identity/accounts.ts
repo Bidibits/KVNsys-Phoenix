@@ -157,7 +157,7 @@ export function accountDisplayName(details: Pick<AccountDetails, 'firstName' | '
  *
  * Saving refuses a username another account has, and a role that doesn't exist. It also refuses any
  * change that would leave nobody able to manage users (an active account whose active role holds
- * users.manage), so nobody can lock the shop out, themselves included.
+ * users.manage), so nobody can lock the business out, themselves included.
  */
 export abstract class UserAccounts {
   abstract list(): Promise<Listed<Account>[]>;

@@ -33,7 +33,7 @@ export const AccessDescriptions: Record<AccessName, string> = {
   'users.manage': "Add accounts, change them, switch them off, and reset passwords",
   'roles.view': 'See the roles and the rights each one holds',
   'roles.manage': 'Make roles, and change their names, rights and status',
-  'stock.view': "See the shop's stock, and every product's movements in and out",
+  'stock.view': "See the location's stock, and every product's movements in and out",
   'stock.receive': 'Record goods coming in from a supplier',
   'stock.adjust': 'Put a stock count right, with the reason',
   'sales.sell': 'Ring up sales, give the senior/PWD discount, and take payment',

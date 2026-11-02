@@ -75,9 +75,9 @@ describe('signIn', () => {
   it('carries the server password, for a server that has one, and leaves it out when there is none', async () => {
     const user = { username: 'admin', displayName: 'System Administrator', roleCode: 'ADMIN', rights: [], machine: null };
     server = await fakeServer(certificate, 200, { signedIn: true, user, session: { token: 'p'.repeat(43), expiresAt: '2026-10-18T20:00:00.000Z' } });
-    await signIn(server.address, credentials, { pin: pinOf(certificate), serverPassword: 'shop-door-1234' });
+    await signIn(server.address, credentials, { pin: pinOf(certificate), serverPassword: 'location-door-1234' });
     await signIn(server.address, credentials, { pin: pinOf(certificate), serverPassword: null });
-    expect(server.received.map((body) => JSON.parse(body))).toEqual([{ ...credentials, serverPassword: 'shop-door-1234' }, credentials]);
+    expect(server.received.map((body) => JSON.parse(body))).toEqual([{ ...credentials, serverPassword: 'location-door-1234' }, credentials]);
   });
 
   it("says when it was the server password that was turned down, not the person's", async () => {

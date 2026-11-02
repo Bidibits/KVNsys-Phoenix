@@ -2,7 +2,7 @@
 
 The design is [`Release/SCHEMA-PLAN.md`](../../Release/SCHEMA-PLAN.md). Since 2026-10-25 every table it
 names is in Phoenix's database, in its column order: `src/KVNsysPostgres/prisma/schema.prisma`, built
-by the one baseline migration, which is still edited in place because no shop has real data yet.
+by the one baseline migration, which is still edited in place because no location has real data yet.
 
 This page says which tables Phoenix uses so far, and every place Phoenix differs from the plan, with
 the reason. Release is kept as a reference and isn't edited from here, so the plan's changes are
@@ -12,8 +12,8 @@ written down on this page instead.
 
 | # | Table | Plan section | Used so far |
 |---|---|---|---|
-| 1–5 | `countries`, `regions`, `provinces`, `municipalities`, `barangays` | 1–5 Where things are | Empty. A shop can point at them; nothing fills them yet |
-| 6 | `locations` | 6–11 | ✅ The shop, set up at install |
+| 1–5 | `countries`, `regions`, `provinces`, `municipalities`, `barangays` | 1–5 Where things are | Empty. A location can point at them; nothing fills them yet |
+| 6 | `locations` | 6–11 | ✅ The location, set up at install |
 | 7–8 | `roles`, `accesses` | 6–11 | ✅ Roles screen |
 | 9 | `users` | 6–11 | ✅ Users screen, sign-in |
 | 10 | `machines` | 6–11 | ✅ Machines screen; every machine records itself at sign-in |
@@ -34,14 +34,14 @@ written down on this page instead.
 
 | Plan | Phoenix | Why |
 |---|---|---|
-| Quantities aren't given a type (Release's old database used decimals) | **Whole pieces everywhere**: stock, the ledger, receipt lines, delivery lines, HQ's totals | Nothing the shop sells goes by weight or length (decided 2026-10-20). Selling by the kilo would be a schema change |
-| `receipts`: id, code, shift, money, status, void reason, three events | **Also** `location_id`, `number`, and `discount_kind`, `discount_id_number`, `discount_customer_name` | Receipts are numbered per shop with no gaps (the plan's gap 1). The senior/PWD discount needs the ID number and the name on the receipt, by law |
+| Quantities aren't given a type (Release's old database used decimals) | **Whole pieces everywhere**: stock, the ledger, receipt lines, delivery lines, HQ's totals | Nothing the business sells goes by weight or length (decided 2026-10-20). Selling by the kilo would be a schema change |
+| `receipts`: id, code, shift, money, status, void reason, three events | **Also** `location_id`, `number`, and `discount_kind`, `discount_id_number`, `discount_customer_name` | Receipts are numbered per location with no gaps (the plan's gap 1). The senior/PWD discount needs the ID number and the name on the receipt, by law |
 | `receipts` opened(4) · settled(4) · voided(4) | **settled is when it was paid; opened stays empty for now** | The machine keeps the cart. The server hears of a sale only when it's paid, so paying is the moment a receipt is made. Opened gets filled if the machine later says when the sale began |
 | `receipt_items`: product, quantity, prices, price basis | **Also** `line_number`, `product_code`, `product_name` | Kept as sold, so renaming or repricing a product never changes a receipt already given |
-| `shifts` | **Also** `number` | Numbered per shop with no gaps, like receipts |
+| `shifts` | **Also** `number` | Numbered per location with no gaps, like receipts |
 | `inventory_logs.movement_type`: seven kinds | The database takes all seven; KVNsysCore records three so far | `to_supplier`, `transfer`, `from_customer` and `disposal` come with the features that make them |
 | `audits` | **Kept as written**: the database refuses to change or remove a row. `column_name` may be empty | An audit log anyone can edit isn't one. Every row written so far names its column: creating a record writes one row per column it was given (Beta did the same), so a column's history starts with its first value |
-| `transfer_imports.from_location`, `sales_imports.location_id`, `consolidated_sales.location_id` | **Not foreign keys** | They name another site's shop, which this database may not hold. The same reasoning as the lineage columns |
+| `transfer_imports.from_location`, `sales_imports.location_id`, `consolidated_sales.location_id` | **Not foreign keys** | They name another location, which this database may not hold. The same reasoning as the lineage columns |
 | `receipt_payments.payment_type` | Cash only, for now (a check in the migration) | Other ways to pay come later; the plan's gap 3 (a table of payment types) isn't decided |
 
 ## What the audit log records (since 2026-10-28)
@@ -55,7 +55,7 @@ save**: a change is never kept without its record, and a refused save leaves non
 |---|---|
 | `products`, `brands`, `manufacturers`, `suppliers`, `categories`, `users`, `roles` | Manual: a person, through a screen |
 | `machines` | Automatic when a PC records itself at sign-in or its Windows name changed; Manual from the list's Edit |
-| `locations`, `machines`, `roles`, `users` made when a shop is set up | Automatic, by nobody (`implemented_by_user` empty) |
+| `locations`, `machines`, `roles`, `users` made when a location is set up | Automatic, by nobody (`implemented_by_user` empty) |
 
 - **One row per column that changed.** A save that changed nothing writes nothing. Values are text:
   money to the centavo (`1450.50`), true/false, ids as they are.
@@ -71,14 +71,14 @@ save**: a change is never kept without its record, and a refused save leaves non
 - **Not logged here, because they're their own record**: the stock ledger (`inventory_logs`, and the
   `inventory` totals it keeps), receipts and their lines and payments, and shifts.
 - **Not logged at all**: `user_settings`, a person's own column widths. They're how one person likes
-  the screens, not a record of the shop's.
+  the screens, not a record of the business's.
 - **Nothing before 2026-10-28 was logged.** Changes made before then have no history.
 
 **Reading it back (since 2026-10-29):** the Audit log tile (right `audits.view`; the Administrator
 has it) shows the newest 500 changes that match, newest save first, each save's columns in its
-table's order. It narrows by table, person (or KVNsys itself), and days by the shop's clock; a
+table's order. It narrows by table, person (or KVNsys itself), and days by the business's clock; a
 record's name shows only that record's history. Names stand in for ids: the record, the person, the
-PC, the shop, and a column holding another record's id (a product's category, a user's role). A
+PC, the location, and a column holding another record's id (a product's category, a user's role). A
 record no longer there shows as such. `GET /api/audits` (protocol 18); Core `audits/audit-log-book.ts`,
 Postgres `audits/prisma-audit-log.ts`.
 

@@ -22,7 +22,7 @@ const Columns: Column<ListedMachine>[] = [
   },
   { heading: 'Hardware id', width: '21em', cell: (machine) => <TextOrDash text={machine.hardwareId} />, sortBy: (machine) => machine.hardwareId },
   { heading: 'Computer name', width: '11em', cell: (machine) => <TextOrDash text={machine.computerName} />, sortBy: (machine) => machine.computerName },
-  { heading: 'Shop', width: '10em', cell: (machine) => machine.shopName, sortBy: (machine) => machine.shopName },
+  { heading: 'Location', width: '10em', cell: (machine) => machine.locationName, sortBy: (machine) => machine.locationName },
   { heading: 'Status', width: '8em', cell: (machine) => <StatusLabel status={machine.status} />, sortBy: (machine) => machine.status },
   { heading: 'Description', width: '16em', cell: (machine) => <TextOrDash text={machine.description} />, sortBy: (machine) => machine.description },
   ...historyColumns<ListedMachine>((machine) => machine.history),

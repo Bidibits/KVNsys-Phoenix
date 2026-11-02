@@ -30,13 +30,13 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
   let address: string;
   let certificate: ServerCertificate;
   let pin: ServerPin;
-  let shopId: string;
+  let hqId: string;
   let rice: Product;
   let sardines: Product;
   let soap: Product;
   const passes: Record<string, SessionPass> = {};
 
-  /** A role made by hand, as a shop makes one: a new install has only the Administrator. */
+  /** A role made by hand, as a location makes one: a new install has only the Administrator. */
   async function addRole(code: string, rights: string[]): Promise<void> {
     const role = await db.role.create({ data: { id: randomUUID(), code, name: code, level: 10 } });
     for (const access of rights) await db.access.create({ data: { id: randomUUID(), roleId: role.id, access } });
@@ -71,7 +71,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
   const as = (username: string) => ({ pass: passes[username]!, options: { pin } });
   const received = (product: Product, pieces: number): HandMovement => ({ productId: product.id, type: 'from_supplier', quantityChange: pieces, note: null });
   const counted = (product: Product, change: number, note: string | null): HandMovement => ({ productId: product.id, type: 'adjustment', quantityChange: change, note });
-  const stockOf = async (product: Product) => (await db.inventory.findUnique({ where: { locationId_productId: { locationId: shopId, productId: product.id } } }))?.stock ?? 0;
+  const stockOf = async (product: Product) => (await db.inventory.findUnique({ where: { locationId_productId: { locationId: hqId, productId: product.id } } }))?.stock ?? 0;
 
   beforeAll(async () => {
     database = await createThrowawayDatabase();
@@ -83,8 +83,8 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
       adminPassword: Password,
       server: ServerPc,
     });
-    shopId = (await db.location.findUniqueOrThrow({ where: { code: 'HQ' } })).id;
-    // A second shop in the same database, as HQ will hold its branches': stock here must never land there.
+    hqId = (await db.location.findUniqueOrThrow({ where: { code: 'HQ' } })).id;
+    // A second location in the same database, as HQ will hold its branches': stock here must never land there.
     await db.location.create({ data: { id: randomUUID(), code: 'GUMACA', name: 'Gumaca branch' } });
     await addRole('STOCKMAN', ['stock.view', 'stock.receive', 'stock.adjust']);
     await addRole('RECEIVER', ['stock.view', 'stock.receive']);
@@ -112,7 +112,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     await database?.drop();
   });
 
-  it("receives goods and puts a count right at the server's own shop, recording who did", async () => {
+  it("receives goods and puts a count right at the server's own location, recording who did", async () => {
     const { pass, options } = as('ana');
     const saved = await recordStock(address, pass, [received(sardines, 24), counted(sardines, -2, ' counted 22 on the shelf ')], options);
     if (!saved.ok) throw new Error(saved.message);
@@ -123,14 +123,14 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     ]);
     expect(await stockOf(sardines)).toBe(22);
     const lines = await db.inventoryLog.findMany({ where: { productId: sardines.id } });
-    expect(lines.every((l) => l.locationId === shopId && l.createdAtLocation === shopId && l.createdByUser === ana.id && l.createdAtMachine === null)).toBe(true);
+    expect(lines.every((l) => l.locationId === hqId && l.createdAtLocation === hqId && l.createdByUser === ana.id && l.createdAtMachine === null)).toBe(true);
   });
 
-  it('lists every product with its stock, never-moved ones at 0, and the shop it belongs to', async () => {
+  it('lists every product with its stock, never-moved ones at 0, and the location it belongs to', async () => {
     const { pass, options } = as('cora');
     const list = await listStock(address, pass, options);
     if (!list.ok) throw new Error(list.message);
-    expect(list.shop).toEqual({ id: shopId, code: 'HQ', name: 'Head Office' });
+    expect(list.location).toEqual({ id: hqId, code: 'HQ', name: 'Head Office' });
     expect(list.items.map((item) => [item.product.name, item.stock])).toEqual([
       ['Bath soap', 0],
       ['Sack of rice 25kg', 0],
@@ -165,7 +165,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
 
   it('finds a product by its code or its barcode, capitals ignored, with its stock here, for anyone who may see stock', async () => {
     const { pass, options } = as('cora');
-    expect(await findStockItem(address, pass, ' prd-0007 ', options)).toEqual({ ok: true, shop: expect.objectContaining({ code: 'HQ' }), item: { product: sardines, stock: 22 } });
+    expect(await findStockItem(address, pass, ' prd-0007 ', options)).toEqual({ ok: true, location: expect.objectContaining({ code: 'HQ' }), item: { product: sardines, stock: 22 } });
     expect(await findStockItem(address, pass, '4800249211116', options)).toMatchObject({ ok: true, item: { product: { id: sardines.id } } });
     expect(await findStockItem(address, pass, 'PRD-9999', options)).toEqual({ ok: false, reason: 'not-found', message: 'No product has the code or barcode PRD-9999.' });
     expect(await findStockItem(address, pass, '  ', options)).toEqual({ ok: false, reason: 'refused', message: 'Type or scan a code or a barcode.' });
@@ -176,8 +176,8 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
   it("names nobody for a line saved by someone whose account isn't on this server", async () => {
     const fromHq = randomUUID();
     await new PrismaStockLedger(db).record(
-      [{ locationId: shopId, productId: rice.id, type: 'from_supplier', quantityChange: 5, note: null, source: null }],
-      { userId: fromHq, machineId: null, locationId: shopId },
+      [{ locationId: hqId, productId: rice.id, type: 'from_supplier', quantityChange: 5, note: null, source: null }],
+      { userId: fromHq, machineId: null, locationId: hqId },
     );
     const one = await getProductStock(address, as('cora').pass, rice.id, { pin });
     expect(one).toMatchObject({ ok: true, stock: 5, movements: [{ createdBy: { id: fromHq, name: null } }] });
@@ -250,10 +250,10 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
     expect(understood).toMatchObject({ status: 400, body: { message: "The stock movements didn't arrive in a form the server understands." } });
   });
 
-  it('finds its shop by its hardware id even after its machine code changed, and refuses when it can tell neither', async () => {
+  it('finds its location by its hardware id even after its machine code changed, and refuses when it can tell neither', async () => {
     await db.machine.update({ where: { code: 'HQ-SRV' }, data: { code: 'RENAMED-SRV' } });
     try {
-      expect(await listStock(address, as('cora').pass, { pin })).toMatchObject({ ok: true, shop: { code: 'HQ' } });
+      expect(await listStock(address, as('cora').pass, { pin })).toMatchObject({ ok: true, location: { code: 'HQ' } });
 
       const elsewhere = await createServer({ logger: false, databaseUrl: database.url, certificate, server: { hardwareId: 'another-pc', computerName: 'X' } });
       await elsewhere.listen(0, '127.0.0.1');
@@ -265,7 +265,7 @@ describeWithDatabase('stock over HTTPS, through the client engine, against a rea
           ok: false,
           reason: 'refused',
           message:
-            "KVNsys Server can't tell which shop it serves: this PC isn't recorded as any shop's server. Was the database moved here from another PC?",
+            "KVNsys Server can't tell which location it serves: this PC isn't recorded as any location's server. Was the database moved here from another PC?",
         });
       } finally {
         await elsewhere.close();

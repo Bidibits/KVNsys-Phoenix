@@ -177,7 +177,7 @@ try {
     Write-Log "  $($differences.Count) of $($names.Count) tables differ from the live database:"
     foreach ($line in $differences) { Write-Log "    $line" }
     if ($RequireMatch) { throw 'Every table had to match the live database.' }
-    Write-Log "  That's expected when the shop has used KVNsys since the backup was made."
+    Write-Log "  That's expected when the location has used KVNsys since the backup was made."
   }
   $exitCode = 0
 } catch {

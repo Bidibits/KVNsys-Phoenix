@@ -10,7 +10,7 @@ function created(lineage: Lineage) {
   };
 }
 
-/** Setting a shop up is KVNsys's doing, not a person's at a screen. */
+/** Setting a location up is KVNsys's doing, not a person's at a screen. */
 const audited = (table: string, recordId: string, lineage: Lineage) => ({ table, recordId, lineage, source: 'Automatic' as const });
 
 /** The seed's reads and writes, all in one database transaction. */

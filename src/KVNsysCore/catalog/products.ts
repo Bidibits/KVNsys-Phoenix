@@ -34,7 +34,7 @@ export interface ProductDetails {
   unitOfMeasure?: string | null;
   /** A service, say, doesn't: selling it takes nothing out of stock. */
   tracksStock?: boolean;
-  /** What the shop pays, in centavos: whatever someone last typed. */
+  /** What the business pays, in centavos: whatever someone last typed. */
   costPrice?: number;
   /** A price below the shelf price, in centavos, while there's a promo; none otherwise. */
   promoPrice?: number | null;

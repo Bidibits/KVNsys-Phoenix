@@ -1,11 +1,11 @@
-// `pnpm package`: makes the two programs a shop's PCs run, from what `pnpm build` produced.
+// `pnpm package`: makes the two programs a location's PCs run, from what `pnpm build` produced.
 //
 //   out/KVNsys POS & Inventory/            the app for each machine: Electron, with its own Chrome and Node
 //   out/KVNsys POS & Inventory Setup.exe   that app as one setup file, to carry to a machine
 //   out/KVNsys Server/                     the server: KVNsys Server.exe, a console program, with its own Node
 //   out/KVNsys Server Dashboard/           the server's dashboard: Electron, like the app, run as administrator
 //   out/KVNsys Server Setup.exe            the server PC's setup file: the server, its dashboard, and its own PostgreSQL
-//   out/Uninstall all KVNsys.exe           takes both off a PC for a fresh start, the shop packed into an archive first
+//   out/Uninstall all KVNsys.exe           takes both off a PC for a fresh start, the location's records packed into an archive first
 //
 // None of them needs Node or pnpm on the PC it runs on. `pnpm install:here` installs the app and the
 // server on this PC.
@@ -265,7 +265,7 @@ function innoCompiler() {
  * The server PC's setup file, built by Inno Setup from scripts/server-setup/kvnsys-server.iss. It
  * carries the server packageServer made, the dashboard packageDashboard made, PostgreSQL and the
  * Visual C++ runtime from vendor/, the scripts that install PostgreSQL as a service and remove it
- * again, the nightly backup's, and the one that packs a shop into an archive before an uninstall.
+ * again, the nightly backup's, and the one that packs a location's records into an archive before an uninstall.
  */
 function makeServerSetup() {
   const iscc = innoCompiler();

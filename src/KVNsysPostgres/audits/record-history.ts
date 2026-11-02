@@ -21,7 +21,7 @@ export function personLabel(user: { username: string; firstName: string; middleN
 const Uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Each row's history, its people, machines and shops by name: three questions however many rows.
+ * Each row's history, its people, machines and locations by name: three questions however many rows.
  * Lineage ids aren't foreign keys, so one may name someone this server doesn't have
  * (NotOnThisServer).
  */
@@ -35,24 +35,24 @@ export async function historiesOf(db: PrismaClient | Prisma.TransactionClient, r
     select: { id: true, username: true, firstName: true, middleName: true, lastName: true },
   });
   const machines = await db.machine.findMany({ ...among((row) => [row.createdAtMachine, row.updatedAtMachine]), select: { id: true, name: true } });
-  const shops = await db.location.findMany({ ...among((row) => [row.createdAtLocation, row.updatedAtLocation]), select: { id: true, name: true } });
+  const locations = await db.location.findMany({ ...among((row) => [row.createdAtLocation, row.updatedAtLocation]), select: { id: true, name: true } });
 
   // Ids are unique across tables, so one map holds every name.
   const names = new Map<string, string>();
   for (const person of people) names.set(person.id, personLabel(person));
   for (const machine of machines) names.set(machine.id, machine.name);
-  for (const shop of shops) names.set(shop.id, shop.name);
+  for (const location of locations) names.set(location.id, location.name);
   const name = (id: string | null) => (id === null ? null : (names.get(id) ?? NotOnThisServer));
 
   return rows.map((row) => ({
     createdAt: row.createdAtDate.toISOString(),
     createdBy: name(row.createdByUser),
     createdMachine: name(row.createdAtMachine),
-    createdShop: name(row.createdAtLocation),
+    createdLocation: name(row.createdAtLocation),
     updatedAt: row.updatedAtDate?.toISOString() ?? null,
     updatedBy: row.updatedAtDate ? name(row.updatedByUser) : null,
     updatedMachine: row.updatedAtDate ? name(row.updatedAtMachine) : null,
-    updatedShop: row.updatedAtDate ? name(row.updatedAtLocation) : null,
+    updatedLocation: row.updatedAtDate ? name(row.updatedAtLocation) : null,
   }));
 }
 

@@ -2,7 +2,7 @@ import { Refusal } from '../shared/refusal.js';
 import { StockLimits } from './stock-ledger.js';
 
 /**
- * A change a person records by hand: goods in from a supplier, or a count put right. The shop is
+ * A change a person records by hand: goods in from a supplier, or a count put right. The location is
  * never part of it: it's always the server's own.
  */
 export interface HandMovement {

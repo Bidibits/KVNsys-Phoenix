@@ -1,7 +1,7 @@
 /**
  * What a person changed about how the screens look, kept on the server for them so it follows them
  * to whichever machine they sign in at (SCHEMA-PLAN 29, design-direction.md rule 7). So far: the
- * widths they dragged a list's columns to. Nothing the shop records depends on it.
+ * widths they dragged a list's columns to. Nothing the business records depends on it.
  */
 export interface UserSettings {
   /** Per list (its name, such as "Products"), per column (its heading): the width it was dragged to, such as "8.5em". */

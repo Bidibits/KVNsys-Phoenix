@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // The calls between a running KVNsys Server and its dashboard, on the same PC. They never cross the
-// shop's network: the server answers them only on 127.0.0.1, and only with the key it wrote into
+// location's network: the server answers them only on 127.0.0.1, and only with the key it wrote into
 // its own folder, which only the server's service and the PC's administrators can read.
 
 /** What the running server writes into its folder: where to reach it, and the key to show. */
@@ -22,7 +22,7 @@ export const ConnectedPerson = z.object({
   id: z.string(),
   username: z.string(),
   displayName: z.string(),
-  /** The machine they're at, as the shop calls it, or null when they signed in at none. */
+  /** The machine they're at, as the location calls it, or null when they signed in at none. */
   machine: z.object({ code: z.string(), name: z.string() }).nullable(),
   /** ISO date and time they signed in. */
   since: z.string(),
@@ -35,7 +35,7 @@ export const ServerStatus = z.object({
   protocol: z.number().int(),
   /** The port machines reach it on. */
   port: z.number().int(),
-  /** This PC's addresses on the shop's network. */
+  /** This PC's addresses on the local network. */
   addresses: z.array(z.string()),
   /** ISO date and time this run started. */
   startedAt: z.string(),

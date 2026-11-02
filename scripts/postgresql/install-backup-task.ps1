@@ -27,7 +27,7 @@ try {
   if (-not $isAdmin) { throw 'This needs administrator rights: a task that runs as SYSTEM does.' }
   if (-not (Test-Path -LiteralPath $BackupScript -PathType Leaf)) { throw "There's no backup script at $BackupScript." }
 
-  # The copies are the whole shop, so only Administrators and SYSTEM may open them. Written by SID,
+  # The copies are all the location's records, so only Administrators and SYSTEM may open them. Written by SID,
   # so a Windows in another language works too.
   New-Item -ItemType Directory -Force -Path $BackupDir | Out-Null
   & icacls $BackupDir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' | Out-Null

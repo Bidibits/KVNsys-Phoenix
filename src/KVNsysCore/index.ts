@@ -108,7 +108,7 @@ export {
   type MachineStatus,
   type PcIdentity,
 } from './locations/machines.js';
-export { ShopDirectory, type Shop } from './locations/shops.js';
+export { LocationDirectory, type Location } from './locations/locations.js';
 
 export {
   checkProduct,
@@ -197,7 +197,7 @@ export {
   type StatutoryDiscount,
 } from './selling/sales.js';
 
-export { dayTotals, shopDate, shopDay, ShopTimeZone, type DayTotals, type ReceiptSummary } from './selling/days.js';
+export { businessDate, businessDay, BusinessTimeZone, dayTotals, type DayTotals, type ReceiptSummary } from './selling/days.js';
 export {
   checkShiftNote,
   NoShiftYet,

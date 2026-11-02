@@ -1,4 +1,4 @@
-import { Button, ConfirmDialog, Notice, RecordTable, ShopTime, TickBox, useToast, type Column } from '@kvnsys/ui';
+import { BusinessTime, Button, ConfirmDialog, Notice, RecordTable, TickBox, useToast, type Column } from '@kvnsys/ui';
 import type { ConnectedPerson } from '@kvnsys/server/control';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Closing, DashboardView, Done } from '../desktop/bridge.js';
@@ -122,7 +122,7 @@ export function Dashboard() {
       ),
     },
     { heading: 'Machine', wrap: true, cell: (person) => (person.machine ? person.machine.name : 'No machine') },
-    { heading: 'Signed in', cell: (person) => <ShopTime at={person.since} show="time" /> },
+    { heading: 'Signed in', cell: (person) => <BusinessTime at={person.since} show="time" /> },
     {
       heading: 'Disconnect',
       hiddenHeading: true,
@@ -204,7 +204,7 @@ export function Dashboard() {
             <p>
               {isOn ? 'Machines connect to' : 'When it’s on, machines connect to'}{' '}
               {view.addresses.length === 0 ? (
-                <span className="text-muted-foreground">this PC, once it's on the shop's network</span>
+                <span className="text-muted-foreground">this PC, once it's on the local network</span>
               ) : (
                 view.addresses.map((address, index) => (
                   <span key={address}>
@@ -218,7 +218,7 @@ export function Dashboard() {
             </p>
             {status && (
               <p className="text-muted-foreground">
-                On since <ShopTime at={status.startedAt} />
+                On since <BusinessTime at={status.startedAt} />
               </p>
             )}
           </div>

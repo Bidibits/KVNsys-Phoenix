@@ -123,7 +123,7 @@ export interface KvnsysBridge {
   roleForm(id: string | null): Promise<RoleFormResult>;
   /** Saves what was typed and ticked, as a new role (null) or over the one with that id. */
   saveRole(id: string | null, form: RoleForm): Promise<RoleResult>;
-  /** Every product, by name, with how many this shop has, if the signed-in person may see stock. */
+  /** Every product, by name, with how many this location has, if the signed-in person may see stock. */
   listStock(): Promise<StockListResult>;
   /** One product, by what was typed or scanned (its code or its barcode), with its stock here. */
   findStockItem(codeOrBarcode: string): Promise<StockItemResult>;
@@ -145,11 +145,11 @@ export interface KvnsysBridge {
   clearSale(): Promise<TillResult>;
   /** Records the sale, paid with the cash as typed; once it's recorded, the till starts a new sale. */
   paySale(tendered: string): Promise<SaleResult>;
-  /** A day's receipts at the shop and their totals: "2026-10-24", or null for today by the shop's clock. */
+  /** A day's receipts at the location and their totals: "2026-10-24", or null for today by the business's clock. */
   daySales(date: string | null): Promise<DaySalesResult>;
   /** One receipt as it was given. */
   receipt(id: string): Promise<SaleResult>;
-  /** The shop's machines, the server PC first, if the signed-in person may see them. */
+  /** The location's machines, the server PC first, if the signed-in person may see them. */
   listMachines(): Promise<MachineListResult>;
   /** Renames a machine, or switches it off or on, as typed and picked. */
   saveMachine(id: string, form: { name: string; status: string }): Promise<MachineResult>;

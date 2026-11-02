@@ -26,7 +26,7 @@ datasource db {
   provider = "postgresql"
 }
 
-/// A shop: HQ or a branch. Holds stock, rings sales, and owns machines.
+/// A location: HQ or a branch. Holds stock, rings sales, and owns machines.
 model Location {
   id               String  @id @db.Uuid
   code             String  @unique
@@ -164,7 +164,7 @@ model Machine {
   @@map("machines")
 }
 
-/// Something the shop sells. HQ encodes it; later, branches receive it with the delivery.
+/// Something the location sells. HQ encodes it; later, branches receive it with the delivery.
 /// Every column SCHEMA-PLAN names, all on the product form. The till charges the cheapest price
 /// the customer qualifies for: retail, promo, or wholesale once a line reaches its pieces.
 model Product {
@@ -185,7 +185,7 @@ model Product {
   unitOfMeasure     String?  @map("unit_of_measure")
   /// A service, say, doesn't: selling it would take nothing out of stock.
   tracksStock       Boolean  @default(true) @map("tracks_stock")
-  /// What the shop pays: whatever someone last typed, not worked out from deliveries.
+  /// What the business pays: whatever someone last typed, not worked out from deliveries.
   costPrice         Decimal  @default(0) @map("cost_price") @db.Decimal(14, 2)
   /// The shelf price in pesos, exact to the centavo: numeric, never floating point. The migration
   /// refuses a negative price. KVNsysCore works in whole centavos.
@@ -225,7 +225,7 @@ model Product {
 /// How many of a product a location holds now: the running total of its inventory_logs, kept so
 /// reading stock is one row rather than a sum over every sale. Only the stock ledger writes it,
 /// in the same transaction as the movement line, so the two never disagree. No id: the key is
-/// (location, product). Whole pieces only; nothing the shop sells is sold by weight or length.
+/// (location, product). Whole pieces only; nothing the business sells is sold by weight or length.
 /// min_stock, max_stock and reorder_point are kept for reorder alerts, which aren't built yet.
 model Inventory {
   locationId   String @map("location_id") @db.Uuid
@@ -286,19 +286,19 @@ model InventoryLog {
 
 /// One customer sale, as charged: SCHEMA-PLAN's receipts. The money columns are stored, not worked out
 /// again when read: a receipt is evidence of what was charged, and today's prices must never rewrite
-/// it. Numbered per shop with no gaps (number), and known by the shop's code and that number (code,
+/// it. Numbered per location with no gaps (number), and known by the location's code and that number (code,
 /// HQ-000042). Never changed or deleted: the migration refuses both. Its three events, as the plan
 /// has them: settled_* is when it was paid, by whom, where (a receipt is recorded only once it's
 /// paid); opened_* stays empty until the machine says when the sale began; voided_* and void_reason
 /// wait for voiding.
 model Receipt {
   id                   String  @id @db.Uuid
-  /// The shop's code and the receipt's number there: HQ-000042.
+  /// The location's code and the receipt's number there: HQ-000042.
   code                 String  @unique
   /// The shift it was rung up in. The till never records a receipt without one.
   shiftId              String? @map("shift_id") @db.Uuid
   locationId           String  @map("location_id") @db.Uuid
-  /// Counts up from 1 at each shop, with no gaps.
+  /// Counts up from 1 at each location, with no gaps.
   number               Int
   subtotal             Decimal @db.Decimal(14, 2)
   discountTotal        Decimal @map("discount_total") @db.Decimal(14, 2)
@@ -350,7 +350,7 @@ model ReceiptItem {
   unitPrice     Decimal @map("unit_price") @db.Decimal(14, 2)
   discountValue Decimal @map("discount_value") @db.Decimal(14, 2)
   lineTotal     Decimal @map("line_total") @db.Decimal(14, 2)
-  /// Which of the shop's prices it was charged at: Retail, Promo or Wholesale (KVNsysCore's bestPrice).
+  /// Which of the location's prices it was charged at: Retail, Promo or Wholesale (KVNsysCore's bestPrice).
   priceBasis    String  @default("Retail") @map("price_basis")
 
   receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Restrict)
@@ -383,13 +383,13 @@ model ReceiptPayment {
 }
 
 /// One cashier's stretch at the till: SCHEMA-PLAN's shifts. Opened with the cash counted into the
-/// drawer, closed with the cash counted out. It belongs to a shop and a person, not a PC, so it can
+/// drawer, closed with the cash counted out. It belongs to a location and a person, not a PC, so it can
 /// be opened at one machine and closed at another; the event blocks say where each happened.
 /// expected_cash (the opening cash and the shift's cash sales) is worked out and kept at closing.
-/// Numbered per shop with no gaps. Never deleted, and never changed once closed (the migration).
+/// Numbered per location with no gaps. Never deleted, and never changed once closed (the migration).
 model Shift {
   id           String   @id @db.Uuid
-  /// The shop's code and the shift's number there: HQ-S00001.
+  /// The location's code and the shift's number there: HQ-S00001.
   code         String   @unique
   locationId   String   @map("location_id") @db.Uuid
   number       Int
@@ -626,7 +626,7 @@ model Affiliation {
 }
 
 /// SCHEMA-PLAN 18–19: a delivery as paperwork, moving stock between two parties. Each end is a
-/// supplier or a shop, exactly one of the two (the migration checks it), and the kind says which:
+/// supplier or a location, exactly one of the two (the migration checks it), and the kind says which:
 /// from_supplier, to_supplier or transfer. draft, open, closed or cancelled. Fully received and
 /// short are worked out from the lines, never stored. No screens yet.
 model StockDocument {
@@ -675,8 +675,8 @@ model StockDocumentItem {
   @@map("stock_document_items")
 }
 
-/// SCHEMA-PLAN 26: "have I already taken this delivery file in?", kept by the shop that took it.
-/// from_location is the sending shop's id, which this database may not hold, so it points nowhere.
+/// SCHEMA-PLAN 26: "have I already taken this delivery file in?", kept by the location that took it.
+/// from_location is the sending location's id, which this database may not hold, so it points nowhere.
 model TransferImport {
   documentId      String   @id @map("document_id") @db.Uuid
   fromLocation    String   @map("from_location") @db.Uuid
@@ -726,7 +726,7 @@ model ConsolidatedSale {
 /// SCHEMA-PLAN 29: what a person changed about how the screens look, kept on the server so it
 /// follows them to whichever machine they sign in at. So far, the widths they dragged list columns
 /// to, as JSON text; KVNsysCore's user-settings.ts says what the server keeps. Not audited: it's
-/// the person's own, not a record of the shop's.
+/// the person's own, not a record of the business's.
 model UserSetting {
   userId    String   @id @map("user_id") @db.Uuid
   settings  String

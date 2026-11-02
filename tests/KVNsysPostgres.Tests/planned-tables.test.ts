@@ -17,7 +17,7 @@ const PlannedTables = [
 describeWithDatabase("SCHEMA-PLAN's tables in PostgreSQL", () => {
   let database: Awaited<ReturnType<typeof createThrowawayDatabase>>;
   let db: PrismaClient;
-  let shop: string;
+  let location: string;
   let product: string;
   let supplier: string;
 
@@ -26,7 +26,7 @@ describeWithDatabase("SCHEMA-PLAN's tables in PostgreSQL", () => {
   beforeAll(async () => {
     database = await createThrowawayDatabase();
     db = createPrismaClient(database.url);
-    shop = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Head Office' } })).id;
+    location = (await db.location.create({ data: { id: randomUUID(), code: 'HQ', name: 'Head Office' } })).id;
     product = (await db.product.create({ data: { id: randomUUID(), code: 'PRD-0001', name: 'Electric fan', retailPrice: '1499.00' } })).id;
     supplier = (await db.supplier.create({ data: { id: randomUUID(), code: 'SUP-001', name: 'Asia Appliances' } })).id;
   }, 120_000);
@@ -43,7 +43,7 @@ describeWithDatabase("SCHEMA-PLAN's tables in PostgreSQL", () => {
     expect(PlannedTables.filter((table) => !present.includes(table))).toEqual([]);
   });
 
-  it('chains places from a country down to a barangay, and a shop can point at them', async () => {
+  it('chains places from a country down to a barangay, and a location can point at them', async () => {
     await db.country.create({ data: { code: 'PH', name: 'Philippines' } });
     await db.region.create({ data: { code: '0400000000', name: 'CALABARZON', countryCode: 'PH' } });
     await db.province.create({ data: { code: '0456000000', name: 'Quezon', regionCode: '0400000000' } });
@@ -91,12 +91,12 @@ describeWithDatabase("SCHEMA-PLAN's tables in PostgreSQL", () => {
   });
 
   it('keeps reorder levels on stock, with a ceiling never below the floor', async () => {
-    const row = await db.inventory.create({ data: { locationId: shop, productId: product, minStock: 2, maxStock: 10, reorderPoint: 4 } });
+    const row = await db.inventory.create({ data: { locationId: location, productId: product, minStock: 2, maxStock: 10, reorderPoint: 4 } });
     expect(row).toMatchObject({ stock: 0, minStock: 2, maxStock: 10, reorderPoint: 4 });
-    await expect(db.inventory.update({ where: { locationId_productId: { locationId: shop, productId: product } }, data: { maxStock: 1 } })).rejects.toThrow(
+    await expect(db.inventory.update({ where: { locationId_productId: { locationId: location, productId: product } }, data: { maxStock: 1 } })).rejects.toThrow(
       /inventory_reorder_levels_sensible/,
     );
-    await expect(db.inventory.update({ where: { locationId_productId: { locationId: shop, productId: product } }, data: { reorderPoint: -1 } })).rejects.toThrow(
+    await expect(db.inventory.update({ where: { locationId_productId: { locationId: location, productId: product } }, data: { reorderPoint: -1 } })).rejects.toThrow(
       /inventory_reorder_levels_sensible/,
     );
   });
@@ -105,25 +105,25 @@ describeWithDatabase("SCHEMA-PLAN's tables in PostgreSQL", () => {
     const kinds = ['from_supplier', 'to_supplier', 'transfer', 'to_customer', 'from_customer', 'disposal', 'adjustment'];
     for (const kind of kinds) {
       await db.$executeRaw`INSERT INTO inventory_logs (id, location_id, product_id, quantity_change, movement_type, resulting_on_hand)
-                           VALUES (${randomUUID()}::uuid, ${shop}::uuid, ${product}::uuid, 1, ${kind}, 1)`;
+                           VALUES (${randomUUID()}::uuid, ${location}::uuid, ${product}::uuid, 1, ${kind}, 1)`;
     }
     expect(await db.inventoryLog.count({ where: { movementType: { in: kinds } } })).toBe(7);
   });
 
-  it("gives every stock document exactly one supplier or shop at each end, matching its kind", async () => {
+  it("gives every stock document exactly one supplier or location at each end, matching its kind", async () => {
     const document = (data: Record<string, unknown>) => db.stockDocument.create({ data: { id: randomUUID(), code: named('DOC'), ...data } as never });
-    const delivery = await document({ kind: 'from_supplier', sourceSupplierId: supplier, destinationLocationId: shop });
+    const delivery = await document({ kind: 'from_supplier', sourceSupplierId: supplier, destinationLocationId: location });
     expect(delivery.status).toBe('draft');
     await db.stockDocumentItem.create({ data: { id: randomUUID(), documentId: delivery.id, productId: product, expectedQuantity: 10 } });
     expect((await db.stockDocumentItem.findFirstOrThrow({ where: { documentId: delivery.id } })).receivedQuantity).toBe(0);
 
-    await expect(document({ kind: 'from_supplier', sourceSupplierId: supplier, sourceLocationId: shop, destinationLocationId: shop })).rejects.toThrow(/stock_documents_one_source/);
-    await expect(document({ kind: 'from_supplier', sourceSupplierId: supplier, destinationLocationId: shop, destinationSupplierId: supplier })).rejects.toThrow(
+    await expect(document({ kind: 'from_supplier', sourceSupplierId: supplier, sourceLocationId: location, destinationLocationId: location })).rejects.toThrow(/stock_documents_one_source/);
+    await expect(document({ kind: 'from_supplier', sourceSupplierId: supplier, destinationLocationId: location, destinationSupplierId: supplier })).rejects.toThrow(
       /stock_documents_one_destination/,
     );
-    await expect(document({ kind: 'transfer', sourceSupplierId: supplier, destinationLocationId: shop })).rejects.toThrow(/stock_documents_kind_matches_ends/);
-    await expect(document({ kind: 'lost', sourceLocationId: shop, destinationLocationId: shop })).rejects.toThrow(/stock_documents_kind_matches_ends/);
-    await expect(document({ kind: 'to_supplier', sourceLocationId: shop, destinationSupplierId: supplier, status: 'done' })).rejects.toThrow(/stock_documents_status_known/);
+    await expect(document({ kind: 'transfer', sourceSupplierId: supplier, destinationLocationId: location })).rejects.toThrow(/stock_documents_kind_matches_ends/);
+    await expect(document({ kind: 'lost', sourceLocationId: location, destinationLocationId: location })).rejects.toThrow(/stock_documents_kind_matches_ends/);
+    await expect(document({ kind: 'to_supplier', sourceLocationId: location, destinationSupplierId: supplier, status: 'done' })).rejects.toThrow(/stock_documents_status_known/);
     await expect(db.stockDocumentItem.create({ data: { id: randomUUID(), documentId: delivery.id, productId: product, expectedQuantity: -1 } })).rejects.toThrow(
       /stock_document_items_quantities_not_negative/,
     );
@@ -145,7 +145,7 @@ describeWithDatabase("SCHEMA-PLAN's tables in PostgreSQL", () => {
 
   it('lets a voided receipt be told apart: its reason and when, or neither for a paid one', async () => {
     const receipt = (data: Record<string, unknown>) =>
-      db.receipt.create({ data: { id: randomUUID(), code: named('HQ'), locationId: shop, number: Math.floor(Math.random() * 1e9) + 1, subtotal: '10.00', discountTotal: '0.00', total: '10.00', ...data } });
+      db.receipt.create({ data: { id: randomUUID(), code: named('HQ'), locationId: location, number: Math.floor(Math.random() * 1e9) + 1, subtotal: '10.00', discountTotal: '0.00', total: '10.00', ...data } });
     const paid = await receipt({});
     expect(paid).toMatchObject({ status: 'Paid', voidReason: null, openedAtDate: null, voidedAtDate: null });
     expect(paid.settledAtDate).toBeInstanceOf(Date);
@@ -156,9 +156,9 @@ describeWithDatabase("SCHEMA-PLAN's tables in PostgreSQL", () => {
   });
 
   it("keeps HQ and branch files apart from stock: transfers, sales files, HQ's totals, and a person's settings", async () => {
-    await db.transferImport.create({ data: { documentId: randomUUID(), fromLocation: randomUUID(), toLocation: shop, createdAtSource: new Date(), lineCount: 3 } });
+    await db.transferImport.create({ data: { documentId: randomUUID(), fromLocation: randomUUID(), toLocation: location, createdAtSource: new Date(), lineCount: 3 } });
     await expect(
-      db.transferImport.create({ data: { documentId: randomUUID(), fromLocation: randomUUID(), toLocation: shop, createdAtSource: new Date(), lineCount: -1 } }),
+      db.transferImport.create({ data: { documentId: randomUUID(), fromLocation: randomUUID(), toLocation: location, createdAtSource: new Date(), lineCount: -1 } }),
     ).rejects.toThrow(/transfer_imports_line_count_not_negative/);
 
     const sales = await db.salesImport.create({ data: { documentId: randomUUID(), locationId: randomUUID(), generatedAt: new Date() } });

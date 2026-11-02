@@ -35,7 +35,7 @@ describeWithDatabase('shifts in PostgreSQL', () => {
     await database.drop();
   });
 
-  it("opens a person's shift with the cash in the drawer, numbered per shop, and one open at a time", async () => {
+  it("opens a person's shift with the cash in the drawer, numbered per location, and one open at a time", async () => {
     const first = await shifts.open(ana, hq, 100000, at(ana));
     expect(first).toMatchObject({ code: 'HQ-S00001', status: 'Open', openingCash: 100000, openedBy: ana, cashSales: 0, receipts: 0, expectedCash: 100000, countedCash: null });
     await expect(shifts.open(ana, hq, 5000, at(ana))).rejects.toMatchObject({ kind: 'conflict', message: 'Your shift HQ-S00001 is still open. End it before starting another.' });
