@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createPrismaClient, type PrismaClient } from '@kvnsys/postgres';
 import { _electron as electron, type ElectronApplication, type Page } from 'playwright-core';
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { cellsUnder, expectTableOrder, headingsOf, HistoryColumnsShown } from '../table-cells.js';
+import { cellsUnder, expectCompact, expectTableOrder, headingsOf, HistoryColumnsShown } from '../table-cells.js';
 import { createThrowawayDatabase, describeWithDatabase } from '../throwaway-database.js';
 
 // What `pnpm package` made: the server, as its setup file installs it, and the app, as a machine's
@@ -144,10 +144,11 @@ describeWithDatabase('the built programs in out\\, run together on a throwaway s
     await picture(window, 'built-home');
   });
 
-  it('shows Machines in its table\'s order, the id first and the history last, and the Audit log names a change and who made it', async () => {
+  it("shows Machines compact and in its table's order, the id first and the history last, and the Audit log names a change and who made it", async () => {
     await window.getByRole('button', { name: /^Machines/ }).click();
     const machines = window.getByRole('table', { name: 'Machines' });
     await machines.waitFor();
+    await expectCompact(machines);
     await expectTableOrder(db, 'machines', await headingsOf(machines), {
       Id: 'id',
       Code: 'code',
